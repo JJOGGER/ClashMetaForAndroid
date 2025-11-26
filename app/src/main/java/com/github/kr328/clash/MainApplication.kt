@@ -8,6 +8,7 @@ import com.github.kr328.clash.common.log.Log
 import com.github.kr328.clash.remote.Remote
 import com.github.kr328.clash.service.util.sendServiceRecreated
 import com.github.kr328.clash.util.clashDir
+import com.tencent.mmkv.MMKV
 import java.io.File
 import java.io.FileOutputStream
 
@@ -17,16 +18,20 @@ class MainApplication : Application() {
     override fun attachBaseContext(base: Context?) {
         super.attachBaseContext(base)
 
+        MMKV.initialize(this)
         Global.init(this)
     }
 
     override fun onCreate() {
         super.onCreate()
-
         val processName = currentProcessName
         extractGeoFiles()
 
         Log.d("Process $processName started")
+
+        // 初始化 API 客户端
+        // TODO: 从配置文件或 SharedPreferences 读取 Base URL
+//        ApiClient.initialize(this, "http://xiuxiujd.cc/api/v1/")
 
         if (processName == packageName) {
             Remote.launch()

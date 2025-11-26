@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">XBoard</string>
+    <string name="app_tagline">高速稳定的网络加速服务</string>
+
+    <!-- Navigation -->
+    <string name="back">返回</string>
+    <string name="next">下一步</string>
+
+    <!-- Common -->
+    <string name="ok">确定</string>
+    <string name="cancel">取消</string>
+    <string name="save">保存</string>
+    <string name="delete">删除</string>
+    <string name="edit">编辑</string>
+
+    <!-- Login -->
+    <string name="login">登录</string>
+    <string name="register">注册</string>
+    <string name="email">邮箱</string>
+    <string name="password">密码</string>
+    <string name="forgot_password">忘记密码</string>
+    <string name="no_account">没有账号？</string>
+    <string name="register_now">立即注册</string>
+    <string name="have_account">已有账号？</string>
+    <string name="login_now">立即登录</string>
+
+    <!-- Home -->
+    <string name="accelerate">加速</string>
+    <string name="buy">购买</string>
+    <string name="share">分享</string>
+    <string name="mine">我的</string>
+
+    <!-- Traffic -->
+    <string name="upload">上传</string>
+    <string name="download">下载</string>
+    <string name="total">总计</string>
+    <string name="traffic_usage">流量使用</string>
+
+    <!-- Servers -->
+    <string name="servers">节点列表</string>
+    <string name="server_name">节点名称</string>
+    <string name="server_address">节点地址</string>
+
+    <!-- Plans -->
+    <string name="plans">套餐列表</string>
+    <string name="plan_name">套餐名称</string>
+    <string name="plan_price">价格</string>
+    <string name="plan_traffic">流量</string>
+    <string name="plan_description">描述</string>
+
+    <!-- Share -->
+    <string name="invite_code">邀请码</string>
+    <string name="invite_count">邀请人数</string>
+    <string name="commission_balance">返利余额</string>
+    <string name="commission_rate">返利比例</string>
+    <string name="generate_invite_code">生成邀请码</string>
+    <string name="copy_invite_code">复制邀请码</string>
+    <string name="copy_invite_link">复制邀请链接</string>
+
+    <!-- User -->
+    <string name="user_info">用户信息</string>
+    <string name="balance">账户余额</string>
+    <string name="expire_date">到期日期</string>
+    <string name="subscribe_manage">订阅管理</string>
+    <string name="order_history">订单历史</string>
+    <string name="customer_support">客服支持</string>
+    <string name="settings">设置</string>
+    <string name="logout">退出登录</string>
+
+    <!-- Messages -->
+    <string name="loading">加载中...</string>
+    <string name="loading_failed">加载失败</string>
+    <string name="network_error">网络错误</string>
+    <string name="please_try_again">请重试</string>
+    <string name="success">成功</string>
+    <string name="error">错误</string>
+
+</resources>

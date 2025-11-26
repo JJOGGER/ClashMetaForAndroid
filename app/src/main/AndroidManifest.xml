@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="MissingLeanbackLauncher">
 
     <uses-feature
         android:name="android.software.leanback"
@@ -16,6 +17,12 @@
         tools:ignore="QueryAllPackagesPermission" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.BIND_VPN_SERVICE" />
+    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
 
     <application
         android:name=".MainApplication"
@@ -55,12 +62,12 @@
             android:name=".MainActivityAlias"
             android:exported="true"
             android:targetActivity=".MainActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
+<!--            <intent-filter>-->
+<!--                <action android:name="android.intent.action.MAIN" />-->
+<!--                <category android:name="android.intent.category.LAUNCHER" />-->
+<!--                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />-->
+<!--                <category android:name="android.intent.category.DEFAULT" />-->
+<!--            </intent-filter>-->
         </activity-alias>
 
         <activity
@@ -177,6 +184,159 @@
             android:configChanges="uiMode"
             android:exported="false"
             android:label="@string/files" />
+        
+        <!-- XBoard App Activities -->
+        <!-- Splash Activity -->
+        <activity
+            android:name="com.xboard.ui.activity.SplashActivity"
+            android:configChanges="uiMode"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:theme="@style/BootstrapTheme">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        
+        <!-- Login Activity -->
+        <activity
+            android:name="com.xboard.ui.activity.LoginActivity"
+            android:configChanges="uiMode"
+            android:exported="false"
+            android:label="@string/login"
+            android:theme="@style/BootstrapTheme" />
+        
+        <!-- Forgot Password Activity -->
+        <activity
+            android:name="com.xboard.ui.activity.ForgotPasswordActivity"
+            android:configChanges="uiMode"
+            android:exported="false"
+            android:label="@string/forgot_password"
+            android:theme="@style/BootstrapTheme" />
+        
+        <!-- Main Activity -->
+        <activity
+            android:name="com.xboard.ui.activity.MainActivity"
+            android:configChanges="uiMode"
+            android:exported="false"
+            android:label="@string/app_name"
+            android:theme="@style/BootstrapTheme" />
+        
+        <!-- Order Activity -->
+        <activity
+            android:name="com.xboard.ui.activity.OrderActivity"
+            android:configChanges="uiMode"
+            android:exported="false"
+            android:label="@string/buy"
+            android:theme="@style/BootstrapTheme" />
+        
+        <!-- Payment Activity -->
+        <activity
+            android:name="com.xboard.ui.activity.PaymentActivity"
+            android:configChanges="uiMode"
+            android:exported="false"
+            android:label="@string/buy"
+            android:theme="@style/BootstrapTheme" />
+
+        <!-- Order History Activity -->
+        <activity
+            android:name="com.xboard.ui.activity.OrderHistoryActivity"
+            android:configChanges="uiMode"
+            android:exported="false"
+            android:label="我的订单"
+            android:theme="@style/BootstrapTheme" />
+
+        <!-- Order Detail Activity -->
+        <activity
+            android:name="com.xboard.ui.activity.OrderDetailActivity"
+            android:configChanges="uiMode"
+            android:exported="false"
+            android:label="订单详情"
+            android:theme="@style/BootstrapTheme" />
+
+        <activity
+            android:name="com.xboard.ui.activity.NodeSelectionActivity"
+            android:configChanges="uiMode"
+            android:exported="false"
+            android:label="@string/app_name"
+            android:theme="@style/BootstrapTheme" />
+
+        <activity
+            android:name="com.xboard.ui.activity.AgreementActivity"
+            android:configChanges="uiMode"
+            android:exported="false"
+            android:label="协议"
+            android:theme="@style/BootstrapTheme" />
+        <activity android:name="com.xboard.ui.activity.RegistActivity"
+            android:configChanges="uiMode"
+            android:exported="false"
+            android:label="注册"
+            android:theme="@style/BootstrapTheme"  />
+
+        <!-- Other Settings Activity -->
+        <activity
+            android:name="com.xboard.ui.activity.OtherSettingsActivity"
+            android:configChanges="uiMode"
+            android:exported="false"
+            android:label="其他设置"
+            android:theme="@style/BootstrapTheme" />
+
+        <!-- Change Password Activity -->
+        <activity
+            android:name="com.xboard.ui.activity.ChangePasswordActivity"
+            android:configChanges="uiMode"
+            android:exported="false"
+            android:label="修改密码"
+            android:theme="@style/BootstrapTheme" />
+
+        <!-- Traffic Detail Activity -->
+        <activity
+            android:name="com.xboard.ui.activity.TrafficDetailActivity"
+            android:configChanges="uiMode"
+            android:exported="false"
+            android:label="流量明细"
+            android:theme="@style/BootstrapTheme" />
+
+        <!-- Ticket Activity -->
+        <activity
+            android:name="com.xboard.ui.activity.TicketActivity"
+            android:configChanges="uiMode"
+            android:exported="false"
+            android:label="我的工单"
+            android:theme="@style/BootstrapTheme" />
+
+        <!-- Create Ticket Activity -->
+        <activity
+            android:name="com.xboard.ui.activity.CreateTicketActivity"
+            android:configChanges="uiMode"
+            android:exported="false"
+            android:label="新建工单"
+            android:theme="@style/BootstrapTheme" />
+
+        <!-- Ticket Detail Activity -->
+        <activity
+            android:name="com.xboard.ui.activity.TicketDetailActivity"
+            android:configChanges="uiMode"
+            android:exported="false"
+            android:label="工单详情"
+            android:theme="@style/BootstrapTheme" />
+
+        <!-- WebView Activity -->
+        <activity
+            android:name="com.xboard.ui.activity.WebViewActivity"
+            android:configChanges="uiMode"
+            android:exported="false"
+            android:label="网页"
+            android:theme="@style/BootstrapTheme" />
+
+        <!-- Theme Settings Activity -->
+        <activity
+            android:name="com.xboard.ui.activity.ThemeSettingsActivity"
+            android:configChanges="uiMode"
+            android:exported="false"
+            android:label="主题设置"
+            android:theme="@style/BootstrapTheme" />
 
         <service
             android:name=".LogcatService"

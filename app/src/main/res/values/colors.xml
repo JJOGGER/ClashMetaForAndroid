@@ -1,4 +1,47 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="color_launcher_background">#FFFFFF</color>
+
+    <!-- XBoard App Colors - Dark Theme -->
+    <!-- Primary Colors -->
+    <color name="primary_main_light">#B8E7BB</color>
+    <color name="primary">#7FC882</color>
+    <color name="primary_dark">#00A8CC</color>
+    <color name="primary_light">#33E0FF</color>
+    <color name="main_start">#7FC882</color>
+    <color name="main_center">#46AD4A</color>
+    <color name="main_end">#41A946</color>
+    <color name="color_6F9070">#6F9070</color>
+    <color name="color_259526">#259526</color>
+
+    <!-- Background Colors -->
+    <color name="bg_primary">#0F1419</color>
+    <color name="color_1B2126">#1B2126</color>
+    <color name="bg_secondary">#1A1F26</color>
+    <color name="bg_tertiary">#252B33</color>
+
+    <!-- Text Colors -->
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#B0B8C1</color>
+    <color name="text_tertiary">#808A93</color>
+
+    <!-- Accent Colors -->
+    <color name="accent_primary">#7FC882</color>
+    <color name="accent_success">#4CAF50</color>
+    <color name="accent_warning">#FF9800</color>
+    <color name="accent_error">#F44336</color>
+    <color name="error">#F44336</color>
+
+    <!-- Stroke Colors -->
+    <color name="stroke">#2A3038</color>
+
+    <!-- Gradient Colors -->
+    <color name="gradient_start">#1A1F26</color>
+    <color name="gradient_end">#0F1419</color>
+
+    <!-- Utility Colors -->
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="transparent">#00000000</color>
+
 </resources>

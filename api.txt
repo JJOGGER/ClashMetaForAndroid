@@ -1,0 +1,163 @@
+XBoard App 对接接口说明（v1）
+==============================
+
+基础信息
+--------
+- **Base URL**：`https://{DOMAIN}/api/v1`
+- **认证方式**：除 `guest/*`、`passport/*` 外均需 `Authorization: Bearer {token}`
+- **数据格式**：`Content-Type: application/json`
+- **统一响应**：`{ "code": 0, "data": ..., "message": "ok" }`；出现 `ApiException` 时 message 即错误文案
+- **分页**：列表类接口使用 `page`、`per_page` 或 `limit`，具体见返回体
+
+一、访客接口 `GET/POST /guest/*`
+--------------------------------
+1. `GET /guest/plan/fetch`  
+   - 用途：展示套餐列表（前台/登录页）  
+   - 响应字段：`plans[]`（id、name、price、period、traffic等），`coupons_enabled`
+2. `GET /guest/comm/config`  
+   - 用途：公共配置（站点名称、客服方式、公告开关等）
+3. `POST /guest/telegram/webhook`  
+   - 用途：Telegram Bot webhook，App 无需调用
+4. `GET|POST /guest/payment/notify/{method}/{uuid}`  
+   - 第三方支付回调地址；仅供支付网关调用
+
+二、认证接口 `POST /passport/*`
+-------------------------------
+| 接口 | 说明 | 主要参数 | 响应 |
+| --- | --- | --- | --- |
+| `POST /passport/auth/register` | 注册 | `email,password,invite_code(optional)` | 登录信息 |
+| `POST /passport/auth/login` | 登录 | `email,password` | `token`, `user` |
+| `GET /passport/auth/token2Login` | 邮件/扫码快捷登录 | `token` | 跳转地址 |
+| `POST /passport/auth/forget` | 重置密码 | `email,code,password` | - |
+| `POST /passport/auth/getQuickLoginUrl` | 生成一次性登录链接 | `email` | `url` |
+| `POST /passport/auth/loginWithMailLink` | 使用一次性链接登录 | `token` | `token` |
+| `POST /passport/comm/sendEmailVerify` | 发送邮件验证码 | `email,scene` | - |
+| `POST /passport/comm/pv` | PV/UV 统计 | `referer,ua` | - |
+
+三、用户主模块 `user/*`（需登录）
+--------------------------------
+### 3.1 用户资料 & 安全
+- `GET /user/info`：基本资料、订阅状态、余额
+- `POST /user/update`：更新昵称、语言、时区等
+- `POST /user/changePassword`
+- `GET /user/resetSecurity`：重置订阅链接
+- `GET /user/checkLogin`：刷新登录状态
+- `POST /user/getQuickLoginUrl`：一次性链接（内嵌浏览器登录）
+- Session 管理：`GET /user/getActiveSession`、`POST /user/removeActiveSession`
+
+### 3.2 订阅 & 流量
+- `GET /user/getSubscribe`：返回 Clash/Surge/Sing-box 等订阅链接（带 token）
+- `GET /user/getStat`：当期用量
+- `GET /user/stat/getTrafficLog`：历史流量日志（分页）
+- `GET /user/server/fetch`：节点列表（前端展示/批量导入）
+
+### 3.3 套餐与优惠
+- `GET /user/plan/fetch`：登录后套餐列表（含个人折扣）
+- 优惠券：`POST /user/coupon/check`
+- 礼品卡：
+  - `POST /user/gift-card/check`
+  - `POST /user/gift-card/redeem`
+  - `GET /user/gift-card/history|detail|types`
+
+### 3.4 订单 & 支付流程
+1. `POST /user/order/save`  
+   - Body：`{ "plan_id": 1, "period": "month_price", "coupon_code": "ABC", "payment_method_ids": [可选] }`  
+   - Resp：`{ "trade_no": "...", "payable_amount": 9900, "plan": {...} }`
+2. `GET /user/order/getPaymentMethod`  
+   - Response：`[{ "id": 12, "name": "唐朝支付", "fee_percent": 0, "plugin_code": "..."}]`
+3. `POST /user/order/checkout`  
+   - Body：`{ "trade_no": "...", "method": 支付方式ID }`  
+   - Resp：`{ "type": 1, "data": "https://..." }` （type=1 打开URL，type=0 为二维码文本）
+4. `GET /user/order/check?trade_no=...`  
+   - Polling 支付状态；`status` = 0 待支付 / 1 已支付 / -1 取消
+5. `GET /user/order/detail?trade_no=...`  
+   - 返回订单详情、支付记录
+6. `GET /user/order/fetch?page=`  
+   - 订单历史列表
+7. `POST /user/order/cancel`  
+   - Body：`{ "trade_no": "..." }`，未支付可取消
+
+### 3.5 邀请/返利
+- `GET /user/invite/save`：生成邀请码
+- `GET /user/invite/fetch`：邀请统计
+- `GET /user/invite/details`：邀请明细
+- `POST /user/transfer`：返利划转到余额
+
+### 3.6 客服/公告/知识库
+- 公告：`GET /user/notice/fetch`
+- 工单：`POST /user/ticket/save|reply|close|withdraw`、`GET /user/ticket/fetch`
+- 知识库：`GET /user/knowledge/getCategory`、`GET /user/knowledge/fetch`
+
+### 3.7 Telegram & 通用配置
+- `GET /user/telegram/getBotInfo`：获取机器人绑定状态
+- `GET /user/comm/config`：与访客配置类似，但包含用户专属设置
+- `POST /user/comm/getStripePublicKey`
+
+四、客户端订阅 `client/*`
+-------------------------
+- `GET /client/subscribe`：旧版订阅链接（受 `client` 中间件保护）
+- `GET /client/app/getConfig`：生成 APP 配置文件（含节点、推送等）
+- `GET /client/app/getVersion`：检查客户端版本
+
+五、节点同步 `server/*`
+-----------------------
+供后端节点程序拉取账号数据，通常不由 App 调用：
+- `GET /server/UniProxy/config|user`、`POST /server/UniProxy/push|alive|status`
+- `GET /server/ShadowsocksTidalab/user`
+- `GET /server/TrojanTidalab/user|config`
+
+六、支付回调 & TangchaoPay 说明
+-------------------------------
+1. XBoard 已内置 `TangchaoPay` 插件（`plugins/TangchaoPay`），后台可配置：
+   - `app_id`、`merchant_id`、RSA 私钥/公钥、`pay_type`（1=支付宝/2=微信/3=银行卡/4=数字货币）、`currency`、回调白名单 IP
+2. App 侧流程：
+   - 登录 → `GET user/plan/fetch` → `POST user/order/save` → `POST user/order/checkout`
+   - 当 `checkout` 返回 `type=1` 时，拉起内置 WebView 打开 `data`（唐朝收银台）
+   - 用户支付完成回调到 `/guest/payment/notify/TangchaoPay/{uuid}`，接口返回 `OK`
+   - App 轮询 `GET /user/order/check?trade_no=` 直至 `status=1`
+3. 错误处理：`checkout` 失败的 message 直接展示给用户；轮询超时可提示“请确认支付结果或联系客服”。
+
+七、常见问题
+------------
+- **token 失效**：接口返回 401 时，跳转登录页重新获取 token。
+- **强制 HTTPS**：若后台开启 `force_https`，所有 API 必须走 HTTPS。
+- **时间戳**：支付相关签名要求 Unix 秒级时间，确保前端/服务端时间同步。
+- **多语言**：发送 Header `Accept-Language: zh-CN` 可影响返回文案（具体取决于后台设置）。
+- **缓存**：新增支付方式或配置后，可调用 `GET /guest/comm/config` 重新拉取配置缓存。
+
+附录：接口调用示例
+------------------
+```
+POST https://example.com/api/v1/passport/auth/login
+Header: Content-Type: application/json
+Body: {"email":"user@example.com","password":"12345678"}
+
+Response:
+{
+  "code": 0,
+  "data": {
+    "token": "1|Psx...",
+    "user": {...}
+  },
+  "message": "success"
+}
+```
+
+```
+POST https://example.com/api/v1/user/order/checkout
+Header: Authorization: Bearer 1|Psx..., Content-Type: application/json
+Body: {"trade_no":"202501010001","method":12}
+
+Response:
+{
+  "code": 0,
+  "data": {
+    "type": 1,
+    "data": "https://api.tangchaoshop.com/payment/cashier?...",
+    "trade_no": "202501010001"
+  },
+  "message": "success"
+}
+```
+
+此文档覆盖了 APP 端对接所需的所有公开接口、依赖顺序和关键参数，满足日常订阅、充值、客服、节点同步等业务场景。如需更细粒度的字段定义，可直接查阅对应 Controller 或使用 API 抓包工具（如 Postman）进行自测。

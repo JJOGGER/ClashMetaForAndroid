@@ -1,0 +1,841 @@
+================================================================================
+                        XBoard API 接口文档 (详细版)
+================================================================================
+
+API 基础信息：
+- 基础 URL: /api/v1
+- 认证方式: Bearer Token (Sanctum)
+- 响应格式: JSON
+
+================================================================================
+响应格式说明
+================================================================================
+
+【成功响应】(HTTP 200)
+{
+  "data": {...}  // 具体数据，类型根据接口而定
+}
+
+【错误响应】(HTTP 400/401/403/404/422/500)
+{
+  "message": "错误信息描述"
+}
+
+【特殊响应】
+- 支付回调成功: 返回纯文本 "OK" 或 custom_result
+- 支付回调失败: {"message": "verify error"}
+- 304 Not Modified: 服务器缓存未变化
+
+================================================================================
+一、认证相关 API (Passport)
+================================================================================
+
+1. 用户注册 - POST /passport/auth/register
+   认证: 否
+   
+   【请求参数】
+   {
+     "email": "user@example.com",
+     "password": "password123",
+     "invite_code": "ABC123"
+   }
+   
+   【成功响应】(HTTP 200)
+   {
+     "data": {
+       "token": "1|abc123def456...",
+       "user": {
+         "id": 1,
+         "email": "user@example.com",
+         "is_admin": false,
+         "is_staff": false
+       }
+     }
+   }
+   
+   【错误响应】(HTTP 400)
+   {
+     "message": "邮箱已被注册"
+   }
+
+2. 用户登录 - POST /passport/auth/login
+   认证: 否
+   
+   【请求参数】
+   {
+     "email": "user@example.com",
+     "password": "password123"
+   }
+   
+   【成功响应】(HTTP 200)
+   {
+     "data": {
+       "token": "1|abc123def456...",
+       "user": {
+         "id": 1,
+         "email": "user@example.com",
+         "is_admin": false,
+         "is_staff": false
+       }
+     }
+   }
+   
+   【错误响应】(HTTP 400)
+   {
+     "message": "邮箱或密码错误"
+   }
+
+3. Token 登录 - GET /passport/auth/token2Login
+   认证: 否
+   参数: token(可选), verify(可选), redirect(可选)
+   返回: 同登录接口
+
+4. 忘记密码 - POST /passport/auth/forget
+   认证: 否
+   
+   【请求参数】
+   {
+     "email": "user@example.com",
+     "email_code": "123456",
+     "password": "newpassword123"
+   }
+   
+   【成功响应】(HTTP 200)
+   {
+     "data": true
+   }
+
+5. 获取快速登录 URL - POST /passport/auth/getQuickLoginUrl
+   认证: 否
+   参数: auth_data(可选)
+   返回: {data: "url"}
+
+6. 发送邮箱验证码 - POST /passport/comm/sendEmailVerify
+   认证: 否
+   参数: email, captcha_token(可选)
+   返回: {data: true}
+
+7. 邀请码 PV 统计 - POST /passport/comm/pv
+   认证: 否
+   参数: invite_code
+   返回: {data: true}
+
+8. 邮件链接登录 - POST /passport/auth/loginWithMailLink
+   认证: 否
+   参数: email, redirect(可选)
+   返回: {data: true}
+
+================================================================================
+二、用户相关 API (User)
+================================================================================
+
+1. 获取用户信息 - GET /user/info
+   认证: 是
+   
+   【成功响应】(HTTP 200)
+   {
+     "data": {
+       "email": "user@example.com",
+       "transfer_enable": 1000000,
+       "last_login_at": "2025-11-22T12:00:00Z",
+       "created_at": "2025-01-01T00:00:00Z",
+       "banned": false,
+       "remind_expire": true,
+       "remind_traffic": true,
+       "expired_at": "2025-12-31T23:59:59Z",
+       "balance": 10000,
+       "commission_balance": 50000,
+       "plan_id": 1,
+       "discount": 100,
+       "commission_rate": 20,
+       "telegram_id": "123456789",
+       "uuid": "550e8400-e29b-41d4-a716-446655440000",
+       "avatar_url": "https://cdn.v2ex.com/gravatar/..."
+     }
+   }
+
+2. 修改密码 - POST /user/changePassword
+   认证: 是
+   参数: old_password, new_password
+   返回: {data: true}
+
+3. 更新用户设置 - POST /user/update
+   认证: 是
+   参数: remind_expire(可选), remind_traffic(可选)
+   返回: {data: true}
+
+4. 获取订阅信息 - GET /user/getSubscribe
+   认证: 是
+   
+   【成功响应】(HTTP 200)
+   {
+     "data": {
+       "plan_id": 1,
+       "token": "abc123def456...",
+       "expired_at": "2025-12-31T23:59:59Z",
+       "u": 5368709120,
+       "d": 10737418240,
+       "transfer_enable": 107374182400,
+       "email": "user@example.com",
+       "uuid": "550e8400-e29b-41d4-a716-446655440000",
+       "device_limit": 5,
+       "speed_limit": 100,
+       "next_reset_at": "2025-12-01T00:00:00Z",
+       "plan": {
+         "id": 1,
+         "name": "基础套餐",
+         "transfer_enable": 107374182400
+       },
+       "subscribe_url": "https://example.com/api/v1/user/subscribe?token=abc123...",
+       "reset_day": 9
+     }
+   }
+
+5. 获取用户统计 - GET /user/getStat
+   认证: 是
+   返回: [未支付订单数, 未关闭工单数, 邀请用户数]
+
+6. 检查登录状态 - GET /user/checkLogin
+   认证: 是
+   返回: {is_login: true, is_admin: false(可选)}
+
+7. 转账佣金到余额 - POST /user/transfer
+   认证: 是
+   参数: transfer_amount
+   返回: {data: true}
+
+8. 获取快速登录 URL - POST /user/getQuickLoginUrl
+   认证: 是
+   参数: redirect(可选)
+   返回: {data: "url"}
+
+9. 获取活跃会话 - GET /user/getActiveSession
+   认证: 是
+   返回: [{id, ip_address, user_agent, last_activity}]
+
+10. 移除活跃会话 - POST /user/removeActiveSession
+    认证: 是
+    参数: session_id
+    返回: {data: true}
+
+11. 重置安全信息 - GET /user/resetSecurity
+    认证: 是
+    返回: {data: "新订阅URL"}
+
+================================================================================
+三、订单相关 API (Order)
+================================================================================
+
+1. 创建订单 - POST /user/order/save
+   认证: 是
+   
+   【请求参数】
+   {
+     "plan_id": 1,
+     "period": "month_1",
+     "coupon_code": "SAVE10"
+   }
+   
+   【成功响应】(HTTP 200)
+   {
+     "data": "2025112200000001"
+   }
+   
+   【错误响应】(HTTP 400)
+   {
+     "message": "您有未支付或待处理的订单，请稍后重试或取消它"
+   }
+
+2. 订单支付 - POST /user/order/checkout
+   认证: 是
+   
+   【请求参数】
+   {
+     "trade_no": "2025112200000001",
+     "method": 1,
+     "token": "stripe_token_123"
+   }
+   
+   【成功响应 - 免费订单】(HTTP 200)
+   {
+     "type": -1,
+     "data": true
+   }
+   
+   【成功响应 - 支付链接】(HTTP 200)
+   {
+     "type": 1,
+     "data": "https://api.tangchaoshop.com/cashier?..."
+   }
+   
+   【成功响应 - 二维码】(HTTP 200)
+   {
+     "type": 0,
+     "data": "00020236000402..."
+   }
+   
+   【错误响应】(HTTP 400)
+   {
+     "message": "订单不存在或已支付"
+   }
+
+3. 检查订单状态 - GET /user/order/check
+   认证: 是
+   参数: trade_no
+   
+   【成功响应】(HTTP 200)
+   {
+     "data": 0
+   }
+   说明: 0=待支付, 1=已支付, 2=已过期, 3=已取消
+
+4. 获取订单详情 - GET /user/order/detail
+   认证: 是
+   参数: trade_no
+   
+   【成功响应】(HTTP 200)
+   {
+     "data": {
+       "id": 1,
+       "trade_no": "2025112200000001",
+       "user_id": 1,
+       "plan_id": 1,
+       "period": "month_1",
+       "total_amount": 9900,
+       "balance_amount": 0,
+       "handling_amount": 100,
+       "status": 0,
+       "payment_id": 1,
+       "coupon_id": null,
+       "created_at": "2025-11-22T12:00:00Z",
+       "updated_at": "2025-11-22T12:00:00Z",
+       "plan": {
+         "id": 1,
+         "name": "基础套餐",
+         "transfer_enable": 107374182400
+       },
+       "try_out_plan_id": 0,
+       "surplus_orders": []
+     }
+   }
+
+5. 获取订单列表 - GET /user/order/fetch
+   认证: 是
+   参数: status(可选)
+   
+   【成功响应】(HTTP 200)
+   {
+     "data": [
+       {
+         "id": 1,
+         "trade_no": "2025112200000001",
+         "user_id": 1,
+         "plan_id": 1,
+         "period": "month_1",
+         "total_amount": 9900,
+         "balance_amount": 0,
+         "handling_amount": 100,
+         "status": 1,
+         "payment_id": 1,
+         "coupon_id": null,
+         "created_at": "2025-11-22T12:00:00Z",
+         "updated_at": "2025-11-22T12:05:00Z",
+         "plan": {
+           "id": 1,
+           "name": "基础套餐"
+         }
+       }
+     ]
+   }
+
+6. 获取支付方式列表 - GET /user/order/getPaymentMethod
+   认证: 是
+   
+   【成功响应】(HTTP 200)
+   {
+     "data": [
+       {
+         "id": 1,
+         "name": "支付宝",
+         "payment": "AlipayF2f",
+         "icon": "https://example.com/alipay.png",
+         "handling_fee_fixed": 0,
+         "handling_fee_percent": 1.0
+       },
+       {
+         "id": 2,
+         "name": "Stripe",
+         "payment": "StripeCredit",
+         "icon": "https://example.com/stripe.png",
+         "handling_fee_fixed": 50,
+         "handling_fee_percent": 2.9
+       }
+     ]
+   }
+
+7. 取消订单 - POST /user/order/cancel
+   认证: 是
+   参数: trade_no
+   返回: {data: true}
+
+================================================================================
+四、套餐相关 API (Plan)
+================================================================================
+
+1. 获取套餐列表（用户） - GET /user/plan/fetch
+   认证: 是
+   参数: id(可选)
+   
+   【成功响应】(HTTP 200)
+   {
+     "data": [
+       {
+         "id": 1,
+         "group_id": 1,
+         "name": "基础套餐",
+         "tags": ["推荐", "热销"],
+         "content": "基础套餐描述",
+         "month_1": 9900,
+         "month_3": 29700,
+         "month_6": 59400,
+         "month_12": 99000,
+         "year_1": 99000,
+         "capacity_limit": 10,
+         "transfer_enable": 107374182400,
+         "speed_limit": 100,
+         "device_limit": 5,
+         "show": true,
+         "sell": true,
+         "renew": true,
+         "reset_traffic_method": "monthly",
+         "sort": 1,
+         "created_at": "2025-01-01T00:00:00Z",
+         "updated_at": "2025-11-22T00:00:00Z"
+       }
+     ]
+   }
+
+2. 获取套餐列表（游客） - GET /guest/plan/fetch
+   认证: 否
+   返回: 同用户套餐列表
+
+================================================================================
+五、优惠券相关 API (Coupon)
+================================================================================
+
+1. 验证优惠券 - POST /user/coupon/check
+   认证: 是
+   参数: code, plan_id, period
+   
+   【成功响应】(HTTP 200)
+   {
+     "data": {
+       "id": 1,
+       "code": "SAVE10",
+       "name": "优惠券名称",
+       "type": 2,
+       "value": 10,
+       "limit_use": 100,
+       "limit_user": 1,
+       "started_at": "2025-01-01T00:00:00Z",
+       "ended_at": "2025-12-31T23:59:59Z",
+       "created_at": "2025-01-01T00:00:00Z",
+       "updated_at": "2025-11-22T00:00:00Z"
+     }
+   }
+
+================================================================================
+六、礼品卡相关 API (Gift Card)
+================================================================================
+
+1. 查询礼品卡信息 - POST /user/gift-card/check
+   认证: 是
+   参数: code
+   
+   【成功响应】(HTTP 200)
+   {
+     "data": {
+       "code_info": {
+         "code": "GIFTCARD123",
+         "template_name": "新年礼包",
+         "template_type": "plan",
+         "plan_info": {
+           "id": 1,
+           "name": "基础套餐"
+         }
+       },
+       "reward_preview": {
+         "balance": 10000,
+         "traffic": 107374182400,
+         "plan_duration": "1_month"
+       },
+       "can_redeem": true,
+       "reason": ""
+     }
+   }
+
+2. 兑换礼品卡 - POST /user/gift-card/redeem
+   认证: 是
+   参数: code
+   
+   【成功响应】(HTTP 200)
+   {
+     "data": {
+       "message": "兑换成功！",
+       "rewards": {
+         "balance": 10000,
+         "traffic": 107374182400
+       },
+       "invite_rewards": {
+         "balance": 0,
+         "traffic": 0
+       },
+       "template_name": "新年礼包"
+     }
+   }
+
+3. 获取兑换记录 - GET /user/gift-card/history
+   认证: 是
+   参数: page(可选), per_page(可选)
+   
+   【成功响应】(HTTP 200)
+   {
+     "data": [
+       {
+         "id": 1,
+         "code": "GIFTCARD****",
+         "template_name": "新年礼包",
+         "template_type": "plan",
+         "template_type_name": "套餐礼包",
+         "rewards_given": {"balance": 10000},
+         "invite_rewards": {"balance": 0},
+         "multiplier_applied": 1.0,
+         "created_at": "2025-11-22T12:00:00Z"
+       }
+     ],
+     "pagination": {
+       "current_page": 1,
+       "last_page": 1,
+       "per_page": 15,
+       "total": 1
+     }
+   }
+
+4. 获取兑换记录详情 - GET /user/gift-card/detail
+   认证: 是
+   参数: id
+   返回: {id, code, template, rewards_given, invite_rewards, invite_user, created_at}
+
+5. 获取礼品卡类型 - GET /user/gift-card/types
+   认证: 是
+   返回: {types: {plan: "套餐礼包", balance: "余额礼包"}}
+
+================================================================================
+七、邀请相关 API (Invite)
+================================================================================
+
+1. 生成邀请码 - GET /user/invite/save
+   认证: 是
+   返回: {data: true}
+
+2. 获取邀请信息 - GET /user/invite/fetch
+   认证: 是
+   
+   【成功响应】(HTTP 200)
+   {
+     "data": {
+       "codes": [
+         {
+           "id": 1,
+           "code": "ABC123DEF456",
+           "user_id": 1,
+           "pv": 100,
+           "created_at": "2025-01-01T00:00:00Z"
+         }
+       ],
+       "stat": [
+         5,
+         50000,
+         10000,
+         20,
+         60000
+       ]
+     }
+   }
+
+3. 获取邀请详情 - GET /user/invite/details
+   认证: 是
+   参数: current(可选), page_size(可选)
+   
+   【成功响应】(HTTP 200)
+   {
+     "data": [
+       {
+         "id": 1,
+         "user_id": 1,
+         "invite_user_id": 2,
+         "order_id": 1,
+         "get_amount": 1000,
+         "created_at": "2025-11-22T12:00:00Z"
+       }
+     ],
+     "total": 5
+   }
+
+================================================================================
+八、工单相关 API (Ticket)
+================================================================================
+
+1. 创建工单 - POST /user/ticket/save
+   认证: 是
+   参数: subject, level, message
+   返回: {data: true}
+
+2. 获取工单列表 - GET /user/ticket/fetch
+   认证: 是
+   参数: id(可选)
+   
+   【成功响应】(HTTP 200)
+   {
+     "data": [
+       {
+         "id": 1,
+         "user_id": 1,
+         "subject": "无法连接到服务器",
+         "level": 2,
+         "status": 0,
+         "created_at": "2025-11-22T12:00:00Z",
+         "updated_at": "2025-11-22T12:00:00Z"
+       }
+     ]
+   }
+
+3. 工单回复 - POST /user/ticket/reply
+   认证: 是
+   参数: id, message
+   返回: {data: true}
+
+4. 关闭工单 - POST /user/ticket/close
+   认证: 是
+   参数: id
+   返回: {data: true}
+
+5. 提交佣金提现申请 - POST /user/ticket/withdraw
+   认证: 是
+   参数: withdraw_method, withdraw_account
+   返回: {data: true}
+
+================================================================================
+九、服务器相关 API (Server)
+================================================================================
+
+1. 获取可用服务器列表 - GET /user/server/fetch
+   认证: 是
+   
+   【成功响应】(HTTP 200)
+   {
+     "data": [
+       {
+         "id": 1,
+         "name": "服务器1",
+         "server": "server1.example.com",
+         "port": 443,
+         "method": "aes-256-gcm",
+         "obfs": "http",
+         "protocol": "origin",
+         "country": "CN",
+         "region": "北京",
+         "sort": 1,
+         "cache_key": "server_1_hash"
+       }
+     ]
+   }
+
+================================================================================
+十、通知相关 API (Notice)
+================================================================================
+
+1. 获取通知列表 - GET /user/notice/fetch
+   认证: 是
+   参数: current(可选)
+   
+   【成功响应】(HTTP 200)
+   {
+     "data": [
+       {
+         "id": 1,
+         "title": "系统维护通知",
+         "content": "今晚 22:00 进行系统维护",
+         "sort": 1,
+         "show": true,
+         "created_at": "2025-11-22T12:00:00Z",
+         "updated_at": "2025-11-22T12:00:00Z"
+       }
+     ],
+     "total": 1
+   }
+
+================================================================================
+十一、知识库相关 API (Knowledge)
+================================================================================
+
+1. 获取知识库文章 - GET /user/knowledge/fetch
+   认证: 是
+   参数: id(可选), language(可选), keyword(可选)
+   
+   【成功响应】(HTTP 200)
+   {
+     "data": [
+       {
+         "id": 1,
+         "category": "使用教程",
+         "title": "如何配置客户端",
+         "body": "文章内容...",
+         "language": "zh",
+         "sort": 1,
+         "show": true,
+         "updated_at": "2025-11-22T00:00:00Z"
+       }
+     ]
+   }
+
+2. 获取知识库分类 - GET /user/knowledge/getCategory
+   认证: 是
+   
+   【成功响应】(HTTP 200)
+   {
+     "data": ["使用教程", "常见问题", "故障排查"]
+   }
+
+================================================================================
+十二、统计相关 API (Stat)
+================================================================================
+
+1. 获取流量日志 - GET /user/stat/getTrafficLog
+   认证: 是
+   
+   【成功响应】(HTTP 200)
+   {
+     "data": [
+       {
+         "user_id": 1,
+         "u": 1073741824,
+         "d": 2147483648,
+         "record_at": "2025-11-22T12:00:00Z"
+       }
+     ]
+   }
+
+================================================================================
+十三、通用配置 API (Comm)
+================================================================================
+
+1. 获取用户配置 - GET /user/comm/config
+   认证: 是
+   
+   【成功响应】(HTTP 200)
+   {
+     "data": {
+       "is_telegram": 1,
+       "telegram_discuss_link": "https://t.me/...",
+       "stripe_pk": "pk_live_...",
+       "withdraw_methods": ["bank", "alipay", "wechat"],
+       "withdraw_close": 0,
+       "currency": "CNY",
+       "currency_symbol": "¥",
+       "commission_distribution_enable": 1,
+       "commission_distribution_l1": 100,
+       "commission_distribution_l2": 50,
+       "commission_distribution_l3": 25
+     }
+   }
+
+2. 获取 Stripe 公钥 - POST /user/comm/getStripePublicKey
+   认证: 是
+   参数: id
+   返回: {data: "pk_live_..."}
+
+3. 获取游客配置 - GET /guest/comm/config
+   认证: 否
+   
+   【成功响应】(HTTP 200)
+   {
+     "data": {
+       "tos_url": "https://example.com/tos",
+       "is_email_verify": 1,
+       "is_invite_force": 0,
+       "email_whitelist_suffix": ["gmail.com", "qq.com"],
+       "is_captcha": 1,
+       "captcha_type": "recaptcha",
+       "recaptcha_site_key": "6Le...",
+       "recaptcha_v3_site_key": "6Le...",
+       "recaptcha_v3_score_threshold": 0.5,
+       "turnstile_site_key": "0x...",
+       "app_description": "应用描述",
+       "app_url": "https://example.com",
+       "logo": "https://example.com/logo.png"
+     }
+   }
+
+================================================================================
+十四、Telegram 相关 API (Telegram)
+================================================================================
+
+1. 获取 Telegram Bot 信息 - GET /user/telegram/getBotInfo
+   认证: 是
+   返回: {username: "bot_name"}
+
+2. Telegram Webhook - POST /guest/telegram/webhook
+   认证: 否
+   参数: Telegram 回调数据
+   返回: 根据处理结果返回
+
+================================================================================
+十五、支付回调 API (Payment)
+================================================================================
+
+1. 支付回调处理 - GET/POST /guest/payment/notify/{method}/{uuid}
+   认证: 否
+   参数: 根据支付方式而定
+   
+   【成功响应】
+   "OK" 或 custom_result (纯文本)
+   
+   【错误响应】
+   {
+     "message": "verify error"
+   }
+
+================================================================================
+常用数据类型说明
+================================================================================
+
+- integer: 整数，金额相关字段单位为分（1元=100分），流量单位为字节
+- string: 字符串
+- boolean: 布尔值 (true/false)
+- datetime: 日期时间格式 (ISO 8601)
+- array: 数组
+- object: 对象
+
+================================================================================
+认证说明
+================================================================================
+
+需要认证的接口在请求头中添加:
+Authorization: Bearer {token}
+
+其中 {token} 为登录或注册时返回的 token 值。
+
+================================================================================
+错误处理
+================================================================================
+
+常见错误状态码:
+- 400: 请求参数错误或业务逻辑错误
+- 401: 未认证或 token 过期
+- 403: 权限不足
+- 404: 资源不存在
+- 422: 验证失败
+- 500: 服务器错误
+
+================================================================================

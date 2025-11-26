@@ -1,0 +1,352 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_primary"
+    android:orientation="vertical">
+
+    <!-- Header -->
+    <FrameLayout
+        android:id="@+id/top_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingTop="48dp">
+        <FrameLayout
+            android:id="@+id/v_back"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingStart="20dp"
+            android:paddingTop="12dp"
+            android:paddingEnd="24dp"
+            android:paddingBottom="12dp">
+            <ImageView
+                android:layout_width="25dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:adjustViewBounds="true"
+                android:src="@drawable/icon_back" />
+        </FrameLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="其他设置"
+            android:textColor="@color/white"
+            android:textSize="18dp" />
+    </FrameLayout>
+
+    <!-- Content -->
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingTop="16dp"
+            android:paddingBottom="16dp">
+
+            <!-- 网络 -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingStart="16dp"
+                android:paddingTop="8dp"
+                android:paddingEnd="16dp"
+                android:paddingBottom="8dp"
+                android:text="网络"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp" />
+            <!-- 访问控制模式 -->
+            <LinearLayout
+                android:id="@+id/item_access_control"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginTop="8dp"
+                android:background="@color/bg_secondary"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp">
+
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="访问控制模式"
+                    android:textColor="@color/text_primary"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/tv_access_control_mode"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="允许所有应用"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp" />
+
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="wrap_content"
+                    android:adjustViewBounds="true"
+                    android:contentDescription="进入"
+                    android:src="@drawable/ic_arrow_right" />
+
+            </LinearLayout>
+
+            <!-- 访问控制应用包列表 -->
+            <LinearLayout
+                android:id="@+id/item_access_control_packages"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:background="@color/bg_secondary"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="访问控制应用包列表"
+                        android:textColor="@color/text_primary"
+                        android:textSize="14sp" />
+
+                </LinearLayout>
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:contentDescription="进入"
+                    android:src="@drawable/ic_arrow_right" />
+
+            </LinearLayout>
+
+            <!-- 个性化 -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingStart="16dp"
+                android:paddingTop="16dp"
+                android:paddingEnd="16dp"
+                android:paddingBottom="8dp"
+                android:text="个性化"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp" />
+
+            <!-- 主题设置 -->
+            <!--            <LinearLayout-->
+            <!--                android:id="@+id/item_theme_settings"-->
+            <!--                android:layout_width="match_parent"-->
+            <!--                android:layout_height="56dp"-->
+            <!--                android:layout_marginTop="8dp"-->
+            <!--                android:background="@color/bg_secondary"-->
+            <!--                android:gravity="center_vertical"-->
+            <!--                android:orientation="horizontal"-->
+            <!--                android:paddingStart="16dp"-->
+            <!--                android:paddingEnd="16dp">-->
+
+            <!--                <TextView-->
+            <!--                    android:layout_width="0dp"-->
+            <!--                    android:layout_height="wrap_content"-->
+            <!--                    android:layout_weight="1"-->
+            <!--                    android:gravity="center_vertical"-->
+            <!--                    android:text="主题设置"-->
+            <!--                    android:textColor="@color/text_primary"-->
+            <!--                    android:textSize="14sp" />-->
+
+            <!--                <ImageView-->
+            <!--                    android:layout_width="24dp"-->
+            <!--                    android:layout_height="24dp"-->
+            <!--                    android:contentDescription="进入"-->
+            <!--                    android:src="@drawable/ic_arrow_right" />-->
+
+            <!--            </LinearLayout>-->
+
+            <!-- 修改密码 -->
+            <LinearLayout
+                android:id="@+id/item_change_password"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginTop="8dp"
+                android:background="@color/bg_secondary"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center_vertical"
+                    android:text="修改密码"
+                    android:textColor="@color/text_primary"
+                    android:textSize="14sp" />
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:contentDescription="进入"
+                    android:src="@drawable/ic_arrow_right" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/v_expire_notification"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:background="@color/bg_secondary"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center_vertical"
+                    android:text="到期邮件提醒"
+                    android:textColor="@color/text_primary"
+                    android:textSize="14sp" />
+
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switch_expire_notification"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/v_traffic_notification"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:background="@color/bg_secondary"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center_vertical"
+                    android:text="流量邮件提醒"
+                    android:textColor="@color/text_primary"
+                    android:textSize="14sp" />
+
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switch_traffic_notification"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+
+            </LinearLayout>
+
+            <!-- 关于 -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingStart="16dp"
+                android:paddingTop="16dp"
+                android:paddingEnd="16dp"
+                android:paddingBottom="8dp"
+                android:text="关于"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp" />
+            <LinearLayout
+                android:id="@+id/v_current_version"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:background="@color/bg_secondary"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center_vertical"
+                    android:text="当前版本"
+                    android:textColor="@color/text_primary"
+                    android:textSize="14sp" />
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:contentDescription="进入"
+                    android:src="@drawable/ic_arrow_right" />
+
+            </LinearLayout>
+            <LinearLayout
+                android:id="@+id/v_agreement"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:background="@color/bg_secondary"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center_vertical"
+                    android:text="服务协议"
+                    android:textColor="@color/text_primary"
+                    android:textSize="14sp" />
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:contentDescription="进入"
+                    android:src="@drawable/ic_arrow_right" />
+
+            </LinearLayout>
+            <LinearLayout
+                android:id="@+id/v_privacy"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:background="@color/bg_secondary"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center_vertical"
+                    android:text="隐私协议"
+                    android:textColor="@color/text_primary"
+                    android:textSize="14sp" />
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:contentDescription="进入"
+                    android:src="@drawable/ic_arrow_right" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+</LinearLayout>

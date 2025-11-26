@@ -1,0 +1,257 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_primary"
+    android:orientation="vertical">
+
+    <FrameLayout
+        android:id="@+id/top_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingTop="48dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+        <FrameLayout
+            android:id="@+id/v_back"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingStart="20dp"
+            android:paddingTop="12dp"
+            android:paddingEnd="24dp"
+            android:paddingBottom="12dp">
+            <ImageView
+                android:layout_width="25dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:adjustViewBounds="true"
+                android:src="@drawable/icon_back" />
+        </FrameLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="配置订阅"
+            android:textColor="@color/white"
+            android:textSize="18dp" />
+    </FrameLayout>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- Plan Info Card -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:background="@drawable/bg_card_dark"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:id="@+id/tv_plan_name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:text="套餐名称"
+                    android:textColor="@color/primary_main_light"
+                    android:textSize="20dp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="4dp"
+                        android:text="套餐流量"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="14dp" />
+
+                    <TextView
+                        android:id="@+id/tv_plan_traffic"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:paddingStart="12dp"
+                        android:text="100 GB"
+                        android:textColor="@color/primary"
+                        android:textSize="14dp"
+                        android:textStyle="bold" />
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1" />
+                    <FrameLayout
+                        android:id="@+id/v_plan_detail"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="end"
+                        android:paddingStart="16dp">
+                        <TextView
+                            android:id="@+id/tv_plan_detail"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_vertical"
+                            android:layout_marginEnd="20dp"
+                            android:paddingStart="14dp"
+                            android:text="查看详情"
+                            android:textColor="@color/primary"
+                            android:textSize="14dp" />
+                        <ImageView
+                            android:layout_width="16dp"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_vertical|end"
+                            android:adjustViewBounds="true"
+                            android:src="@drawable/arrow_right_bold" />
+                    </FrameLayout>
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- Period Selection -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:text="付款周期"
+                android:textColor="@color/text_primary"
+                android:textSize="15dp"
+                android:textStyle="bold" />
+
+            <!-- Period Options Grid -->
+            <LinearLayout
+                android:id="@+id/container_period_options"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:orientation="vertical" />
+
+
+            <!-- Coupon Section -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:text="优惠券"
+                android:textColor="@color/text_primary"
+                android:textSize="15dp"
+                android:textStyle="bold" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="16dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <com.xboard.ui.round.RoundFrameLayout
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_marginEnd="16dp"
+                    android:layout_weight="1"
+                    app:roundCornerRadius="10dp"
+                    app:roundStrokeColor="@color/color_6F9070"
+                    app:roundStrokeWidth="0.5dp">
+                    <EditText
+                        android:id="@+id/et_coupon_code"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@null"
+                        android:gravity="center_vertical"
+                        android:hint="如有请在此填写并验证"
+                        android:paddingStart="12dp"
+                        android:paddingEnd="20dp"
+                        android:textColor="@color/text_primary"
+                        android:textColorHint="@color/text_tertiary"
+                        android:textSize="14dp" />
+
+                </com.xboard.ui.round.RoundFrameLayout>
+                <com.xboard.ui.round.RoundTextView
+                    android:id="@+id/btn_check_coupon"
+                    android:layout_width="wrap_content"
+                    android:layout_height="48dp"
+                    android:gravity="center"
+                    android:paddingStart="22dp"
+                    android:paddingEnd="22dp"
+                    android:text="验证"
+                    android:textColor="@color/white"
+                    android:textSize="12dp"
+                    app:roundBackgroundColor="@color/primary"
+                    app:roundCornerRadius="10dp" />
+
+            </LinearLayout>
+
+            <!-- Coupon Discount -->
+            <TextView
+                android:id="@+id/tv_coupon_discount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:text="优惠: ¥0"
+                android:textColor="@color/accent_success"
+                android:textSize="12sp"
+                android:visibility="gone" />
+
+            <!-- Order Summary -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:background="@drawable/bg_card_dark"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="应付金额"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="12sp" />
+
+                    <TextView
+                        android:id="@+id/tv_total_price"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="¥0"
+                        android:textColor="@color/primary"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+            <com.xboard.ui.round.RoundTextView
+                android:id="@+id/btn_checkout"
+                style="@style/CommonButton"
+                android:layout_marginTop="20dp"
+                android:text="下单" />
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+</LinearLayout>

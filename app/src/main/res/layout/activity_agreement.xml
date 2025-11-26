@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/bg_primary">
+
+    <!-- Toolbar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:background="@color/bg_secondary"
+        android:elevation="4dp">
+
+        <ImageView
+            android:id="@+id/btn_back"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/icon_back"
+            android:contentDescription="返回"
+            android:scaleType="centerInside"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackgroundBorderless" />
+
+        <TextView
+            android:id="@+id/tv_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="16dp"
+            android:text="用户协议"
+            android:textColor="@color/text_primary"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+
+    <!-- WebView -->
+    <WebView
+        android:id="@+id/web_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/bg_primary" />
+
+</LinearLayout>

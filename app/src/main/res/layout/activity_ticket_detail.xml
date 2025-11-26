@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/bg_primary">
+
+    <!-- 顶部栏 -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="48dp"
+        android:paddingBottom="16dp">
+
+        <FrameLayout
+            android:id="@+id/v_back"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingStart="20dp"
+            android:paddingTop="12dp"
+            android:paddingEnd="24dp"
+            android:paddingBottom="12dp">
+
+            <ImageView
+                android:layout_width="25dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:adjustViewBounds="true"
+                android:src="@drawable/icon_back" />
+
+        </FrameLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="工单详情"
+                android:textColor="@color/white"
+                android:textSize="18dp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvTicketStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="处理中"
+                android:textColor="@color/primary"
+                android:textSize="12dp" />
+
+        </LinearLayout>
+
+    </FrameLayout>
+
+    <!-- 消息列表 -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvReplies"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false" />
+
+    <!-- 底部输入框（未关闭时显示） -->
+    <LinearLayout
+        android:id="@+id/llReplyContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="12dp"
+        android:background="@color/bg_secondary">
+
+        <EditText
+            android:id="@+id/etReply"
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            android:background="@color/bg_primary"
+            android:hint="输入回复内容..."
+            android:textColorHint="@color/text_tertiary"
+            android:textColor="@color/text_primary"
+            android:padding="12dp"
+            android:gravity="top"
+            android:layout_marginBottom="12dp"
+            android:minLines="3" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="end">
+
+            <com.xboard.ui.round.RoundTextView
+                android:id="@+id/btnClose"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:gravity="center"
+                android:paddingStart="20dp"
+                android:paddingEnd="20dp"
+                android:text="关闭工单"
+                android:textColor="@color/white"
+                android:textSize="14dp"
+                android:layout_marginEnd="12dp"
+                app:roundBackgroundColor="@color/text_secondary"
+                app:roundCornerRadius="8dp" />
+
+            <com.xboard.ui.round.RoundTextView
+                android:id="@+id/btnReply"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:gravity="center"
+                android:paddingStart="20dp"
+                android:paddingEnd="20dp"
+                android:text="发送"
+                android:textColor="@color/white"
+                android:textSize="14dp"
+                app:roundBackgroundColor="@color/primary"
+                app:roundCornerRadius="8dp" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- 已关闭提示 -->
+    <LinearLayout
+        android:id="@+id/llClosedTip"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:background="@color/bg_secondary"
+        android:gravity="center"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="工单已关闭，无法继续回复"
+            android:textColor="@color/text_secondary"
+            android:textSize="14dp" />
+
+    </LinearLayout>
+
+</LinearLayout>

@@ -13,7 +13,14 @@
     <attr name="color" format="color" />
     <attr name="placeholder" format="string" />
     <attr name="title" format="string" />
-
+    <attr name="cornerRadius" format="dimension" />
+    <declare-styleable name="RoundImageView">
+        <attr name="radius" format="dimension"/>
+        <attr name="leftTopRadius" format="dimension"/>
+        <attr name="rightTopRadius" format="dimension"/>
+        <attr name="leftBottomRadius" format="dimension"/>
+        <attr name="rightBottomRadius" format="dimension"/>
+    </declare-styleable>
     <declare-styleable name="LargeActionCard">
         <attr name="text" />
         <attr name="subtext" />
@@ -46,5 +53,9 @@
         <attr name="android:clickable" />
         <attr name="android:background" />
         <attr name="android:foreground" />
+    </declare-styleable>
+    
+    <declare-styleable name="RoundedImageView">
+        <attr name="cornerRadius" />
     </declare-styleable>
 </resources>

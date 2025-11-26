@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="RoundCornerFrameLayout">
+        <attr name="layoutCornerRadius" format="dimension" />
+    </declare-styleable>
+
+    <attr name="roundBackgroundColor" format="color" />
+    <attr name="roundStrokeWidth" format="dimension" />
+    <attr name="roundStrokeColor" format="color" />
+    <attr name="roundCornerRadius" format="dimension" />
+    <attr name="roundTopLeftRadius" format="dimension" />
+    <attr name="roundTopRightRadius" format="dimension" />
+    <attr name="roundBottomLeftRadius" format="dimension" />
+    <attr name="roundBottomRightRadius" format="dimension" />
+    <attr name="roundStartColor" format="color" />
+    <attr name="roundCenterColor" format="color" />
+    <attr name="roundEndColor" format="color" />
+    <attr name="roundColorAngle" format="integer" />
+    <attr name="needChangeAlpha" format="boolean" />
+    <declare-styleable name="RoundTextView">
+        <attr name="roundBackgroundColor" />
+        <attr name="roundStrokeWidth" />
+        <attr name="roundStrokeColor" />
+        <attr name="roundCornerRadius" />
+        <attr name="roundTopLeftRadius" />
+        <attr name="roundTopRightRadius" />
+        <attr name="roundBottomLeftRadius" />
+        <attr name="roundBottomRightRadius" />
+        <attr name="roundStartColor" />
+        <attr name="roundCenterColor" />
+        <attr name="roundEndColor" />
+        <attr name="roundColorAngle" />
+        <attr name="needChangeAlpha" />
+    </declare-styleable>
+
+    <declare-styleable name="RoundView">
+        <attr name="roundBackgroundColor" />
+        <attr name="roundStrokeWidth" />
+        <attr name="roundStrokeColor" />
+        <attr name="roundCornerRadius" />
+        <attr name="roundTopLeftRadius" />
+        <attr name="roundTopRightRadius" />
+        <attr name="roundBottomLeftRadius" />
+        <attr name="roundBottomRightRadius" />
+        <attr name="roundStartColor" />
+        <attr name="roundCenterColor" />
+        <attr name="roundEndColor" />
+        <attr name="roundColorAngle" />
+        <attr name="needChangeAlpha" />
+    </declare-styleable>
+    <declare-styleable name="RoundRelativeLayout">
+        <attr name="roundBackgroundColor" />
+        <attr name="roundStrokeWidth" />
+        <attr name="roundStrokeColor" />
+        <attr name="roundCornerRadius" />
+        <attr name="roundTopLeftRadius" />
+        <attr name="roundTopRightRadius" />
+        <attr name="roundBottomLeftRadius" />
+        <attr name="roundBottomRightRadius" />
+        <attr name="roundStartColor" />
+        <attr name="roundCenterColor" />
+        <attr name="roundEndColor" />
+        <attr name="roundColorAngle" />
+        <attr name="needChangeAlpha" />
+    </declare-styleable>
+
+    <declare-styleable name="RoundLinearLayout">
+        <attr name="roundBackgroundColor" />
+        <attr name="roundStrokeWidth" />
+        <attr name="roundStrokeColor" />
+        <attr name="roundCornerRadius" />
+        <attr name="roundTopLeftRadius" />
+        <attr name="roundTopRightRadius" />
+        <attr name="roundBottomLeftRadius" />
+        <attr name="roundBottomRightRadius" />
+        <attr name="roundStartColor" />
+        <attr name="roundCenterColor" />
+        <attr name="roundEndColor" />
+        <attr name="roundColorAngle" />
+        <attr name="needChangeAlpha" />
+    </declare-styleable>
+    <declare-styleable name="RoundFrameLayout">
+        <attr name="roundBackgroundColor" />
+        <attr name="roundStrokeWidth" />
+        <attr name="roundStrokeColor" />
+        <attr name="roundCornerRadius" />
+        <attr name="roundTopLeftRadius" />
+        <attr name="roundTopRightRadius" />
+        <attr name="roundBottomLeftRadius" />
+        <attr name="roundBottomRightRadius" />
+        <attr name="roundStartColor" />
+        <attr name="roundCenterColor" />
+        <attr name="roundEndColor" />
+        <attr name="roundColorAngle" />
+        <attr name="needChangeAlpha" />
+    </declare-styleable>
+    <declare-styleable name="RoundConstraintLayout">
+        <attr name="roundBackgroundColor" />
+        <attr name="roundStrokeWidth" />
+        <attr name="roundStrokeColor" />
+        <attr name="roundCornerRadius" />
+        <attr name="roundTopLeftRadius" />
+        <attr name="roundTopRightRadius" />
+        <attr name="roundBottomLeftRadius" />
+        <attr name="roundBottomRightRadius" />
+        <attr name="roundStartColor" />
+        <attr name="roundCenterColor" />
+        <attr name="roundEndColor" />
+        <attr name="roundColorAngle" />
+        <attr name="needChangeAlpha" />
+    </declare-styleable>
+    <declare-styleable name="RoundRecyclerView">
+        <attr name="roundBackgroundColor" />
+        <attr name="roundStrokeWidth" />
+        <attr name="roundStrokeColor" />
+        <attr name="roundCornerRadius" />
+        <attr name="roundTopLeftRadius" />
+        <attr name="roundTopRightRadius" />
+        <attr name="roundBottomLeftRadius" />
+        <attr name="roundBottomRightRadius" />
+        <attr name="roundStartColor" />
+        <attr name="roundCenterColor" />
+        <attr name="roundEndColor" />
+        <attr name="roundColorAngle" />
+        <attr name="needChangeAlpha" />
+    </declare-styleable>
+    <declare-styleable name="GradientDrawable">
+        <attr name="roundBackgroundColor" />
+        <attr name="roundStartColor" />
+        <attr name="roundCenterColor" />
+        <attr name="roundEndColor" />
+        <attr name="roundStrokeWidth" />
+        <attr name="roundStrokeColor" />
+        <attr name="roundCornerRadius" />
+        <attr name="roundTopLeftRadius" />
+        <attr name="roundTopRightRadius" />
+        <attr name="roundBottomLeftRadius" />
+        <attr name="roundBottomRightRadius" />
+        <attr name="roundColorAngle" />
+        <attr name="needChangeAlpha" />
+    </declare-styleable>
+    
+    <declare-styleable name="SlidingTabLayout">
+        <!-- Add custom attributes here if needed -->
+    </declare-styleable>
+</resources>
