@@ -18,6 +18,8 @@ import com.xboard.network.TicketRepository
 import com.xboard.network.UserRepository
 import com.xboard.storage.MMKVManager
 import com.xboard.ui.activity.LoginActivity
+import com.xboard.ui.activity.ShareActivity
+import com.xboard.utils.onClick
 import kotlinx.coroutines.launch
 import java.text.DecimalFormat
 import java.text.SimpleDateFormat
@@ -46,6 +48,9 @@ class MineFragment : BaseFragment<FragmentMineBinding>() {
     }
 
     override fun initListener() {
+        binding.vCommissionBalance.onClick {
+            startActivity(Intent(activity, ShareActivity::class.java))
+        }
         binding.menuPurchaseRecords.root.setOnClickListener { loadOrderHistory() }
 //        binding.menuDeviceManage.root.setOnClickListener { loadTrafficDetail() }
         binding.menuSetting.root.setOnClickListener { openOtherSettings() }
@@ -131,7 +136,7 @@ class MineFragment : BaseFragment<FragmentMineBinding>() {
             binding.vSubscribeInfo.visible()
         }
         try {
-            binding.tvPlanName.text=subscribe.plan.name
+            binding.tvPlanName.text = subscribe.plan.name
             // 总流量：transfer_enable (字节)
             val totalTraffic = subscribe.transferEnable
 

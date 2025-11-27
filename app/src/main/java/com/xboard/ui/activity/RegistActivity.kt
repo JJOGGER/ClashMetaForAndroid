@@ -6,10 +6,12 @@ import android.util.Patterns
 import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
 import com.github.kr328.clash.databinding.ActivityRegistBinding
+import com.xboard.api.RetrofitClient
+import com.xboard.api.TokenManager
 import com.xboard.base.BaseActivity
 import com.xboard.network.AuthRepository
-import com.xboard.api.RetrofitClient
 import com.xboard.storage.MMKVManager
+import com.xboard.utils.onClick
 import kotlinx.coroutines.launch
 
 /**
@@ -32,6 +34,7 @@ class RegistActivity : BaseActivity<ActivityRegistBinding>() {
     }
 
     private fun setupListeners() {
+        binding.vBack.onClick { finish() }
         binding.btnRegist.setOnClickListener {
             performRegister()
         }
@@ -81,7 +84,7 @@ class RegistActivity : BaseActivity<ActivityRegistBinding>() {
             hideLoading()
 
             result.onSuccess { response ->
-                response.token?.let { MMKVManager.saveToken(it) }
+                TokenManager.saveToken(response.token, response.authData, email, password)
                 showSuccess("注册成功")
                 startActivity(Intent(this@RegistActivity, MainActivity::class.java))
                 finish()

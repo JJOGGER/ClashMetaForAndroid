@@ -9,7 +9,6 @@ import com.xboard.api.RetrofitClient
 import com.xboard.api.TokenManager
 import com.xboard.base.BaseActivity
 import com.xboard.network.AuthRepository
-import com.xboard.storage.MMKVManager
 import kotlinx.coroutines.launch
 
 /**
@@ -59,7 +58,7 @@ class LoginActivity : BaseActivity<ActivityLoginBinding>() {
 
             result
                 .onSuccess { response ->
-                    response.token?.let { TokenManager.saveToken(it, email, password) }
+                    TokenManager.saveToken(response.token, response.authData, email, password)
                     showSuccess("登录成功")
                     startActivity(Intent(this@LoginActivity, MainActivity::class.java))
                     finish()

@@ -48,12 +48,13 @@
             android:textSize="16dp" />
         <com.xboard.ui.round.RoundView
             android:id="@+id/v_option1"
-            android:layout_width="10dp"
-            android:layout_height="10dp"
+            android:layout_width="14dp"
+            android:layout_height="14dp"
             android:layout_gravity="center_vertical|end"
             android:layout_marginEnd="10dp"
-            app:roundCornerRadius="10dp"
-            app:roundStrokeColor="@color/check_item_round" />
+            app:roundCornerRadius="14dp"
+            app:roundStrokeColor="@color/check_item_round"
+            app:roundStrokeWidth="1dp" />
     </FrameLayout>
 
 
@@ -81,12 +82,13 @@
 
         <com.xboard.ui.round.RoundView
             android:id="@+id/v_option3"
-            android:layout_width="10dp"
-            android:layout_height="10dp"
+            android:layout_width="14dp"
+            android:layout_height="14dp"
             android:layout_gravity="center_vertical|end"
             android:layout_marginEnd="10dp"
-            app:roundCornerRadius="10dp"
-            app:roundStrokeColor="@color/check_item_round" />
+            app:roundCornerRadius="14dp"
+            app:roundStrokeColor="@color/check_item_round"
+            app:roundStrokeWidth="1dp" />
     </FrameLayout>
 
     <FrameLayout
@@ -108,12 +110,13 @@
             android:textColor="@color/white"
             android:textSize="16dp" />
         <com.xboard.ui.round.RoundView
-            android:layout_width="10dp"
-            android:layout_height="10dp"
+            android:layout_width="14dp"
+            android:layout_height="14dp"
             android:layout_gravity="center_vertical|end"
             android:layout_marginEnd="10dp"
-            app:roundCornerRadius="10dp"
-            app:roundStrokeColor="@color/check_item_round" />
+            app:roundCornerRadius="14dp"
+            app:roundStrokeColor="@color/check_item_round"
+            app:roundStrokeWidth="1dp" />
     </FrameLayout>
     <LinearLayout
         android:layout_width="match_parent"

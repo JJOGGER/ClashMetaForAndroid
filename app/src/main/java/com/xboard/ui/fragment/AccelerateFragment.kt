@@ -13,13 +13,13 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.github.kr328.clash.R
 import com.github.kr328.clash.core.Clash
+import com.github.kr328.clash.core.model.Proxy
 import com.github.kr328.clash.core.model.ProxySort
 import com.github.kr328.clash.databinding.FragmentAccelerateBinding
 import com.github.kr328.clash.remote.Remote
 import com.github.kr328.clash.util.stopClashService
 import com.github.kr328.clash.util.withClash
 import com.github.kr328.clash.util.withProfile
-import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.xboard.api.RetrofitClient
 import com.xboard.base.BaseFragment
 import com.xboard.ex.gone
@@ -88,7 +88,7 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
         binding.cardSelectedNode.onClick {
             navigateToNodeSelection()
         }
-        binding.btnConnect.setOnClickListener {
+        binding.btnConnect.onClick {
             // 点击连接/断开按钮 - 对标 Clash 的 ToggleStatus
             onToggleClashStatus()
         }
@@ -99,10 +99,16 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
     }
 
     override fun initData() {
+        renderNodeCard(null, selectedServer?.name)
         loadData()
         loadCurrentNodeInfo()
         loadLatestNotice()
 //        updateButtonState()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        loadCurrentNodeInfo()
     }
 
     private fun loadData() {
@@ -222,30 +228,32 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
         }
     }
 
-    private fun loadCurrentNodeInfo() {
+    private fun loadCurrentNodeInfo(connectedOverride: Boolean? = null) {
         viewLifecycleOwner.lifecycleScope.launch {
             try {
-                // 1. 获取活跃 Profile
-                currentProfileUUID = withProfile { queryActive() }?.uuid
-                if (currentProfileUUID == null) {
+                val activeProfile = withProfile { queryActive() }
+                currentProfileUUID = activeProfile?.uuid
+                if (activeProfile == null) {
+                    renderNodeCard(null, selectedServer?.name, false)
                     return@launch
                 }
 
-                // 2. 获取默认代理组
                 val groupNames = Clash.queryGroupNames(excludeNotSelectable = false)
                 currentGroupName = groupNames.firstOrNull { it == "Proxy" }
                     ?: groupNames.firstOrNull()
 
-                if (currentGroupName == null) {
+                if (currentGroupName.isNullOrBlank()) {
+                    renderNodeCard(null, selectedServer?.name, connectedOverride)
                     return@launch
                 }
 
-                // 3. 获取当前选择的代理
                 val group = Clash.queryGroup(currentGroupName!!, ProxySort.Default)
                 currentProxyName = group.now
-
+                val activeProxy = group.proxies.firstOrNull { it.name == group.now }
+                renderNodeCard(activeProxy, group.now, connectedOverride)
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to load node info: ${e.message}")
+                renderNodeCard(null, selectedServer?.name, connectedOverride)
             }
         }
     }
@@ -266,16 +274,49 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
 
     private fun updateSelectedServer(server: Server?) {
         selectedServer = server
-        if (server == null) {
-            updateSelectedNodeUI("暂无可用节点", "--")
-            return
+        if (!clashRunning) {
+            renderNodeCard(null, server?.name, false)
         }
-        updateSelectedNodeUI(server.name, "--")
     }
 
-    private fun updateSelectedNodeUI(name: String, latency: String = "--") {
-        binding.tvSelectedNodeName.text = name
-        binding.tvSelectedNodeLatency.text = latency
+    private fun renderNodeCard(
+        proxy: Proxy?,
+        fallbackName: String? = null,
+        connectedOverride: Boolean? = null
+    ) {
+        if (!isAdded) return
+        val ctx = context ?: return
+        val isConnected = connectedOverride ?: clashRunning
+        if (isConnected) {
+            binding.cardSelectedNode.visible()
+        } else {
+            binding.cardSelectedNode.gone()
+        }
+        val candidateName = selectedServer?.name
+        val displayName = when {
+            proxy?.title?.isNotBlank() == true -> proxy.title
+            proxy?.name?.isNotBlank() == true -> proxy.name
+            !fallbackName.isNullOrBlank() -> fallbackName
+            !candidateName.isNullOrBlank() -> candidateName
+            else -> getString(R.string.selected_node_placeholder)
+        }
+
+        binding.tvSelectedNodeName.text = displayName
+        binding.tvSelectedNodeLatency.text = if (isConnected) {
+            val latencyValue = proxy?.delay?.takeIf { it > 0 }
+            val latencyText = latencyValue?.let {
+                getString(R.string.selected_node_latency_value, it)
+            } ?: getString(R.string.selected_node_latency_unknown)
+            getString(R.string.selected_node_connected_format, latencyText)
+        } else {
+            getString(R.string.selected_node_disconnected)
+        }
+
+        val dotColor = ContextCompat.getColor(
+            ctx,
+            if (isConnected) R.color.accent_success else R.color.text_tertiary
+        )
+        binding.vDot.setBackgroundColor(dotColor)
     }
 
     private fun navigateToNodeSelection() {
@@ -432,6 +473,7 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
             binding.btnConnect.text = "开启连接"
             binding.btnConnect.setBackgroundColor(android.graphics.Color.parseColor("#FF9800"))
             stopConnectionTimer()
+            renderNodeCard(null, selectedServer?.name, false)
         } else {
             viewLifecycleOwner.lifecycleScope.launch {
                 startClash()
@@ -439,26 +481,10 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
                 binding.btnConnect.setBackgroundColor(android.graphics.Color.parseColor("#4CAF50"))
                 connectionStartTime = System.currentTimeMillis()
                 startConnectionTimer()
+                loadCurrentNodeInfo(true)
             }
         }
-//        viewLifecycleOwner.lifecycleScope.launch {
-//            try {
-//                // 查询当前 Clash 运行状态 - 对标 Clash 的 clashRunning 检查
-//                val tunnelState = Clash.queryTunnelState()
-//                val isClashRunning = tunnelState.mode != com.github.kr328.clash.core.model.TunnelState.Mode.Direct
-//
-//                if (isClashRunning) {
-//                    // Clash 正在运行，停止它
-//                    disconnectClash()
-//                } else {
-//                    // Clash 未运行，启动它
-//                    onConnectButtonClicked()
-//                }
-//            } catch (e: Exception) {
-//                Log.e(TAG, "Failed to query tunnel state: ${e.message}")
-//                Toast.makeText(requireContext(), "查询状态失败: ${e.message}", Toast.LENGTH_SHORT).show()
-//            }
-//        }
+
     }
 
     private suspend fun startClash() {
@@ -466,6 +492,7 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
 
         if (active == null || !active.imported) {
             showToast("连接失败")
+            renderNodeCard(null, selectedServer?.name, false)
             return
         }
 
@@ -487,65 +514,6 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
         }
     }
 
-    private fun updateButtonState() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            try {
-                val tunnelState = Clash.queryTunnelState()
-                val isClashRunning =
-                    tunnelState.mode != com.github.kr328.clash.core.model.TunnelState.Mode.Direct
-
-                if (isClashRunning) {
-                    binding.btnConnect.text = "关闭连接"
-                    binding.btnConnect.setBackgroundColor(android.graphics.Color.parseColor("#4CAF50"))
-                    connectionStartTime = System.currentTimeMillis()
-                    startConnectionTimer()
-                } else {
-                    binding.btnConnect.text = "开启连接"
-                    binding.btnConnect.setBackgroundColor(android.graphics.Color.parseColor("#FF9800"))
-                    stopConnectionTimer()
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to update button state: ${e.message}")
-            }
-        }
-    }
-
-    private fun onConnectSuccess() {
-        // 连接成功
-        connectionStartTime = System.currentTimeMillis()
-        binding.btnConnect.text = "关闭连接"
-        binding.btnConnect.setBackgroundColor(android.graphics.Color.parseColor("#4CAF50"))
-        binding.btnConnect.isEnabled = true
-        startConnectionTimer()
-        Toast.makeText(requireContext(), "连接成功", Toast.LENGTH_SHORT).show()
-    }
-
-    private fun disconnectClash() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            try {
-                binding.btnConnect.text = "断开中..."
-                binding.btnConnect.isEnabled = false
-
-                // 停止 Clash Service
-                val context = requireContext()
-                val intent =
-                    Intent(context, com.github.kr328.clash.service.ClashService::class.java)
-                context.stopService(intent)
-
-                // 重置状态
-                stopConnectionTimer()
-                binding.btnConnect.text = "开启连接"
-                binding.btnConnect.setBackgroundColor(android.graphics.Color.parseColor("#FF9800"))
-                binding.btnConnect.isEnabled = true
-                Toast.makeText(requireContext(), "已断开连接", Toast.LENGTH_SHORT).show()
-            } catch (e: Exception) {
-                binding.btnConnect.text = "开启连接"
-                binding.btnConnect.isEnabled = true
-                Toast.makeText(requireContext(), "断开失败: ${e.message}", Toast.LENGTH_SHORT)
-                    .show()
-            }
-        }
-    }
 
     private fun startClashService(): Intent? {
         val context = requireContext()

@@ -12,9 +12,9 @@ class HeaderInterceptor : Interceptor {
         val requestBuilder = originalRequest.newBuilder()
 
         requestBuilder.header("content-language", "zh-CN")
-        val token = TokenManager.getToken()
-        if (token.isNotEmpty()) {
-            requestBuilder.header("Authorization", "Bearer $token")
+        val authData = TokenManager.getAuthData()
+        if (authData.isNotEmpty()) {
+            requestBuilder.header("Authorization", authData)
         }
 
         requestBuilder.addHeader("Accept", "application/json")

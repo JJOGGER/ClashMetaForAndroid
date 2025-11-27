@@ -11,32 +11,37 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <!-- Header -->
-        <LinearLayout
+        <FrameLayout
+            android:id="@+id/top_bar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/bg_gradient_header"
             android:orientation="vertical"
-            android:padding="24dp">
+            android:paddingTop="48dp">
+            <FrameLayout
+                android:id="@+id/v_back"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingStart="20dp"
+                android:paddingTop="12dp"
+                android:paddingEnd="24dp"
+                android:paddingBottom="12dp">
+                <ImageView
+                    android:layout_width="25dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:adjustViewBounds="true"
+                    android:src="@drawable/icon_back" />
+            </FrameLayout>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp"
-                android:text="分享"
+                android:layout_gravity="center"
+                android:text="我的邀请"
                 android:textColor="@color/white"
-                android:textSize="28sp"
-                android:textStyle="bold" />
+                android:textSize="18dp" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="邀请好友，获得返利"
-                android:textColor="@color/white"
-                android:textSize="14sp"
-                android:alpha="0.7" />
-
-        </LinearLayout>
+        </FrameLayout>
 
         <!-- Content -->
         <LinearLayout
@@ -50,18 +55,18 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="24dp">
+                android:layout_marginBottom="24dp"
+                android:orientation="horizontal">
 
                 <!-- Invite Count Card -->
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp"
                     android:layout_weight="1"
                     android:background="@drawable/bg_card_dark"
                     android:orientation="vertical"
-                    android:padding="16dp"
-                    android:layout_marginEnd="8dp">
+                    android:padding="16dp">
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -86,11 +91,11 @@
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
                     android:layout_weight="1"
                     android:background="@drawable/bg_card_dark"
                     android:orientation="vertical"
-                    android:padding="16dp"
-                    android:layout_marginStart="8dp">
+                    android:padding="16dp">
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -117,10 +122,10 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
                 android:background="@drawable/bg_card_dark"
                 android:orientation="vertical"
-                android:padding="16dp"
-                android:layout_marginBottom="24dp">
+                android:padding="16dp">
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -145,10 +150,10 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
                 android:background="@drawable/bg_card_dark"
                 android:orientation="vertical"
-                android:padding="16dp"
-                android:layout_marginBottom="16dp">
+                android:padding="16dp">
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -164,27 +169,27 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:background="@color/bg_secondary"
+                    android:gravity="center"
                     android:padding="12dp"
                     android:text="点击下方按钮生成邀请码"
                     android:textColor="@color/text_secondary"
                     android:textSize="12sp"
-                    android:gravity="center"
                     android:visibility="gone" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginTop="12dp">
+                    android:layout_marginTop="12dp"
+                    android:orientation="horizontal">
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btn_generate_code"
                         android:layout_width="0dp"
                         android:layout_height="40dp"
+                        android:layout_marginEnd="8dp"
                         android:layout_weight="1"
                         android:text="生成邀请码"
                         android:textSize="12sp"
-                        android:layout_marginEnd="8dp"
                         app:backgroundTint="@color/primary"
                         app:cornerRadius="8dp" />
 

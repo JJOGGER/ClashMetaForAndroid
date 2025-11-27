@@ -194,7 +194,26 @@ class OtherSettingsActivity : BaseActivity<ActivityOtherSettingsBinding>() {
         val voption3 = view.findViewById<View>(R.id.v_option3)
         val vCancel = view.findViewById<View>(R.id.v_cancel)
         val vConfirm = view.findViewById<View>(R.id.v_confirm)
+        val mode = service::accessControlMode.get()
+        when (mode) {
+            AccessControlMode.AcceptAll -> {
+                voption1.isSelected = true
+                voption2.isSelected = false
+                voption3.isSelected = false
+            }
 
+            AccessControlMode.AcceptSelected -> {
+                voption1.isSelected = false
+                voption2.isSelected = true
+                voption3.isSelected = false
+            }
+
+            AccessControlMode.DenySelected -> {
+                voption1.isSelected = false
+                voption2.isSelected = false
+                voption3.isSelected = true
+            }
+        }
         option1?.setOnClickListener {
             voption1.isSelected = true
             voption2.isSelected = false

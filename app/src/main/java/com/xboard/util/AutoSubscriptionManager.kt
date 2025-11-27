@@ -52,60 +52,53 @@ class AutoSubscriptionManager(
      * @return 是否成功完成整个流程
      */
     suspend fun autoImportAndApply(): Boolean {
-        try {
+        return try {
             Log.d(TAG, "Starting auto import and apply")
-            val subscribeUrl = subscriptionManager.getCachedSubscribeUrl()
-            Log.d(TAG, "本地缓存的订阅地址: $subscribeUrl")
-            val subscribeConfig = subscriptionManager.getCachedConfigContent()
-            Log.d(TAG, "本地缓存的订阅配置: $subscribeConfig")
-            val subscribeUrlServer = subscriptionManager.getSubscribe()
-            if (subscribeUrlServer == null) {
-                Log.d(TAG, "未获取到服务端配置")
+
+            val subscribeFromServer = subscriptionManager.getSubscribe()
+            if (subscribeFromServer == null) {
+                Log.w(TAG, "Failed to fetch subscribe information from server")
                 return false
             }
-            // 3. 获取配置内容
-            val configContent = fetchConfigAndHash(subscribeUrlServer.subscribeUrl)
-            if (subscribeUrlServer.subscribeUrl != subscribeUrl || configContent.first != subscribeConfig) {
-                Log.d(TAG, "更新配置")
-                withProfile {
 
-                    val profile =
-                        queryByUUID(UUID.fromString(subscribeUrlServer.uuid)) ?: return@withProfile
-                    // 4. 更新VPN配置
-                    if (subscribeConfig == null) {
-                        Log.d(TAG, "导入VPN配置")
-                        patch(profile.uuid, profile.name, profile.source, profile.interval)
-                        coroutineScope {
-                            commit(profile.uuid) {
-                                launch {
-                                    Log.d(TAG, "导入配置成功")
-                                    saveSubscribe(subscribeUrlServer,configContent.first,
-                                        configContent.second)
-                                    setActive(profile)
-                                }
-                            }
-                        }
-                    } else {
-                        Log.d(TAG, "更新VPN配置")
-                        update(profile.uuid)
-                    }
-
-                }
-                return true
+            val profile = ensureProfile(subscribeFromServer)
+            if (profile == null) {
+                Log.w(TAG, "Unable to locate or create profile for ${subscribeFromServer.subscribeUrl}")
+                return false
             }
 
-            return true
-        } catch (e: Exception) {
+            val cachedUrl = subscriptionManager.getCachedSubscribeUrl().orEmpty()
+            val cachedHash = MMKVManager.getSubscribeConfigHash().orEmpty()
+            var remoteConfig = fetchConfigAndHash(subscribeFromServer.subscribeUrl)
 
+            val ensuredProfile = ensureProfileImported(profile, subscribeFromServer, remoteConfig)
+                ?: return false
+            remoteConfig = remoteConfig ?: fetchConfigAndHash(subscribeFromServer.subscribeUrl)
+
+            val urlChanged = cachedUrl.isBlank() || cachedUrl != subscribeFromServer.subscribeUrl
+            val configChanged = remoteConfig?.second?.let { it.isNotBlank() && it != cachedHash } ?: false
+
+            when {
+                urlChanged -> runImportFlow(ensuredProfile, subscribeFromServer, remoteConfig)
+                configChanged -> runUpdateFlow(ensuredProfile, subscribeFromServer, remoteConfig)
+                remoteConfig == null && cachedHash.isBlank() -> runImportFlow(ensuredProfile, subscribeFromServer, null)
+                else -> {
+                    saveSubscribe(subscribeFromServer, remoteConfig?.first, remoteConfig?.second)
+                    ensureProfileActive(ensuredProfile)
+                    true
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Auto import and apply failed: ${e.message}", e)
+            false
         }
-        return false
     }
 
-    fun saveSubscribe(subscribe: SubscribeResponse, configContent: String, configHash: String) {
+    fun saveSubscribe(subscribe: SubscribeResponse, configContent: String?, configHash: String?) {
         try {
             MMKVManager.saveSubscribe(subscribe)
-            MMKVManager.saveSubscribeConfig(configContent)
-            MMKVManager.saveSubscribeConfigHash(configHash)
+            configContent?.let { MMKVManager.saveSubscribeConfig(it) }
+            configHash?.let { MMKVManager.saveSubscribeConfigHash(it) }
 
             Log.d(TAG, "Saved subscribe config to cache")
         } catch (e: Exception) {
@@ -115,20 +108,25 @@ class AutoSubscriptionManager(
             )
         }
     }
-    suspend fun fetchConfigAndHash(subscribeUrl: String): Pair<String, String> {
+    suspend fun fetchConfigAndHash(subscribeUrl: String): Pair<String, String>? {
         return try {
-            // 1. 获取配置内容
             val configContent = getConfigContentFromUrl(subscribeUrl)
-
-            // 2. 计算哈希值
-            val configHash = calculateConfigHash(configContent)
-
-            Log.d(TAG, "Config hash: $configHash")
-
-            Pair(configContent, configHash)
+            if (configContent.isBlank()) {
+                Log.w(TAG, "Empty config content from $subscribeUrl")
+                null
+            } else {
+                val configHash = calculateConfigHash(configContent)
+                if (configHash.isBlank()) {
+                    Log.w(TAG, "Failed to calculate config hash for $subscribeUrl")
+                    null
+                } else {
+                    Log.d(TAG, "Config hash: $configHash")
+                    configContent to configHash
+                }
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to fetch config and hash: ${e.message}")
-            Pair("", "")
+            null
         }
     }
 
@@ -155,6 +153,99 @@ class AutoSubscriptionManager(
         } catch (e: Exception) {
             Log.e(TAG, "Failed to calculate hash: ${e.message}")
             ""
+        }
+    }
+
+    private suspend fun ensureProfile(subscribe: SubscribeResponse): Profile? {
+        if (subscribe.subscribeUrl.isBlank()) {
+            Log.w(TAG, "Subscribe url is empty, skip ensureProfile")
+            return null
+        }
+
+        return try {
+            withProfile {
+                val existing = queryAll().firstOrNull { it.source == subscribe.subscribeUrl }
+                existing ?: run {
+                    val uuid = create(Profile.Type.Url, buildProfileName(subscribe), subscribe.subscribeUrl)
+                    queryByUUID(uuid)
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to ensure profile: ${e.message}", e)
+            null
+        }
+    }
+
+    private fun buildProfileName(subscribe: SubscribeResponse): String {
+        return subscribe.plan.name.takeIf { it.isNotBlank() }
+            ?: subscribe.email
+    }
+
+    private suspend fun ensureProfileImported(
+        profile: Profile,
+        subscribe: SubscribeResponse,
+        configBundle: Pair<String, String>?
+    ): Profile? {
+        if (profile.imported) {
+            return profile
+        }
+
+        return if (runImportFlow(profile, subscribe, configBundle)) {
+            withProfile { queryByUUID(profile.uuid) }
+        } else {
+            null
+        }
+    }
+
+    private suspend fun runImportFlow(
+        profile: Profile,
+        subscribe: SubscribeResponse,
+        configBundle: Pair<String, String>?
+    ): Boolean {
+        return try {
+            withProfile {
+                patch(profile.uuid, buildProfileName(subscribe), subscribe.subscribeUrl, profile.interval)
+                coroutineScope {
+                    commit(profile.uuid) {
+                        launch {
+                            saveSubscribe(subscribe, configBundle?.first, configBundle?.second)
+                            val latest = queryByUUID(profile.uuid) ?: profile
+                            setActive(latest)
+                        }
+                    }
+                }
+            }
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to import profile: ${e.message}", e)
+            false
+        }
+    }
+
+    private suspend fun runUpdateFlow(
+        profile: Profile,
+        subscribe: SubscribeResponse,
+        configBundle: Pair<String, String>?
+    ): Boolean {
+        return try {
+            withProfile {
+                update(profile.uuid)
+            }
+            saveSubscribe(subscribe, configBundle?.first, configBundle?.second)
+            ensureProfileActive(profile)
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to update profile: ${e.message}", e)
+            false
+        }
+    }
+
+    private suspend fun ensureProfileActive(profile: Profile) {
+        withProfile {
+            val latest = queryByUUID(profile.uuid) ?: return@withProfile
+            if (!latest.active) {
+                setActive(latest)
+            }
         }
     }
 

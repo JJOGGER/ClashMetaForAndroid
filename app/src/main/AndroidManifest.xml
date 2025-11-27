@@ -203,6 +203,7 @@
         <activity
             android:name="com.xboard.ui.activity.LoginActivity"
             android:configChanges="uiMode"
+            android:launchMode="singleTask"
             android:exported="false"
             android:label="@string/login"
             android:theme="@style/BootstrapTheme" />
@@ -336,6 +337,11 @@
             android:configChanges="uiMode"
             android:exported="false"
             android:label="主题设置"
+            android:theme="@style/BootstrapTheme" />
+        <activity android:name="com.xboard.ui.activity.ShareActivity"
+            android:configChanges="uiMode"
+            android:exported="false"
+            android:label="邀请"
             android:theme="@style/BootstrapTheme" />
 
         <service

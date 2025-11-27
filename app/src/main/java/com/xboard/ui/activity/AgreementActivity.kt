@@ -46,21 +46,16 @@ class AgreementActivity : AppCompatActivity() {
     }
 
     private fun loadAgreement(type: String) {
-        val resourceId = when (type) {
-            TYPE_PRIVACY_POLICY -> resources.getIdentifier("privacy_policy", "raw", packageName)
-            else -> resources.getIdentifier("user_agreement", "raw", packageName)
-        }
-        
-        if (resourceId != 0) {
-            val htmlContent = resources.openRawResource(resourceId).bufferedReader().use { it.readText() }
-            binding.webView.loadDataWithBaseURL(
-                null,
-                htmlContent,
-                "text/html",
-                "utf-8",
-                null
+         when (type) {
+            TYPE_PRIVACY_POLICY ->  binding.webView.loadUrl(
+                "http://xiuxiujd.cc/page/privacy_policy.html",
+            )
+            else ->  binding.webView.loadUrl(
+                "http://xiuxiujd.cc/page/user_agreement.html",
             )
         }
+        
+
     }
 
     private fun setupToolbar(type: String) {

@@ -37,14 +37,15 @@
         <com.xboard.ui.round.RoundTextView
             android:id="@+id/btn_create_ticket"
             android:layout_width="wrap_content"
-            android:layout_height="40dp"
+            android:layout_height="38dp"
             android:layout_gravity="end|center_vertical"
             android:gravity="center"
-            android:paddingStart="25dp"
-            android:paddingEnd="25dp"
+            android:paddingStart="20dp"
+            android:layout_marginEnd="10dp"
+            android:paddingEnd="20dp"
             android:text="新建工单"
             android:textColor="@color/white"
-            android:textSize="16dp"
+            android:textSize="14dp"
             app:roundBackgroundColor="@color/primary"
             app:roundCornerRadius="10dp" />
     </FrameLayout>

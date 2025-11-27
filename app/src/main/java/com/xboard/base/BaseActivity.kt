@@ -1,10 +1,14 @@
 package com.xboard.base
 
-import android.os.Build
 import android.os.Bundle
 import android.view.View
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.viewbinding.ViewBinding
 import com.github.kr328.clash.BaseActivity
 import com.github.kr328.clash.BaseActivity.Event
@@ -56,12 +60,13 @@ abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity(),
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // 设置沉浸式状态栏
-        setupImmersiveStatusBar()
-
         // 绑定视图
         binding = getViewBinding()
         setContentView(binding.root)
+
+        // 设置沉浸式状态栏
+        setupImmersiveStatusBar()
+        applyWindowInsetsToContent()
 
         // 初始化
         initView()
@@ -122,36 +127,102 @@ abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity(),
      * 设置沉浸式状态栏
      */
     private fun setupImmersiveStatusBar() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            window.apply {
-                // 设置状态栏背景色
-                statusBarColor = getStatusBarColor()
-
-                // 设置状态栏文字颜色（浅色/深色）
-                val decorView = decorView
-                val flags = if (isStatusBarDarkText()) {
-                    decorView.systemUiVisibility or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
-                } else {
-                    decorView.systemUiVisibility and View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR.inv()
-                }
-                decorView.systemUiVisibility = flags
-            }
+        if (!shouldUseImmersiveStatusBar()) {
+            return
         }
+
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+
+        window.statusBarColor = getStatusBarColor()
+        window.navigationBarColor = getNavigationBarColor()
+
+        WindowInsetsControllerCompat(window, window.decorView).apply {
+            isAppearanceLightStatusBars = isStatusBarDarkText()
+            isAppearanceLightNavigationBars = isNavigationBarDarkText()
+            systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_BARS_BY_SWIPE
+        }
+    }
+
+    /**
+     * 处理内容区域与系统栏的间距，避免内容被状态栏/导航栏遮挡
+     */
+    private fun applyWindowInsetsToContent() {
+        if (!shouldUseImmersiveStatusBar()) {
+            return
+        }
+
+        val targetView = getWindowInsetsTargetView() ?: binding.root
+        val initialPadding = intArrayOf(
+            targetView.paddingLeft,
+            targetView.paddingTop,
+            targetView.paddingRight,
+            targetView.paddingBottom
+        )
+
+        ViewCompat.setOnApplyWindowInsetsListener(targetView) { view, insets ->
+            val statusInsets = insets.getInsets(WindowInsetsCompat.Type.statusBars())
+            val navigationInsets = insets.getInsets(WindowInsetsCompat.Type.navigationBars())
+
+            val topPadding = initialPadding[1] + if (shouldApplyStatusBarInsets()) statusInsets.top else 0
+            val bottomPadding =
+                initialPadding[3] + if (shouldApplyNavigationBarInsets()) navigationInsets.bottom else 0
+
+            view.setPadding(
+                initialPadding[0],
+                topPadding,
+                initialPadding[2],
+                bottomPadding
+            )
+
+            insets
+        }
+
+        ViewCompat.requestApplyInsets(targetView)
     }
 
     /**
      * 获取状态栏颜色，子类可覆盖
      */
     protected open fun getStatusBarColor(): Int {
-        return getColor(R.color.primary_dark)
+        return ContextCompat.getColor(this, R.color.bg_primary)
     }
+
+    /**
+     * 获取导航栏颜色，子类可覆盖
+     */
+    protected open fun getNavigationBarColor(): Int {
+        return ContextCompat.getColor(this, R.color.bg_primary)
+    }
+
+    /**
+     * 是否启用沉浸式状态栏，子类可覆盖
+     */
+    protected open fun shouldUseImmersiveStatusBar(): Boolean = true
 
     /**
      * 状态栏文字是否为深色，子类可覆盖
      */
-    protected open fun isStatusBarDarkText(): Boolean {
-        return false
-    }
+    protected open fun isStatusBarDarkText(): Boolean = false
+
+    /**
+     * 导航栏图标是否为深色，子类可覆盖
+     */
+    protected open fun isNavigationBarDarkText(): Boolean = false
+
+    /**
+     * 是否需要为内容区域增加状态栏高度的内边距
+     */
+    protected open fun shouldApplyStatusBarInsets(): Boolean = true
+
+    /**
+     * 是否需要为内容区域增加导航栏高度的内边距
+     */
+    protected open fun shouldApplyNavigationBarInsets(): Boolean = false
+
+    /**
+     * 自定义需要应用 WindowInsets 的 View，默认使用根布局
+     */
+    protected open fun getWindowInsetsTargetView(): View? = null
 
     /**
      * 获取ViewBinding实例，子类必须实现

@@ -1,6 +1,5 @@
 package com.xboard.ui.activity
 
-import android.view.View
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.github.kr328.clash.databinding.ActivityTicketDetailBinding
@@ -22,7 +21,7 @@ class TicketDetailActivity : BaseActivity<ActivityTicketDetailBinding>() {
 
     companion object {
         private const val TAG = "TicketDetailActivity"
-        private const val REFRESH_INTERVAL = 3000L // 3秒刷新一次
+        private const val REFRESH_INTERVAL = 10000L // 3秒刷新一次
     }
 
     private val ticketRepository by lazy { TicketRepository(RetrofitClient.getApiService()) }
@@ -59,6 +58,7 @@ class TicketDetailActivity : BaseActivity<ActivityTicketDetailBinding>() {
 
     override fun initData() {
         loadTicketDetail()
+        loadReplies()
         startAutoRefresh()
     }
 

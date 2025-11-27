@@ -67,12 +67,12 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
      */
     private fun setupTabLayout() {
         TabLayoutMediator(binding.tabLayout, binding.viewPager) { tab, position ->
-            tab.text = when (position) {
-                MainPagerAdapter.PAGE_ACCELERATE -> "加速"
-                MainPagerAdapter.PAGE_BUY -> "购买"
-                MainPagerAdapter.PAGE_MINE -> "我的"
-                else -> ""
-            }
+            tab.setIcon(when (position) {
+                MainPagerAdapter.PAGE_ACCELERATE -> R.drawable.ic_accelerate
+                MainPagerAdapter.PAGE_BUY ->  R.drawable.ic_buy
+                MainPagerAdapter.PAGE_MINE -> R.drawable.ic_mine
+                else -> R.drawable.ic_accelerate
+            })
         }.attach()
     }
 

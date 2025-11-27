@@ -35,7 +35,8 @@ class SplashActivity : BaseActivity<ActivitySplashBinding>() {
 
     override fun initView() {
         // 初始化Retrofit客户端
-        val baseUrl = "http://192.168.3.3:7001/api/v1/" // TODO: 从配置读取
+        val baseUrl = "http://xiuxiujd.cc/api/v1/" // TODO: 从配置读取
+//        val baseUrl = "http://192.168.3.3:7001/api/v1/" // TODO: 从配置读取
         RetrofitClient.initialize(this, baseUrl)
         MMKVManager.saveApiBaseUrl(baseUrl)
     }

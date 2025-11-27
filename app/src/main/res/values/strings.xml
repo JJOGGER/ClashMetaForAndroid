@@ -30,6 +30,11 @@
     <string name="buy">购买</string>
     <string name="share">分享</string>
     <string name="mine">我的</string>
+    <string name="selected_node_placeholder">未选择节点</string>
+    <string name="selected_node_disconnected">未连接</string>
+    <string name="selected_node_connected_format">已连接 · %1$s</string>
+    <string name="selected_node_latency_unknown">--</string>
+    <string name="selected_node_latency_value">%1$dms</string>
 
     <!-- Traffic -->
     <string name="upload">上传</string>
