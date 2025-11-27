@@ -1,70 +1,71 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.xboard.ui.round.RoundConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="12dp"
     android:foreground="?attr/selectableItemBackground"
-    app:cardCornerRadius="16dp"
-    app:cardElevation="0dp"
-    app:strokeColor="@color/primary_light"
-    app:strokeWidth="1dp">
+    android:padding="16dp"
+    app:roundCornerRadius="16dp"
+    app:roundStrokeColor="@color/node_item_selected"
+    app:roundStrokeWidth="1dp"
+    tools:background="@color/bg_secondary">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:layout_width="match_parent"
+    <ImageView
+        android:id="@+id/iv_icon"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        tools:src="@drawable/ico_hk" />
+    <TextView
+        android:id="@+id/tv_node_name"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:minHeight="72dp"
-        android:padding="16dp">
+        android:text="香港节点"
+        android:layout_marginStart="10dp"
+        android:textColor="@color/text_primary"
+        android:textSize="16dp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@id/tv_node_tags"
+        app:layout_constraintEnd_toStartOf="@id/iv_signal"
+        app:layout_constraintStart_toEndOf="@id/iv_icon"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_chainStyle="packed" />
 
-        <TextView
-            android:id="@+id/tv_node_name"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:text="香港节点"
-            android:textColor="@color/text_primary"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            app:layout_constraintEnd_toStartOf="@id/tv_node_latency"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toTopOf="@id/tv_node_tags"
-            app:layout_constraintVertical_chainStyle="packed" />
+    <TextView
+        android:id="@+id/tv_node_tags"
+        android:layout_width="0dp"
+        android:layout_marginStart="10dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:textColor="@color/text_secondary"
+        android:textSize="13dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/iv_signal"
+        app:layout_constraintStart_toEndOf="@id/iv_icon"
+        app:layout_constraintTop_toBottomOf="@id/tv_node_name"
+        tools:text="推荐 · 高速" />
+    <ImageView
+        android:id="@+id/iv_signal"
+        android:layout_width="22dp"
+        android:adjustViewBounds="true"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="20dp"
+        android:src="@drawable/ic_signal_best"
+        app:layout_constraintBottom_toBottomOf="@id/v_checked"
+        app:layout_constraintEnd_toStartOf="@id/v_checked"
+        app:layout_constraintTop_toTopOf="@id/v_checked" />
+    <com.xboard.ui.round.RoundView
+        android:id="@+id/v_checked"
+        android:layout_width="14dp"
+        android:layout_height="14dp"
+        android:layout_marginEnd="10dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:roundCornerRadius="14dp"
+        app:roundStrokeColor="@color/check_item_round"
+        app:roundStrokeWidth="1dp" />
 
-        <TextView
-            android:id="@+id/tv_node_tags"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="推荐 · 高速"
-            android:textColor="@color/text_secondary"
-            android:textSize="13sp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/tv_node_latency"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tv_node_name" />
+</com.xboard.ui.round.RoundConstraintLayout>
 
-        <TextView
-            android:id="@+id/tv_node_latency"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="42ms"
-            android:textColor="@color/primary"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            app:layout_constraintBaseline_toBaselineOf="@id/tv_node_name"
-            app:layout_constraintEnd_toEndOf="parent" />
-
-        <TextView
-            android:id="@+id/tv_node_status"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="在线"
-            android:textColor="@color/text_secondary"
-            android:textSize="12sp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tv_node_latency" />
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
-</com.google.android.material.card.MaterialCardView>

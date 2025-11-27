@@ -22,6 +22,8 @@ interface ApiService {
      */
     @GET("guest/comm/config")
     suspend fun getGuestConfig(): ApiResponse<CommConfigResponse>
+    @GET("user/comm/config")
+    suspend fun getUserConfig(): ApiResponse<UserConfigResponse>
 
     // ==================== 认证接口 ====================
 
@@ -148,25 +150,25 @@ interface ApiService {
     suspend fun changePassword(@Body params: Map<String, String>): ApiResponse<Unit>
 
     /**
-     * 获取邀请信息
+     * 获取邀请信息（邀请码列表和统计数据）
      */
     @GET("user/invite/fetch")
-    suspend fun getInviteInfo(): ApiResponse<InviteResponse>
+    suspend fun getInviteInfo(): ApiResponse<InviteDetailsResponse>
 
     /**
-     * 获取邀请明细
+     * 获取邀请详情（邀请用户的详细信息）
      */
     @GET("user/invite/details")
     suspend fun getInviteDetails(
-        @Query("page") page: Int = 1,
-        @Query("per_page") perPage: Int = 20
-    ): ApiResponse<InviteDetailsResponse>
+        @Query("current") current: Int = 1,
+        @Query("page_size") pageSize: Int = 20
+    ): InviteDetailResponse?
 
     /**
      * 生成邀请码
      */
     @GET("user/invite/save")
-    suspend fun generateInviteCode(): ApiResponse<InviteCodeResponse>
+    suspend fun generateInviteCode(): ApiResponse<Boolean>
 
     /**
      * 返利划转到余额

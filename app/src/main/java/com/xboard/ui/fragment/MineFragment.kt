@@ -170,15 +170,17 @@ class MineFragment : BaseFragment<FragmentMineBinding>() {
 
     private fun loadInviteStats() {
         viewLifecycleOwner.lifecycleScope.launch {
-            val result = inviteRepository.getInviteInfo()
+            // 从用户信息中获取返利余额
+            val userResult = userRepository.getUserInfo()
 
-            result
-                .onSuccess { info ->
+            userResult
+                .onSuccess { user ->
+                    // 返利余额单位是分，需要转换为元
                     binding.tvCommissionBalance.text =
-                        "返利余额 ¥${formatCurrency(info.commissionBalance)}"
+                        "返利余额 ¥${formatCurrency(user.commissionBalance)}"
                 }
                 .onError { error ->
-                    showError(error.message ?: "加载邀请信息失败")
+                    // 加载失败不影响页面显示
                 }
         }
     }
@@ -211,6 +213,8 @@ class MineFragment : BaseFragment<FragmentMineBinding>() {
             authRepository.logout()
             MMKVManager.clearToken()
             MMKVManager.clearUserInfo()
+            MMKVManager.clearSubscribeCache()
+            MMKVManager.setUserConfigResponse(null)
             startActivity(Intent(requireContext(), LoginActivity::class.java))
             requireActivity().finish()
         }

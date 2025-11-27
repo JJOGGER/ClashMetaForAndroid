@@ -5,12 +5,11 @@
     android:background="@color/bg_primary"
     android:orientation="vertical">
 
-    <!-- Header -->
+    <!-- Top Bar -->
     <FrameLayout
-        android:id="@+id/top_bar"
         android:layout_width="match_parent"
-        android:layout_height="@dimen/toolbar_height"
-        android:orientation="vertical">
+        android:layout_height="@dimen/toolbar_height">
+
         <FrameLayout
             android:id="@+id/v_back"
             android:layout_width="wrap_content"
@@ -19,21 +18,25 @@
             android:paddingTop="12dp"
             android:paddingEnd="24dp"
             android:paddingBottom="12dp">
+
             <ImageView
                 android:layout_width="25dp"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
                 android:adjustViewBounds="true"
                 android:src="@drawable/icon_back" />
+
         </FrameLayout>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:text="流量明细"
+            android:text="佣金发放记录"
             android:textColor="@color/white"
-            android:textSize="18dp" />
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
     </FrameLayout>
 
     <!-- Content -->
@@ -42,32 +45,42 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <FrameLayout
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            android:orientation="vertical">
 
-            <!-- Empty State -->
-            <TextView
-                android:id="@+id/tv_empty"
+            <!-- Total Count -->
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:gravity="center"
-                android:text="暂无流量明细"
-                android:textColor="@color/text_secondary"
-                android:textSize="14sp"
-                android:visibility="gone" />
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_card_dark"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:layout_margin="12dp">
 
-            <!-- Traffic Details List -->
+                <TextView
+                    android:id="@+id/tv_total_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="共 0 条记录"
+                    android:textColor="@color/text_primary"
+                    android:textSize="14sp" />
+
+            </LinearLayout>
+
+            <!-- Commission Record List -->
             <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rv_traffic_details"
+                android:id="@+id/rv_commission_record"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:paddingStart="16dp"
-                android:paddingEnd="16dp"
-                android:paddingTop="16dp"
-                android:paddingBottom="16dp" />
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:clipToPadding="false"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:paddingBottom="12dp" />
 
-        </FrameLayout>
+        </LinearLayout>
 
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 

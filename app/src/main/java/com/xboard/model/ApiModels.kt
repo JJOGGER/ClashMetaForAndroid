@@ -1,6 +1,5 @@
 package com.xboard.model
 
-import android.os.Parcelable
 import com.google.gson.annotations.SerializedName
 import java.io.Serializable
 
@@ -17,6 +16,7 @@ data class ApiResponse<T>(
 ) {
     fun isSuccess(): Boolean = status == null || status == "success"
 }
+
 data class OrderPay<T>(
     val type: Int?,
     val data: T? = null
@@ -54,6 +54,9 @@ data class UserInfo(
     val balance: Double = 0.0,
     @SerializedName("commission_balance")
     val commissionBalance: Double = 0.0,
+    @SerializedName("commission_rate")
+    val commissionRate: Int = 0,
+
     @SerializedName("expired_at")
     val expiredAt: Long? = null,
     @SerializedName("plan_id")
@@ -183,7 +186,7 @@ data class Plan(
     @SerializedName("updated_at")
     val updatedAt: Long? = null
 ) : Serializable {
-    companion object{
+    companion object {
         const val MAX_TRAFFIC = Integer.MAX_VALUE
     }
 
@@ -305,44 +308,98 @@ data class PlanInfo(
 // ==================== 公共配置 ====================
 
 data class CommConfigResponse(
-    @SerializedName("site_name")
-    val siteName: String,
-    @SerializedName("site_url")
-    val siteUrl: String,
+    @SerializedName("tos_url")
+    val tosUrl: String?,
+    @SerializedName("is_email_verify")
+    val isEmailVerify: Int,
+    @SerializedName("is_invite_force")
+    val isInviteForce: Int,
+    @SerializedName("email_whitelist_suffix")
+    val emailWhitelistSuffix: Int,
+    @SerializedName("is_captcha")
+    val isCaptcha: Int,
+    @SerializedName("captcha_type")
+    val captchaType: String? = null,
+    @SerializedName("recaptcha_site_key")
+    val recaptchaSiteKey: Boolean = false,
+    @SerializedName("recaptcha_v3_site_key")
+    val recaptchaV3SiteKey: String? = null,
+    @SerializedName("recaptcha_v3_score_threshold")
+    val recaptchaV3ScoreThreshold: Double = 0.5,
+    @SerializedName("turnstile_site_key")
+    val turnstileSiteKey: String? = null,
+    @SerializedName("app_description")
+    val appDescription: String,
+    @SerializedName("app_url")
+    val appUrl: String,
     @SerializedName("logo")
-    val logo: String? = null,
-    @SerializedName("telegram_bot_enable")
-    val telegramBotEnable: Boolean = false,
-    @SerializedName("telegram_bot_token")
-    val telegramBotToken: String? = null,
-    @SerializedName("telegram_bot_username")
-    val telegramBotUsername: String? = null,
-    @SerializedName("notice_enable")
-    val noticeEnable: Boolean = false,
-    @SerializedName("notice_content")
-    val noticeContent: String? = null,
-    @SerializedName("email_support")
-    val emailSupport: String? = null,
-    @SerializedName("telegram_support")
-    val telegramSupport: String? = null
+    val logo: String,
+    @SerializedName("is_recaptcha")
+    val isRecaptcha: Int
+)
+
+data class UserConfigResponse(
+    @SerializedName("is_telegram")
+    val isTelegram: Int?,
+    @SerializedName("telegram_discuss_link")
+    val telegramDiscussLink: Int,
+    @SerializedName("stripe_pk")
+    val isInviteForce: Int,
+    @SerializedName("withdraw_methods")
+    val withdrawMethods: List<String>? = null,
+    @SerializedName("withdraw_close")
+    val withdrawClose: Int,
+    @SerializedName("currency")
+    val currency: String? = null,
+    @SerializedName("currency_symbol")
+    val currencySymbol: String? = null,
+    @SerializedName("commission_distribution_enable")
+    val commissionDistributionEnable: Int,
+    @SerializedName("commission_distribution_l1")
+    val commissionDistributionL1:String? = null,
+    @SerializedName("commission_distribution_l2")
+    val commissionDistributionL2:String? = null,
+    @SerializedName("commission_distribution_l3")
+    val commissionDistributionL3:String? = null,
+
 )
 
 // ==================== 邀请相关 ====================
 
-data class InviteResponse(
-    @SerializedName("invite_count")
-    val inviteCount: Int,
-    @SerializedName("commission_balance")
-    val commissionBalance: Double,
-    @SerializedName("commission_rate")
-    val commissionRate: Double
-)
-
+/**
+ * 邀请信息响应 (user/invite/fetch)
+ * 包含邀请码列表和统计数据
+ */
 data class InviteDetailsResponse(
-    val data: List<InviteDetail>,
-    val total: Int
+    val codes: List<InviteCode> = emptyList(),
+    val stat: List<Int> = emptyList()
 )
 
+/**
+ * 邀请码信息
+ */
+data class InviteCode(
+    val id: Int,
+    val code: String,
+    @SerializedName("user_id")
+    val userId: Int,
+    val pv: Int = 0,
+    @SerializedName("created_at")
+    val createdAt: String
+)
+
+/**
+ * 邀请详情响应 (user/invite/details)
+ * 包含邀请用户的详细信息
+ */
+data class InviteDetailResponse(
+    val data: List<InviteDetail> = emptyList(),
+    val total: Int = 0
+)
+
+/**
+ * 邀请用户详情
+ */
 data class InviteDetail(
     val id: Int,
     @SerializedName("user_id")
@@ -355,11 +412,6 @@ data class InviteDetail(
     val getAmount: Double,
     @SerializedName("created_at")
     val createdAt: String
-)
-
-data class InviteCodeResponse(
-    @SerializedName("invite_code")
-    val inviteCode: String
 )
 
 data class TransferRequest(
@@ -377,6 +429,7 @@ data class CreateOrderRequest(
     @SerializedName("payment_method_ids")
     val paymentMethodIds: List<Int>? = null
 )
+
 data class OrderResponse(
     @SerializedName("trade_no")
     val tradeNo: String,
@@ -597,7 +650,7 @@ data class ReplyTicketRequest(
 )
 
 data class CloseTicketRequest(
-    @SerializedName("ticket_id")
+    @SerializedName("id")
     val ticketId: Int
 )
 

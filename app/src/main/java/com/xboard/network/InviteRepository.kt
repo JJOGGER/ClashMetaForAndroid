@@ -9,36 +9,32 @@ import com.xboard.model.*
 class InviteRepository(private val apiService: ApiService) : BaseRepository() {
 
     /**
-     * 获取邀请信息
+     * 获取邀请信息（邀请码列表和统计数据）
      */
-    suspend fun getInviteInfo(): ApiResult<InviteResponse> {
+    suspend fun getInviteInfo(): ApiResult<InviteDetailsResponse> {
         return safeApiCall {
             apiService.getInviteInfo()
         }
     }
 
     /**
-     * 获取邀请明细
+     * 获取邀请详情（邀请用户的详细信息）
      */
     suspend fun getInviteDetails(
-        page: Int = 1,
-        perPage: Int = 20
-    ): ApiResult<List<InviteDetail>> {
-        return safeApiCall {
-            apiService.getInviteDetails(page, perPage)
-        }.map { response ->
-            response.data
+        current: Int = 1,
+        pageSize: Int = 20
+    ): ApiResult<InviteDetailResponse?> {
+        return safeApiDirectCall {
+            apiService.getInviteDetails(current, pageSize)
         }
     }
 
     /**
      * 生成邀请码
      */
-    suspend fun generateInviteCode(): ApiResult<String> {
+    suspend fun generateInviteCode(): ApiResult<Boolean> {
         return safeApiCall {
             apiService.generateInviteCode()
-        }.map { response ->
-            response.inviteCode
         }
     }
 

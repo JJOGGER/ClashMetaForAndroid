@@ -36,43 +36,59 @@
             android:text="选择节点"
             android:textColor="@color/white"
             android:textSize="18dp" />
+
+        <FrameLayout
+            android:id="@+id/url_test_layout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end|center_vertical"
+            android:layout_marginEnd="16dp">
+
+            <ImageView
+                android:id="@+id/url_test_view"
+                android:layout_width="@dimen/item_tailing_component_size"
+                android:layout_height="@dimen/item_tailing_component_size"
+                android:layout_gravity="center"
+                android:clickable="true"
+                android:contentDescription="@string/delay_test"
+                android:focusable="true"
+                android:padding="@dimen/toolbar_image_action_padding"
+                android:src="@drawable/ic_baseline_flash_on"
+                app:tint="@color/white" />
+
+            <ProgressBar
+                android:id="@+id/url_test_progress_view"
+                android:layout_width="@dimen/item_tailing_component_size"
+                android:layout_height="@dimen/item_tailing_component_size"
+                android:visibility="gone" />
+        </FrameLayout>
     </FrameLayout>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rv_nodes"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginTop="16dp"
-        android:clipToPadding="false"
-        android:paddingBottom="16dp"
-        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
-
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/v_network_error"
-        android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:visibility="gone"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="12dp"
+        android:clipToPadding="false"
+        android:paddingBottom="20dp"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toBottomOf="parent">
-        <ImageView
-            android:id="@+id/iv_network_error"
-            android:layout_width="140dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="160dp"
-            android:adjustViewBounds="true"
-            android:src="@drawable/network_error"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="15dp"
-            android:text="网络请求失败，请重试"
-            android:textColor="@color/text_tertiary"
-            android:textSize="15dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/iv_network_error" />
-    </androidx.constraintlayout.widget.ConstraintLayout>
+        app:layout_constraintTop_toBottomOf="@id/top_bar" />
+
+    <!-- 测速按钮 -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_refresh"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_margin="16dp"
+        android:text="测速"
+        android:textSize="16sp"
+        app:backgroundTint="@color/primary"
+        app:cornerRadius="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

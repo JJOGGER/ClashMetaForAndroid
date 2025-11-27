@@ -9,6 +9,8 @@ import com.github.kr328.clash.databinding.ActivityRegistBinding
 import com.xboard.api.RetrofitClient
 import com.xboard.api.TokenManager
 import com.xboard.base.BaseActivity
+import com.xboard.ex.gone
+import com.xboard.ex.visible
 import com.xboard.network.AuthRepository
 import com.xboard.storage.MMKVManager
 import com.xboard.utils.onClick
@@ -21,6 +23,7 @@ class RegistActivity : BaseActivity<ActivityRegistBinding>() {
 
     private val authRepository by lazy { AuthRepository(RetrofitClient.getApiService()) }
     private var countDownTimer: CountDownTimer? = null
+    private val config by lazy { MMKVManager.getCommConfig() }
 
     override fun getViewBinding(): ActivityRegistBinding {
         return ActivityRegistBinding.inflate(layoutInflater)
@@ -38,7 +41,16 @@ class RegistActivity : BaseActivity<ActivityRegistBinding>() {
         binding.btnRegist.setOnClickListener {
             performRegister()
         }
-
+        if (config?.isEmailVerify == 1) {
+            binding.llEmailCode.visible()
+        } else {
+            binding.llEmailCode.gone()
+        }
+        if (config?.isEmailVerify == 1) {
+            binding.tilInviteCode.hint = "邀请码（可选）"
+        } else {
+            binding.tilInviteCode.hint = "邀请码"
+        }
         binding.tvToggleMode.setOnClickListener {
             startActivity(Intent(this, LoginActivity::class.java))
             finish()
@@ -68,14 +80,19 @@ class RegistActivity : BaseActivity<ActivityRegistBinding>() {
         val inviteCode = binding.etInviteCode.text.toString().trim()
 
         if (!validateInput(email, password)) return
-        if (emailCode.isEmpty()) {
+        if (config?.isEmailVerify == 1 && emailCode.isEmpty()) {
             showError("请输入邮箱验证码")
+            return
+        }
+        if (config?.isInviteForce == 1 && inviteCode.isEmpty()) {
+            showError("请输入邀请码")
             return
         }
         if (!binding.cbAgreement.isChecked) {
             showError("请勾选用户协议和隐私政策")
             return
         }
+
 
         lifecycleScope.launch {
             showLoading("注册中...")
@@ -95,11 +112,11 @@ class RegistActivity : BaseActivity<ActivityRegistBinding>() {
     }
 
     private fun validateInput(email: String, password: String): Boolean {
-        if (email.isEmpty()) {
+        if (config?.isEmailVerify == 1 && email.isEmpty()) {
             Toast.makeText(this, "请输入邮箱", Toast.LENGTH_SHORT).show()
             return false
         }
-        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+        if (config?.isEmailVerify == 1 && !Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
             Toast.makeText(this, "邮箱格式不正确", Toast.LENGTH_SHORT).show()
             return false
         }

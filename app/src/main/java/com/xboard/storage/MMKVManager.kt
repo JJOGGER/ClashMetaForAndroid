@@ -3,7 +3,9 @@ package com.xboard.storage
 import android.content.Context
 import com.sunmi.background.utils.GsonUtil
 import com.tencent.mmkv.MMKV
+import com.xboard.model.CommConfigResponse
 import com.xboard.model.SubscribeResponse
+import com.xboard.model.UserConfigResponse
 import com.xboard.utils.MMKVUtil
 
 /**
@@ -385,5 +387,39 @@ object MMKVManager {
      */
     fun putInt(key: String, value: Int) {
         MMKVUtil.getInstance().setValue(key, value)
+    }
+
+    fun setCommConfigResponse(config: CommConfigResponse) {
+        MMKVUtil.getInstance().setValue("config", GsonUtil.getGson().toJson(config))
+    }
+
+
+    fun getCommConfig(): CommConfigResponse? {
+        val json = MMKVUtil.getInstance().getStringValue("config", "")
+        try {
+            return GsonUtil.getGson().fromJson(json, CommConfigResponse::class.java)
+        } catch (e: Exception) {
+        }
+        return null
+
+    }
+
+    fun setUserConfigResponse(config: UserConfigResponse?) {
+        if (config == null) {
+            MMKVUtil.getInstance().setValue("user_config", null)
+            return
+        }
+        MMKVUtil.getInstance().setValue("user_config", GsonUtil.getGson().toJson(config))
+    }
+
+
+    fun getUserConfig(): UserConfigResponse? {
+        val json = MMKVUtil.getInstance().getStringValue("user_config", "")
+        try {
+            return GsonUtil.getGson().fromJson(json, UserConfigResponse::class.java)
+        } catch (e: Exception) {
+        }
+        return null
+
     }
 }

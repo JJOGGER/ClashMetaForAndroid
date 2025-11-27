@@ -344,6 +344,14 @@
             android:label="邀请"
             android:theme="@style/BootstrapTheme" />
 
+        <!-- Commission Record Activity -->
+        <activity
+            android:name="com.xboard.ui.activity.CommissionRecordActivity"
+            android:configChanges="uiMode"
+            android:exported="false"
+            android:label="佣金发放记录"
+            android:theme="@style/BootstrapTheme" />
+
         <service
             android:name=".LogcatService"
             android:exported="false"

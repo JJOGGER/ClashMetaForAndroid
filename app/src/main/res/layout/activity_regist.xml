@@ -204,7 +204,6 @@
         android:id="@+id/til_invite_code"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="32dp"
         android:hint="邀请码（可选）"
         android:textColorHint="@color/text_tertiary"
         app:boxBackgroundColor="@color/bg_secondary"
@@ -232,19 +231,9 @@
             android:textSize="15sp" />
 
     </com.google.android.material.textfield.TextInputLayout>
-    <LinearLayout
-        android:id="@+id/ll_agreement"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="12dp"
-        android:layout_marginEnd="12dp"
-        android:layout_marginBottom="12dp"
-        android:background="@drawable/agreement_background"
-        android:orientation="vertical"
-        android:padding="16dp"
-        android:visibility="gone">
-
         <LinearLayout
+            android:id="@+id/ll_agreement"
+            android:padding="16dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="12dp"
@@ -259,22 +248,12 @@
                 android:buttonTint="@color/primary" />
 
             <TextView
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:lineSpacingMultiplier="1.2"
                 android:text="我已阅读并同意"
                 android:textColor="@color/text_primary"
                 android:textSize="13sp" />
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
-
             <TextView
                 android:id="@+id/tv_user_agreement"
                 android:layout_width="wrap_content"
@@ -294,8 +273,6 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:layout_marginEnd="8dp"
                 android:text="和"
                 android:textColor="@color/text_secondary"
                 android:textSize="13sp" />
@@ -315,13 +292,11 @@
                 android:textColor="@color/primary"
                 android:textSize="13sp"
                 android:textStyle="bold" />
-
         </LinearLayout>
-    </LinearLayout>
+
 
     <com.xboard.ui.round.RoundTextView
         android:id="@+id/btn_regist"
-
         style="@style/CommonButton"
         android:text="注册" />
     <!-- Toggle Mode -->

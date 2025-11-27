@@ -121,16 +121,6 @@ class TicketDetailActivity : BaseActivity<ActivityTicketDetailBinding>() {
                     // 构建回复列表
                     val replies = mutableListOf<TicketReply>()
 
-                    // 添加工单初始消息
-                    replies.add(
-                        TicketReply(
-                            id = ticket.id,
-                            message = ticket.subject,
-                            createdAt = ticket.createdAt ?: System.currentTimeMillis() / 1000,
-                            isAdmin = false
-                        )
-                    )
-
                     // 添加消息列表（新格式）
                     ticket.message?.forEach { msg ->
                         replies.add(

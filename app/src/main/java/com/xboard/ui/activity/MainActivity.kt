@@ -5,11 +5,16 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.activity.result.contract.ActivityResultContracts.RequestPermission
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import com.github.kr328.clash.R
 import com.github.kr328.clash.databinding.ActivityMainBinding
 import com.google.android.material.tabs.TabLayoutMediator
+import com.xboard.api.RetrofitClient
 import com.xboard.base.BaseActivity
+import com.xboard.network.UserRepository
 import com.xboard.ui.adapter.MainPagerAdapter
+import com.xboard.util.AutoSubscriptionManager
+import kotlinx.coroutines.launch
 
 /**
  * 主页（首页）
@@ -17,10 +22,19 @@ import com.xboard.ui.adapter.MainPagerAdapter
  */
 class MainActivity : BaseActivity<ActivityMainBinding>() {
 
+    private val autoSubscriptionManager by lazy {
+        AutoSubscriptionManager(this, userRepository, lifecycleScope)
+    }
+    private val userRepository by lazy { UserRepository(RetrofitClient.getApiService()) }
+
     private lateinit var pagerAdapter: MainPagerAdapter
 
     override fun getViewBinding(): ActivityMainBinding {
         return ActivityMainBinding.inflate(layoutInflater)
+    }
+
+    override fun getNavigationBarColor(): Int {
+        return ContextCompat.getColor(this, R.color.bg_secondary)
     }
 
     override fun initView() {
@@ -46,6 +60,29 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
     override fun initData() {
         // 默认显示加速页面
         binding.viewPager.currentItem = 0
+        lifecycleScope.launch {
+            userRepository.getUserCommonConfig()
+        }
+        fetchSubscribeUrl()
+    }
+
+    /**
+     *
+     * 使用 AutoSubscriptionManager 完成整个自动化流程：
+     * 1. 获取或创建配置文件 UUID
+     * 2. 自动更新配置（导入）
+     * 3. 自动选中 Profile（应用）
+     *
+     * 无论成功还是失败，都继续跳转到首页
+     */
+    private fun fetchSubscribeUrl() {
+        lifecycleScope.launch {
+            try {
+                // 自动导入和应用订阅
+                autoSubscriptionManager.autoImportAndApply()
+            } catch (e: Exception) {
+            }
+        }
     }
 
     /**
@@ -67,12 +104,14 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
      */
     private fun setupTabLayout() {
         TabLayoutMediator(binding.tabLayout, binding.viewPager) { tab, position ->
-            tab.setIcon(when (position) {
-                MainPagerAdapter.PAGE_ACCELERATE -> R.drawable.ic_accelerate
-                MainPagerAdapter.PAGE_BUY ->  R.drawable.ic_buy
-                MainPagerAdapter.PAGE_MINE -> R.drawable.ic_mine
-                else -> R.drawable.ic_accelerate
-            })
+            tab.setIcon(
+                when (position) {
+                    MainPagerAdapter.PAGE_ACCELERATE -> R.drawable.ic_accelerate
+                    MainPagerAdapter.PAGE_BUY -> R.drawable.ic_buy
+                    MainPagerAdapter.PAGE_MINE -> R.drawable.ic_mine
+                    else -> R.drawable.ic_accelerate
+                }
+            )
         }.attach()
     }
 
@@ -87,5 +126,9 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
             val intent = Intent(this, com.github.kr328.clash.MainActivity::class.java)
             startActivity(intent)
         }
+    }
+
+    override fun getStatusBarColor(): Int {
+        return ContextCompat.getColor(this, R.color.gradient_end)
     }
 }

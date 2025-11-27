@@ -148,8 +148,8 @@ object RetrofitClient {
     private var retrofit: Retrofit? = null
     private var apiService: ApiService? = null
     private var baseUrl: String = ""
-
-    fun initialize(context: Context, baseUrl: String) {
+    const val BASE_URL = "http://xiuxiujd.cc"
+    fun initialize( baseUrl: String) {
         this.baseUrl = baseUrl
         retrofit = null
         apiService = null

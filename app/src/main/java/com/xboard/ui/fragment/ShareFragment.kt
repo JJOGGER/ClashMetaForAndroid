@@ -1,19 +1,23 @@
 package com.xboard.ui.fragment
 
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
+import android.app.Dialog
+import android.content.Intent
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
+import android.widget.ImageView
 import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.github.kr328.clash.databinding.FragmentShareBinding
 import com.xboard.api.RetrofitClient
 import com.xboard.base.BaseFragment
+import com.xboard.model.InviteDetailsResponse
 import com.xboard.network.InviteRepository
+import com.xboard.storage.MMKVManager
+import com.xboard.ui.activity.CommissionRecordActivity
 import com.xboard.ui.adapter.InviteDetailAdapter
+import com.xboard.ui.round.RoundTextView
 import kotlinx.coroutines.launch
 import java.text.DecimalFormat
 
@@ -23,21 +27,26 @@ import java.text.DecimalFormat
 class ShareFragment : BaseFragment<FragmentShareBinding>() {
 
     private val inviteRepository by lazy { InviteRepository(RetrofitClient.getApiService()) }
+    private val userRepository by lazy { com.xboard.network.UserRepository(RetrofitClient.getApiService()) }
     private lateinit var inviteDetailAdapter: InviteDetailAdapter
     private val priceFormatter = DecimalFormat("#.##")
     private var currentInviteCode: String = ""
 
-    override fun getViewBinding(inflater: LayoutInflater, container: ViewGroup?): FragmentShareBinding {
+    override fun getViewBinding(
+        inflater: LayoutInflater,
+        container: ViewGroup?
+    ): FragmentShareBinding {
         return FragmentShareBinding.inflate(inflater, container, false)
     }
 
     override fun initView() {
         // 设置邀请明细列表
-        inviteDetailAdapter = InviteDetailAdapter()
-//        binding.rvInviteDetails.apply {
-//            layoutManager = LinearLayoutManager(requireContext())
-//            adapter = inviteDetailAdapter
-//        }
+        inviteDetailAdapter = InviteDetailAdapter(activity)
+        binding.tvUnit.text = MMKVManager.getUserConfig()?.currency ?: "CNY"
+        binding.rvInviteDetails.apply {
+            layoutManager = LinearLayoutManager(requireContext())
+            adapter = inviteDetailAdapter
+        }
     }
 
     override fun initListener() {
@@ -45,17 +54,13 @@ class ShareFragment : BaseFragment<FragmentShareBinding>() {
             generateInviteCode()
         }
 
-        binding.btnCopyCode.setOnClickListener {
-            copyInviteCode()
+        binding.btnTransfer.setOnClickListener {
+            transferCommission()
         }
 
-        binding.btnCopyLink.setOnClickListener {
-            copyInviteLink()
+        binding.tvRecord.setOnClickListener {
+            startActivity(Intent(requireContext(), CommissionRecordActivity::class.java))
         }
-
-//        binding.btnTransfer.setOnClickListener {
-//            transferCommission()
-//        }
 
         binding.swipeRefresh.setOnRefreshListener {
             loadData()
@@ -68,29 +73,30 @@ class ShareFragment : BaseFragment<FragmentShareBinding>() {
 
     private fun loadData() {
         binding.swipeRefresh.isRefreshing = true
-
         viewLifecycleOwner.lifecycleScope.launch {
-            // 加载邀请信息
+            // 1. 加载用户信息（获取返利余额和返利比例）
+            val userResult = userRepository.getUserInfo()
+            userResult
+                .onSuccess { userInfo ->
+                    binding.tvCommissionBalance.text =
+                        "¥${formatPrice(userInfo.commissionBalance / 100.0)}"
+                    // 显示返利比例
+                    binding.tvCommissionRate.text = "${userInfo.commissionRate}%"
+                }
+                .onError { error ->
+                    showError("获取用户信息失败: ${error.message}")
+                }
+
+            // 2. 加载邀请信息（邀请码列表和邀请用户数）
             val infoResult = inviteRepository.getInviteInfo()
             infoResult
                 .onSuccess { inviteInfo ->
-                    binding.tvInviteCount.text = inviteInfo.inviteCount.toString()
-                    binding.tvCommissionBalance.text = "¥${formatPrice(inviteInfo.commissionBalance)}"
-                    binding.tvCommissionRate.text = "${(inviteInfo.commissionRate * 100).toInt()}%"
-//                    binding.btnTransfer.isEnabled = inviteInfo.commissionBalance > 0
-                }
-                .onError { error ->
-                    showError(error.message)
-                }
+                    // stat: [邀请用户数, 邀请返利(分), 佣金余额(分), 佣金比率(%), 其他]
+                    updateInviteInfo(inviteInfo)
 
-            // 加载邀请明细
-            val detailsResult = inviteRepository.getInviteDetails(page = 1, perPage = 20)
-            detailsResult
-                .onSuccess { details ->
-                    inviteDetailAdapter.updateData(details)
                 }
                 .onError { error ->
-                    showError(error.message)
+                    showError("获取邀请信息失败: ${error.message}")
                 }
 
             binding.swipeRefresh.isRefreshing = false
@@ -104,43 +110,46 @@ class ShareFragment : BaseFragment<FragmentShareBinding>() {
             val result = inviteRepository.generateInviteCode()
 
             result
-                .onSuccess { code ->
-                    currentInviteCode = code
-                    binding.tvInviteCode.text = code
-                    binding.tvInviteCode.visibility = View.VISIBLE
-                    binding.btnCopyCode.visibility = View.VISIBLE
-                    binding.btnCopyLink.visibility = View.VISIBLE
-                    showSuccess("邀请码已生成")
+                .onSuccess { success ->
+                    if (success) {
+                        // 生成成功，重新加载邀请信息以获取最新的邀请码
+                        val infoResult = inviteRepository.getInviteInfo()
+                        infoResult
+                            .onSuccess { inviteInfo ->
+                                updateInviteInfo(inviteInfo)
+                            }
+                            .onError { error ->
+                                showError("获取邀请码失败: ${error.message}")
+                            }
+                    }
                 }
                 .onError { error ->
-                    showError(error.message)
+                    showError("生成邀请码失败: ${error.message}")
                 }
 
             binding.btnGenerateCode.isEnabled = true
         }
     }
 
-    private fun copyInviteCode() {
-        val code = binding.tvInviteCode.text.toString()
-        if (code.isNotEmpty()) {
-            copyToClipboard("邀请码", code)
+    private fun updateInviteInfo(inviteInfo: InviteDetailsResponse) {
+        if (inviteInfo.codes.isNotEmpty()) {
+            if (inviteInfo.stat.isNotEmpty()) {
+                binding.tvInviteCount.text = inviteInfo.stat[0].toString()
+                binding.tvCommissionRate.text = "${inviteInfo.stat[3]}%"
+                binding.tvReconfirmBalance.text = inviteInfo.stat[1].toString()
+                binding.tvTotalBalance.text = inviteInfo.stat[2].toString()
+            }
+            inviteDetailAdapter.updateData(inviteInfo.codes)
         }
     }
 
-    private fun copyInviteLink() {
-        val code = binding.tvInviteCode.text.toString()
-        if (code.isNotEmpty()) {
-            val link = "https://example.com/register?invite_code=$code"
-            copyToClipboard("邀请链接", link)
-        }
-    }
 
     private fun formatPrice(amount: Double): String {
         // Round to avoid floating point precision issues
         val rounded = Math.round(amount * 100.0) / 100.0
         return priceFormatter.format(rounded)
     }
-    
+
     private fun transferCommission() {
         val balanceText = binding.tvCommissionBalance.text.toString()
         val balance = balanceText.replace("¥", "").toDoubleOrNull() ?: 0.0
@@ -150,35 +159,87 @@ class ShareFragment : BaseFragment<FragmentShareBinding>() {
             return
         }
 
-//        binding.btnTransfer.isEnabled = false
+        // 显示划转弹窗
+        showTransferDialog(balance)
+    }
+
+    private fun showTransferDialog(maxBalance: Double) {
+        val dialog = Dialog(requireContext(), android.R.style.Theme_Dialog)
+        val dialogView = LayoutInflater.from(requireContext()).inflate(
+            com.github.kr328.clash.R.layout.dialog_transfer,
+            null
+        )
+        dialog.setContentView(dialogView)
+
+        // 设置对话框宽度
+        val window = dialog.window
+        window?.setLayout(
+            (resources.displayMetrics.widthPixels * 0.9).toInt(),
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        )
+
+        // 获取控件
+        val tvCurrentBalance = dialogView.findViewById<android.widget.TextView>(
+            com.github.kr328.clash.R.id.tv_current_balance
+        )
+        val etTransferAmount = dialogView.findViewById<EditText>(
+            com.github.kr328.clash.R.id.et_transfer_amount
+        )
+
+        val btnCancel = dialogView.findViewById<RoundTextView>(
+            com.github.kr328.clash.R.id.btn_cancel
+        )
+        val btnConfirm = dialogView.findViewById<RoundTextView>(
+            com.github.kr328.clash.R.id.btn_confirm
+        )
+
+        // 设置当前余额
+        tvCurrentBalance.text = formatPrice(maxBalance)
+
+        // 取消按钮
+        btnCancel.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        // 确定按钮
+        btnConfirm.setOnClickListener {
+            val amountText = etTransferAmount.text.toString()
+            val amount = amountText.toDoubleOrNull() ?: 0.0
+
+            if (amount <= 0) {
+                showError("请输入有效的划转金额")
+                return@setOnClickListener
+            }
+
+            if (amount > maxBalance) {
+                showError("划转金额不能超过余额")
+                return@setOnClickListener
+            }
+
+            dialog.dismiss()
+            performTransfer(amount)
+        }
+
+        dialog.show()
+    }
+
+    private fun performTransfer(amount: Double) {
+        binding.btnTransfer.isEnabled = false
 
         viewLifecycleOwner.lifecycleScope.launch {
-            val result = inviteRepository.transferCommission(balance)
+            val result = inviteRepository.transferCommission(amount)
 
             result
                 .onSuccess {
-                    showSuccess("转账成功")
+                    showSuccess("划转成功")
                     loadData()
                 }
                 .onError { error ->
-                    showError(error.message)
-//                    binding.btnTransfer.isEnabled = true
+                    showError(error.message ?: "划转失败")
+                    binding.btnTransfer.isEnabled = true
                 }
         }
     }
 
-    private fun copyToClipboard(label: String, text: String) {
-        val clipboard = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-        val clip = ClipData.newPlainText(label, text)
-        clipboard.setPrimaryClip(clip)
-        showSuccess("已复制到剪贴板")
-    }
 
-    override fun showError(message: String) {
-        Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
-    }
-
-    override fun showSuccess(message: String) {
-        Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
-    }
 }

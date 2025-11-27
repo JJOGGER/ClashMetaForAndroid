@@ -1,83 +1,100 @@
 package com.xboard.ui.adapter
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.github.kr328.clash.databinding.ItemInviteDetailBinding
-import com.xboard.model.InviteDetail
-import java.text.DecimalFormat
-import java.text.ParseException
+import com.xboard.api.RetrofitClient
+import com.xboard.ex.showToast
+import com.xboard.model.InviteCode
 import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
-import java.util.TimeZone
+import kotlin.toString
 
 /**
  * 邀请明细列表 Adapter
  */
-class InviteDetailAdapter : RecyclerView.Adapter<InviteDetailAdapter.InviteDetailViewHolder>() {
+class InviteDetailAdapter (val context: Context?): RecyclerView.Adapter<InviteDetailAdapter.InviteDetailViewHolder>() {
 
-    private val inviteDetails = mutableListOf<InviteDetail>()
-    private val serverDateParser = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault()).apply {
-        timeZone = TimeZone.getTimeZone("UTC")
-    }
-    private val localDateFormatter = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
-    private val priceFormatter = DecimalFormat("#.##")
+    private val inviteCodes = mutableListOf<InviteCode>()
+    private val dateFormatter = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): InviteDetailViewHolder {
-        val binding = ItemInviteDetailBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        val binding =
+            ItemInviteDetailBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return InviteDetailViewHolder(binding)
     }
 
     override fun onBindViewHolder(holder: InviteDetailViewHolder, position: Int) {
-        holder.bind(inviteDetails[position])
+        holder.bind(inviteCodes[position])
     }
 
-    override fun getItemCount(): Int = inviteDetails.size
+    override fun getItemCount(): Int = inviteCodes.size
 
-    fun updateData(newDetails: List<InviteDetail>) {
-        val diffResult = DiffUtil.calculateDiff(InviteDetailDiffCallback(inviteDetails, newDetails))
-        inviteDetails.clear()
-        inviteDetails.addAll(newDetails)
+    fun updateData(newCodes: List<InviteCode>?) {
+        newCodes ?: return
+        val diffResult = DiffUtil.calculateDiff(InviteCodeDiffCallback(inviteCodes, newCodes))
+        inviteCodes.clear()
+        inviteCodes.addAll(newCodes)
         diffResult.dispatchUpdatesTo(this)
     }
 
     inner class InviteDetailViewHolder(private val binding: ItemInviteDetailBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(detail: InviteDetail) {
-            binding.tvInviteUser.text = "邀请用户 ID: ${detail.inviteUserId}"
-            binding.tvInviteReward.text = "¥${formatPrice(detail.getAmount)}"
-            binding.tvInviteDate.text = formatServerDate(detail.createdAt)
-            binding.tvInviteStatus.text = "订单 #${detail.orderId}"
-        }
-        
-        private fun formatPrice(amount: Double): String {
-            // Round to avoid floating point precision issues
-            val rounded = Math.round(amount * 100.0) / 100.0
-            return priceFormatter.format(rounded)
+        fun bind(code: InviteCode) {
+            binding.tvInviteCode.text = "${code.code}"
+            binding.tvInviteDate.text = formatDate(code.createdAt)
+            binding.btnCopyCode.setOnClickListener {
+                copyInviteLink(code)
+            }
         }
 
-        private fun formatServerDate(value: String): String {
+        private fun copyInviteLink(code: InviteCode) {
+
+            copyToClipboard("邀请链接", "${ RetrofitClient.BASE_URL}/#/register?code=${code.code}")
+        }
+
+        private fun copyToClipboard(label: String, text: String) {
+            val clipboard =
+                context?.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+            val clip = ClipData.newPlainText(label, text)
+            clipboard.setPrimaryClip(clip)
+            showToast("$label 已复制到剪贴板")
+        }
+        private fun formatDate(dateString: String): String {
             return try {
-                val date = serverDateParser.parse(value)
-                date?.let { localDateFormatter.format(it) } ?: value
-            } catch (e: ParseException) {
-                value
+                // 将 ISO 8601 格式转换为本地格式
+                // 例如: "2025-01-01T00:00:00Z" -> "2025-01-01 00:00"
+                val parts = dateString.split("T")
+                if (parts.size >= 2) {
+                    val date = parts[0]
+                    val time = parts[1].split(":").take(2).joinToString(":")
+                    "$date $time"
+                } else {
+                    dateString
+                }
+            } catch (e: Exception) {
+                dateString
             }
         }
     }
 
-    private class InviteDetailDiffCallback(
-        private val oldList: List<InviteDetail>,
-        private val newList: List<InviteDetail>
+    private class InviteCodeDiffCallback(
+        private val oldList: List<InviteCode>,
+        private val newList: List<InviteCode>
     ) : DiffUtil.Callback() {
         override fun getOldListSize(): Int = oldList.size
 
         override fun getNewListSize(): Int = newList.size
 
         override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
-            return oldList[oldItemPosition].id == newList[newItemPosition].id
+            return oldList[oldItemPosition].code == newList[newItemPosition].code
         }
 
         override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {

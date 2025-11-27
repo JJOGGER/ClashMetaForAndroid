@@ -2,6 +2,7 @@ package com.xboard.ui.activity
 
 import android.content.Intent
 import android.os.CountDownTimer
+import android.text.TextUtils
 import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
 import com.github.kr328.clash.databinding.ActivityLoginBinding
@@ -9,6 +10,7 @@ import com.xboard.api.RetrofitClient
 import com.xboard.api.TokenManager
 import com.xboard.base.BaseActivity
 import com.xboard.network.AuthRepository
+import com.xboard.storage.MMKVManager
 import kotlinx.coroutines.launch
 
 /**
@@ -24,6 +26,9 @@ class LoginActivity : BaseActivity<ActivityLoginBinding>() {
     }
 
     override fun initView() {
+        if (!TextUtils.isEmpty(MMKVManager.getUserEmail())) {
+            binding.etEmail.setText(MMKVManager.getUserEmail())
+        }
     }
 
     override fun initListener() {

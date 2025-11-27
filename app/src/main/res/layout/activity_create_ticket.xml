@@ -8,9 +8,8 @@
     <FrameLayout
         android:id="@+id/top_bar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:paddingTop="48dp">
+        android:layout_height="@dimen/toolbar_height"
+        android:orientation="vertical">
         <FrameLayout
             android:id="@+id/v_back"
             android:layout_width="wrap_content"
@@ -51,8 +50,8 @@
         android:id="@+id/etSubject"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="20dp"
         android:layout_marginTop="10dp"
+        android:layout_marginBottom="20dp"
         android:background="@color/bg_secondary"
         android:hint="请输入工单主题"
         android:padding="15dp"
@@ -71,11 +70,11 @@
         android:id="@+id/etDescription"
         android:layout_width="match_parent"
         android:layout_height="200dp"
+        android:layout_marginTop="10dp"
         android:layout_marginBottom="20dp"
         android:background="@color/bg_secondary"
         android:gravity="top"
         android:hint="请输入工单描述"
-        android:layout_marginTop="10dp"
         android:padding="12dp"
         android:textColor="@color/text_primary"
         android:textColorHint="@color/text_tertiary" />

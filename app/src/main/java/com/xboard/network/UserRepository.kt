@@ -8,6 +8,22 @@ import com.xboard.storage.MMKVManager
  * 用户相关的Repository
  */
 class UserRepository(private val apiService: ApiService) : BaseRepository() {
+    suspend fun getCommonConfig(): ApiResult<CommConfigResponse> {
+        return safeApiCall {
+            apiService.getGuestConfig()
+        }.onSuccess { config ->
+            // 更新缓存
+            MMKVManager.setCommConfigResponse(config)
+        }
+    }
+    suspend fun getUserCommonConfig(): ApiResult<UserConfigResponse> {
+        return safeApiCall {
+            apiService.getUserConfig()
+        }.onSuccess { config ->
+            // 更新缓存
+            MMKVManager.setUserConfigResponse(config)
+        }
+    }
 
     /**
      * 获取用户信息

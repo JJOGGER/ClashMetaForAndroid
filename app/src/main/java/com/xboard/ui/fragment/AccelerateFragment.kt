@@ -16,7 +16,9 @@ import com.github.kr328.clash.core.Clash
 import com.github.kr328.clash.core.model.Proxy
 import com.github.kr328.clash.core.model.ProxySort
 import com.github.kr328.clash.databinding.FragmentAccelerateBinding
+import com.github.kr328.clash.design.store.UiStore
 import com.github.kr328.clash.remote.Remote
+import com.github.kr328.clash.util.startClashService
 import com.github.kr328.clash.util.stopClashService
 import com.github.kr328.clash.util.withClash
 import com.github.kr328.clash.util.withProfile
@@ -46,6 +48,7 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
 
     private val userRepository by lazy { UserRepository(RetrofitClient.getApiService()) }
     private val ticketRepository by lazy { TicketRepository(RetrofitClient.getApiService()) }
+    private val uiStore by lazy { UiStore(requireContext()) }
     private var selectedServer: Server? = null
     private var currentProfileUUID: UUID? = null
     private var currentGroupName: String? = null
@@ -62,7 +65,22 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
             loadCurrentNodeInfo()
         }
     }
-    private var currentMode: Mode = Mode.SMART
+
+    private val vpnPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            // VPN 权限已授予，启动 Clash Service
+            viewLifecycleOwner.lifecycleScope.launch {
+                startClashServiceInternal()
+            }
+        } else {
+            showToast("VPN 权限被拒绝，无法连接")
+            binding.btnConnect.text = "开启连接"
+            binding.btnConnect.setBackgroundColor(android.graphics.Color.parseColor("#FF9800"))
+        }
+    }
+
 
     override fun getViewBinding(
         inflater: LayoutInflater,
@@ -102,7 +120,7 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
         renderNodeCard(null, selectedServer?.name)
         loadData()
         loadCurrentNodeInfo()
-        loadLatestNotice()
+//        loadLatestNotice()
 //        updateButtonState()
     }
 
@@ -234,25 +252,44 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
                 val activeProfile = withProfile { queryActive() }
                 currentProfileUUID = activeProfile?.uuid
                 if (activeProfile == null) {
+                    Log.w(TAG, "No active profile found")
                     renderNodeCard(null, selectedServer?.name, false)
                     return@launch
                 }
 
-                val groupNames = Clash.queryGroupNames(excludeNotSelectable = false)
+                // 使用 withClash 获取代理组名称
+                val groupNames = withClash {
+                    queryProxyGroupNames(uiStore.proxyExcludeNotSelectable)
+                }
+                Log.d(TAG, "Available groups: $groupNames")
+
+                // 优先选择 "Proxy" 组，否则选择第一个可用的组
                 currentGroupName = groupNames.firstOrNull { it == "Proxy" }
                     ?: groupNames.firstOrNull()
 
                 if (currentGroupName.isNullOrBlank()) {
+                    Log.w(TAG, "No proxy group found")
                     renderNodeCard(null, selectedServer?.name, connectedOverride)
                     return@launch
                 }
 
-                val group = Clash.queryGroup(currentGroupName!!, ProxySort.Default)
+                // 使用 withClash 获取代理组信息
+                val group = withClash {
+                    queryProxyGroup(currentGroupName!!, uiStore.proxySort)
+                }
                 currentProxyName = group.now
+                Log.d(TAG, "Current proxy: ${group.now}, total proxies: ${group.proxies.size}")
+                
                 val activeProxy = group.proxies.firstOrNull { it.name == group.now }
+                if (activeProxy != null) {
+                    Log.d(TAG, "Active proxy found: ${activeProxy.name}, delay: ${activeProxy.delay}")
+                } else {
+                    Log.w(TAG, "Active proxy not found in group")
+                }
+                
                 renderNodeCard(activeProxy, group.now, connectedOverride)
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to load node info: ${e.message}")
+                Log.e(TAG, "Failed to load node info: ${e.message}", e)
                 renderNodeCard(null, selectedServer?.name, connectedOverride)
             }
         }
@@ -300,7 +337,23 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
             !candidateName.isNullOrBlank() -> candidateName
             else -> getString(R.string.selected_node_placeholder)
         }
-
+        if (displayName.contains("香港")) {
+            binding.ivNodeIcon.setImageResource(R.drawable.ico_hk)
+        } else if (displayName.contains("日本")) {
+            binding.ivNodeIcon.setImageResource(R.drawable.ico_jp)
+        } else if (displayName.contains("美国")) {
+            binding.ivNodeIcon.setImageResource(R.drawable.ico_us)
+        } else if (displayName.contains("新加坡")) {
+            binding.ivNodeIcon.setImageResource(R.drawable.ico_sg)
+        } else if (displayName.contains("韩国")) {
+            binding.ivNodeIcon.setImageResource(R.drawable.ico_ko)
+        } else if (displayName.contains("荷兰")) {
+            binding.ivNodeIcon.setImageResource(R.drawable.ico_helan)
+        } else if (displayName.contains("瑞典")) {
+            binding.ivNodeIcon.setImageResource(R.drawable.ico_ruidian)
+        } else {
+            binding.ivNodeIcon.setImageResource(R.drawable.ico_unknown)
+        }
         binding.tvSelectedNodeName.text = displayName
         binding.tvSelectedNodeLatency.text = if (isConnected) {
             val latencyValue = proxy?.delay?.takeIf { it > 0 }
@@ -322,8 +375,6 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
     private fun navigateToNodeSelection() {
         val context = requireContext()
         val intent = Intent(context, NodeSelectionActivity::class.java)
-        intent.putExtra("profileUUID", currentProfileUUID.toString())
-        intent.putExtra("groupName", currentGroupName)
         nodeSelectionLauncher.launch(intent)
     }
 
@@ -477,11 +528,6 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
         } else {
             viewLifecycleOwner.lifecycleScope.launch {
                 startClash()
-                binding.btnConnect.text = "关闭连接"
-                binding.btnConnect.setBackgroundColor(android.graphics.Color.parseColor("#4CAF50"))
-                connectionStartTime = System.currentTimeMillis()
-                startConnectionTimer()
-                loadCurrentNodeInfo(true)
             }
         }
 
@@ -496,43 +542,43 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
             return
         }
 
-        val vpnRequest = startClashService()
-
-        try {
-            if (vpnRequest != null) {
-                val result = startActivityForResult(
-                    ActivityResultContracts.StartActivityForResult(),
-                    vpnRequest
-                )
-
-                if (result.resultCode == RESULT_OK) {
-                    startClashService()
-                }
-            }
-        } catch (e: Exception) {
-//            showToast(R.string.unable_to_start_vpn)
+        // 检查 VPN 权限
+        val vpnRequest = android.net.VpnService.prepare(requireContext())
+        if (vpnRequest != null) {
+            // 需要请求 VPN 权限
+            vpnPermissionLauncher.launch(vpnRequest)
+        } else {
+            // VPN 权限已授予，直接启动 Clash Service
+            startClashServiceInternal()
         }
     }
 
-
-    private fun startClashService(): Intent? {
+    private suspend fun startClashServiceInternal() {
         val context = requireContext()
 
-        // 检查 VPN 权限
-        val vpnRequest = android.net.VpnService.prepare(context)
+        // 使用 startClashService() 工具函数，它会根据 enableVpn 设置选择启动 TunService 或 ClashService
+        val vpnRequest = context.startClashService()
+
         if (vpnRequest != null) {
-            return vpnRequest
+            // 如果返回了 VPN 请求，说明权限已被拒绝，不应该到这里
+            showToast("VPN 权限被拒绝")
+            return
         }
 
-        // 启动 Clash Service
-        val intent = Intent(context, com.github.kr328.clash.service.ClashService::class.java)
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            ContextCompat.startForegroundService(context, intent)
-        } else {
-            context.startService(intent)
-        }
+        // 更新 UI 状态
+        binding.btnConnect.text = "关闭连接"
+        binding.btnConnect.setBackgroundColor(android.graphics.Color.parseColor("#4CAF50"))
+        connectionStartTime = System.currentTimeMillis()
+        startConnectionTimer()
 
-        return null
+        // 立即加载节点信息（从已知的配置中获取，不需要等待延迟数据）
+        // 这样用户能立即看到当前连接的节点
+        loadCurrentNodeInfo(true)
+
+        // 延迟 1 秒后再次加载，确保 Clash 已完全初始化并获取到最新的延迟信息
+        // 这次加载会更新延迟数据
+        kotlinx.coroutines.delay(1000)
+        loadCurrentNodeInfo(true)
     }
 
     private suspend fun fetch() {

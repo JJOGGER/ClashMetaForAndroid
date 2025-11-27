@@ -29,7 +29,7 @@ fun GradientDrawable.parseAttribute(context: Context, attrs: AttributeSet?): Gra
     val endColor = a.getColor(R.styleable.GradientDrawable_roundEndColor, -2)
     val angle = a.getInt(R.styleable.GradientDrawable_roundColorAngle, 0)
     val strokeWidth = a.getDimensionPixelSize(R.styleable.GradientDrawable_roundStrokeWidth, 0)
-    val strokeColor = a.getColor(R.styleable.GradientDrawable_roundStrokeColor, 0)
+    val strokeColor = a.getColorStateList(R.styleable.GradientDrawable_roundStrokeColor)
     a.recycle()
     if (startColor != -2 && endColor != -2) {
         colors = if (centerColor != -2) {

@@ -21,7 +21,7 @@
         <com.google.android.material.tabs.TabLayout
             android:id="@+id/tab_layout"
             android:layout_width="match_parent"
-            android:layout_height="48dp"
+            android:layout_height="55dp"
             android:background="@color/bg_secondary"
             android:elevation="4dp"
             app:tabIconTint="@color/home_tab_item"
