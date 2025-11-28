@@ -13,7 +13,6 @@ import com.xboard.api.RetrofitClient
 import com.xboard.base.BaseActivity
 import com.xboard.network.UserRepository
 import com.xboard.ui.adapter.MainPagerAdapter
-import com.xboard.util.AutoSubscriptionManager
 import kotlinx.coroutines.launch
 
 /**
@@ -22,9 +21,6 @@ import kotlinx.coroutines.launch
  */
 class MainActivity : BaseActivity<ActivityMainBinding>() {
 
-    private val autoSubscriptionManager by lazy {
-        AutoSubscriptionManager(this, userRepository, lifecycleScope)
-    }
     private val userRepository by lazy { UserRepository(RetrofitClient.getApiService()) }
 
     private lateinit var pagerAdapter: MainPagerAdapter
@@ -63,26 +59,9 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
         lifecycleScope.launch {
             userRepository.getUserCommonConfig()
         }
-        fetchSubscribeUrl()
     }
-
-    /**
-     *
-     * 使用 AutoSubscriptionManager 完成整个自动化流程：
-     * 1. 获取或创建配置文件 UUID
-     * 2. 自动更新配置（导入）
-     * 3. 自动选中 Profile（应用）
-     *
-     * 无论成功还是失败，都继续跳转到首页
-     */
-    private fun fetchSubscribeUrl() {
-        lifecycleScope.launch {
-            try {
-                // 自动导入和应用订阅
-                autoSubscriptionManager.autoImportAndApply()
-            } catch (e: Exception) {
-            }
-        }
+    fun setCurrentTab(position: Int){
+        binding.viewPager.currentItem = position
     }
 
     /**

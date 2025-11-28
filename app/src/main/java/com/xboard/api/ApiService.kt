@@ -1,7 +1,50 @@
 package com.xboard.api
 
-import com.xboard.model.*
-import retrofit2.http.*
+import com.xboard.model.ApiResponse
+import com.xboard.model.CancelOrderRequest
+import com.xboard.model.ChangePasswordRequest
+import com.xboard.model.CheckCouponRequest
+import com.xboard.model.CheckGiftCardRequest
+import com.xboard.model.CheckoutRequest
+import com.xboard.model.CloseTicketRequest
+import com.xboard.model.CommConfigResponse
+import com.xboard.model.CouponResponse
+import com.xboard.model.CreateOrderRequest
+import com.xboard.model.CreateTicketRequest
+import com.xboard.model.ForgetPasswordRequest
+import com.xboard.model.GiftCardHistoryResponse
+import com.xboard.model.GiftCardResponse
+import com.xboard.model.GuestPlanResponse
+import com.xboard.model.InviteDetailResponse
+import com.xboard.model.InviteDetailsResponse
+import com.xboard.model.KnowledgeArticleResponse
+import com.xboard.model.KnowledgeCategory
+import com.xboard.model.LoginRequest
+import com.xboard.model.LoginResponse
+import com.xboard.model.NoticeListResponse
+import com.xboard.model.OrderDetailResponse
+import com.xboard.model.OrderPay
+import com.xboard.model.OrderStatusResponse
+import com.xboard.model.PaymentMethod
+import com.xboard.model.Plan
+import com.xboard.model.RedeemGiftCardRequest
+import com.xboard.model.RegisterRequest
+import com.xboard.model.ReplyTicketRequest
+import com.xboard.model.SendEmailVerifyRequest
+import com.xboard.model.Server
+import com.xboard.model.ServerGroupNode
+import com.xboard.model.SubscribeResponse
+import com.xboard.model.TicketResponse
+import com.xboard.model.TrafficLog
+import com.xboard.model.TransferRequest
+import com.xboard.model.UpdateUserRequest
+import com.xboard.model.UserConfigResponse
+import com.xboard.model.UserInfo
+import retrofit2.http.Body
+import retrofit2.http.GET
+import retrofit2.http.POST
+import retrofit2.http.Query
+import retrofit2.http.Url
 
 /**
  * XBoard API 服务接口
@@ -22,6 +65,7 @@ interface ApiService {
      */
     @GET("guest/comm/config")
     suspend fun getGuestConfig(): ApiResponse<CommConfigResponse>
+
     @GET("user/comm/config")
     suspend fun getUserConfig(): ApiResponse<UserConfigResponse>
 
@@ -72,10 +116,10 @@ interface ApiService {
     suspend fun getUserPlan(): ApiResponse<Plan>
 
     /**
-     * 获取当期用量
+     * 获取用户统计
      */
     @GET("user/getStat")
-    suspend fun getUserStat(): ApiResponse<List<Long>>
+    suspend fun getUserStat(): ApiResponse<List<Int>>
 
     /**
      * 获取流量日志
@@ -86,7 +130,7 @@ interface ApiService {
         @Query("per_page") perPage: Int = 20
     ): ApiResponse<List<TrafficLog>?>
 
-//    /**
+    //    /**
 //     * 获取用户可用的服务器列表
 //     */
 //    @GET("user/server/fetch")
@@ -101,6 +145,7 @@ interface ApiService {
     suspend fun getServersByGroup(
         @Query("group_id") groupId: Int
     ): ApiResponse<List<ServerGroupNode>>
+
     /**
      * 获取订阅链接
      */
@@ -109,10 +154,10 @@ interface ApiService {
 
     /**
      * 获取订阅配置内容（纯文本）
-     * 
+     *
      * 注意：订阅URL返回的是纯文本YAML格式，不是JSON格式的ApiResponse
      * 所以这个方法返回 ResponseBody，需要手动处理
-     * 
+     *
      * @param subscribeUrl 完整的订阅URL，例如：https://example.com/api/v1/client/subscribe?token=xxx
      * @return 配置内容（YAML格式）
      */
@@ -129,7 +174,7 @@ interface ApiService {
      * 更新用户信息
      */
     @POST("user/update")
-    suspend fun updateUserInfo(@Body request: UpdateUserRequest): ApiResponse<Unit>
+    suspend fun updateUserInfo(@Body request: UpdateUserRequest): ApiResponse<Boolean>
 
     /**
      * 更新用户信息（通用）

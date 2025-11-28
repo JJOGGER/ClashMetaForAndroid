@@ -1,5 +1,7 @@
 package com.xboard.model
 
+import android.graphics.Color
+import androidx.core.graphics.toColorInt
 import com.google.gson.annotations.SerializedName
 import java.io.Serializable
 
@@ -20,8 +22,7 @@ data class ApiResponse<T>(
 data class OrderPay<T>(
     val type: Int?,
     val data: T? = null
-) {
-}
+)
 // ==================== 认证相关 ====================
 
 data class LoginRequest(
@@ -47,10 +48,25 @@ data class LoginResponse(
 )
 
 data class UserInfo(
-    val id: Int,
+
+    //"email": "980328722@qq.com",
+    //        "transfer_enable": 107374182400,
+    //        "last_login_at": 1764298287,
+    //        "created_at": 1763379590,
+    //        "banned": false,
+    //        "remind_expire": true,
+    //        "remind_traffic": true,
+    //        "expired_at": 1779020849,
+    //        "balance": 100,
+    //        "commission_balance": 100,
+    //        "plan_id": 1,
+    //        "discount": null,
+    //        "commission_rate": null,
+    //        "telegram_id": null,
+    //        "uuid": "b13152a7-1cad-43b4-89ab-6a6de4fc4061",
+    //        "avatar_url": "https:\/\/cdn.v2ex.com\/gravatar\/729991e46535d907bb47cb02708af1e2?s=64&d=identicon"
+    //
     val email: String,
-    val nickname: String? = null,
-    val avatar: String? = null,
     val balance: Double = 0.0,
     @SerializedName("commission_balance")
     val commissionBalance: Double = 0.0,
@@ -61,11 +77,6 @@ data class UserInfo(
     val expiredAt: Long? = null,
     @SerializedName("plan_id")
     val planId: Int? = null,
-    @SerializedName("plan_name")
-    val planName: String? = null,
-    @SerializedName("subscribe_url")
-    val subscribeUrl: String? = null,
-    val status: Int = 0,
     @SerializedName("created_at")
     val createdAt: Long,
     @SerializedName("updated_at")
@@ -73,17 +84,24 @@ data class UserInfo(
     // 订阅信息字段
     @SerializedName("transfer_enable")
     val transferEnable: Long? = null,
-    val u: Long? = null,  // 上传流量
-    val d: Long? = null,  // 下载流量
-    val upload: Long? = null,  // 上传流量（备用字段）
-    val download: Long? = null,  // 下载流量（备用字段）
-    @SerializedName("speed_limit")
-    val speedLimit: Int? = null,  // 速度限制 (Mbps)
-    @SerializedName("device_limit")
-    val deviceLimit: Int? = null,  // 设备限制
-    val token: String? = null,  // 订阅令牌
-    @SerializedName("plan")
-    val plan: Plan? = null  // 套餐信息
+
+    // 新增字段 - 根据注释中的示例JSON添加
+    @SerializedName("last_login_at")
+    val lastLoginAt: String? = null,
+    @SerializedName("banned")
+    val banned: Boolean = false,
+    @SerializedName("remind_expire")
+    var remindExpire: Boolean = true,
+    @SerializedName("remind_traffic")
+    var remindTraffic: Boolean = true,
+    @SerializedName("discount")
+    val discount: Int = 100,
+    @SerializedName("telegram_id")
+    val telegramId: String? = null,
+    @SerializedName("uuid")
+    val uuid: String? = null,
+    @SerializedName("avatar_url")
+    val avatarUrl: String? = null
 )
 
 data class SendEmailVerifyRequest(
@@ -98,9 +116,8 @@ data class ForgetPasswordRequest(
 )
 
 data class UpdateUserRequest(
-    val nickname: String? = null,
-    val language: String? = null,
-    val timezone: String? = null
+    val remind_expire: Int? = null,
+    val remind_traffic: Int? = null
 )
 
 data class ChangePasswordRequest(
@@ -195,12 +212,9 @@ data class Plan(
 // ==================== 用户统计相关 ====================
 
 data class UserStat(
-    @SerializedName("u")
-    val upload: Long = 0,
-    @SerializedName("d")
-    val download: Long = 0,
-    @SerializedName("total")
-    val total: Long = 0
+    val orderCount: Int = 0,
+    val tickerCount: Int = 0,
+    val inviteCount: Int = 0
 )
 
 data class TrafficLogResponse(
@@ -356,13 +370,13 @@ data class UserConfigResponse(
     @SerializedName("commission_distribution_enable")
     val commissionDistributionEnable: Int,
     @SerializedName("commission_distribution_l1")
-    val commissionDistributionL1:String? = null,
+    val commissionDistributionL1: String? = null,
     @SerializedName("commission_distribution_l2")
-    val commissionDistributionL2:String? = null,
+    val commissionDistributionL2: String? = null,
     @SerializedName("commission_distribution_l3")
-    val commissionDistributionL3:String? = null,
+    val commissionDistributionL3: String? = null,
 
-)
+    )
 
 // ==================== 邀请相关 ====================
 
@@ -467,7 +481,7 @@ data class CheckoutResponse(
 data class OrderStatusResponse(
     @SerializedName("trade_no")
     val tradeNo: String,
-    val status: Int, // 0=待支付, 1=已支付, -1=取消
+    val status: Int, // 0=待支付, 1=已支付, 2=已过期, 3=已取消
     @SerializedName("paid_at")
     val paidAt: Long? = null
 )
@@ -521,7 +535,34 @@ data class OrderDetailResponse(
     val amount: Double = 0.0,
     @SerializedName("payable_amount")
     val payableAmount: Double = 0.0
-)
+){
+    companion object{
+        //0=待支付, 1=已支付, 2=已过期, 3=已取消
+        const val STATUS_PAID = 1
+        const val STATUS_CANCELED = 3
+        const val STATUS_WAITING = 0
+        const val STATUS_EXPIRE = 2
+    }
+    fun getStatusText(): String {
+        return when (status) {
+            STATUS_PAID -> "已支付"
+            STATUS_CANCELED -> "已取消"
+            STATUS_WAITING -> "待支付"
+            STATUS_EXPIRE -> "已过期"
+            else -> "未知"
+        }
+    }
+    fun getStatusColor(): Int {
+        return when (status) {
+            STATUS_PAID -> "#4CAF50".toColorInt()
+            STATUS_CANCELED -> Color.GRAY
+            STATUS_WAITING ->"#FF9800".toColorInt()
+            STATUS_EXPIRE -> Color.GRAY
+            else -> Color.GRAY
+        }
+
+    }
+}
 
 data class OrderHistoryResponse(
     val data: List<OrderDetailResponse>,
@@ -590,7 +631,7 @@ data class GiftCardHistory(
 
 data class CreateTicketRequest(
     val subject: String,
-    val description: String,
+    val message: String,
     val level: Int? = null
 )
 

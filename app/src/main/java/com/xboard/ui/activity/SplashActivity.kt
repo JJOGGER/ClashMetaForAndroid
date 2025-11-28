@@ -1,15 +1,12 @@
 package com.xboard.ui.activity
 
 import android.content.Intent
-import android.os.Handler
-import android.os.Looper
 import androidx.lifecycle.lifecycleScope
 import com.github.kr328.clash.databinding.ActivitySplashBinding
 import com.xboard.api.RetrofitClient
 import com.xboard.base.BaseActivity
 import com.xboard.network.UserRepository
 import com.xboard.storage.MMKVManager
-import com.xboard.util.AutoSubscriptionManager
 import kotlinx.coroutines.launch
 
 /**

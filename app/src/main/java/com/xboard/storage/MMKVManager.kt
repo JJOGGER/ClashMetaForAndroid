@@ -6,6 +6,7 @@ import com.tencent.mmkv.MMKV
 import com.xboard.model.CommConfigResponse
 import com.xboard.model.SubscribeResponse
 import com.xboard.model.UserConfigResponse
+import com.xboard.model.UserInfo
 import com.xboard.utils.MMKVUtil
 
 /**
@@ -174,7 +175,7 @@ object MMKVManager {
      */
     fun clearSubscribeCache() {
         MMKVUtil.getInstance()
-            .clear(arrayOf("subscribe_url", "subscribe_config_hash", "subscribe_config"))
+            .clear(arrayOf("subscribe", "subscribe_config_hash", "subscribe_config"))
     }
 
     // ==================== 应用配置 ====================
@@ -417,6 +418,25 @@ object MMKVManager {
         val json = MMKVUtil.getInstance().getStringValue("user_config", "")
         try {
             return GsonUtil.getGson().fromJson(json, UserConfigResponse::class.java)
+        } catch (e: Exception) {
+        }
+        return null
+
+    }
+
+    fun setUserInfo(userInfo: UserInfo?) {
+        if (userInfo == null) {
+            MMKVUtil.getInstance().setValue("user_info", null)
+            return
+        }
+        MMKVUtil.getInstance().setValue("user_info", GsonUtil.getGson().toJson(userInfo))
+    }
+
+
+    fun getUserInfo(): UserInfo? {
+        val json = MMKVUtil.getInstance().getStringValue("user_info", "")
+        try {
+            return GsonUtil.getGson().fromJson(json, UserInfo::class.java)
         } catch (e: Exception) {
         }
         return null

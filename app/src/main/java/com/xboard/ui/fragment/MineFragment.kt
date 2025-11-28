@@ -3,6 +3,7 @@ package com.xboard.ui.fragment
 import android.content.Intent
 import android.net.Uri
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
@@ -52,7 +53,7 @@ class MineFragment : BaseFragment<FragmentMineBinding>() {
             startActivity(Intent(activity, ShareActivity::class.java))
         }
         binding.menuPurchaseRecords.root.setOnClickListener { loadOrderHistory() }
-//        binding.menuDeviceManage.root.setOnClickListener { loadTrafficDetail() }
+        binding.menuTraffic.root.setOnClickListener { loadTrafficDetail() }
         binding.menuSetting.root.setOnClickListener { openOtherSettings() }
 //        binding.menuOfficialSite.root.setOnClickListener { openWebsite(getSiteBaseUrl()) }
 //        binding.menuFaq.root.setOnClickListener { openWebsite(getSiteBaseUrl("/faq")) }
@@ -62,12 +63,42 @@ class MineFragment : BaseFragment<FragmentMineBinding>() {
         binding.menuLogout.setOnClickListener { logout() }
 
         binding.swipeRefresh.setOnRefreshListener {
+            loadUserState()
             loadUserInfo()
             loadInviteStats()
         }
     }
 
+    private fun loadUserState() {
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            val result = userRepository.getUserStat()
+
+            result
+                .onSuccess { user ->
+                    binding.menuPurchaseRecords.vHandle.visibility =
+                        if (user.orderCount > 0) {
+                            View.VISIBLE
+                        } else {
+                            View.GONE
+                        }
+                    binding.menuMyTickets.vHandle.visibility =
+                        if (user.tickerCount > 0) {
+                            View.VISIBLE
+                        } else {
+                            View.GONE
+                        }
+                }
+                .onError { error ->
+                    showError(error.message)
+                }
+
+        }
+    }
+
+
     override fun initData() {
+        loadUserState()
         loadUserInfo()
         loadInviteStats()
     }
@@ -81,7 +112,7 @@ class MineFragment : BaseFragment<FragmentMineBinding>() {
             result
                 .onSuccess { user ->
                     binding.tvUserEmail.text = user.email
-                    binding.tvUserNickname.text = user.nickname ?: "欢迎回来"
+                    binding.tvUserNickname.text = "欢迎回来"
                     binding.tvBalance.text = "¥${formatCurrency(user.balance)}"
 
                     // 加载订阅信息

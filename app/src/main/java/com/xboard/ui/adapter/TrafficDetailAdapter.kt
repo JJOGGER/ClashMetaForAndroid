@@ -4,7 +4,8 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.github.kr328.clash.databinding.ItemTrafficDetailBinding
-import com.xboard.ui.activity.TrafficDetailItem
+import com.xboard.model.TrafficLog
+import com.xboard.utils.DateUtils
 import java.text.DecimalFormat
 
 /**
@@ -12,10 +13,10 @@ import java.text.DecimalFormat
  */
 class TrafficDetailAdapter : RecyclerView.Adapter<TrafficDetailAdapter.ViewHolder>() {
 
-    private val items = mutableListOf<TrafficDetailItem>()
+    private val items = mutableListOf<TrafficLog>()
     private val sizeFormatter = DecimalFormat("#,##0.00")
 
-    fun updateData(newItems: List<TrafficDetailItem>) {
+    fun updateData(newItems: List<TrafficLog>) {
         items.clear()
         items.addAll(newItems)
         notifyDataSetChanged()
@@ -39,22 +40,12 @@ class TrafficDetailAdapter : RecyclerView.Adapter<TrafficDetailAdapter.ViewHolde
     inner class ViewHolder(private val binding: ItemTrafficDetailBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(item: TrafficDetailItem) {
-            binding.tvDate.text = item.date
-
-            if (item.isHeader) {
-                // 头部样式
-                binding.tvUpload.text = "上传: ${formatSize(item.upload)}"
-                binding.tvDownload.text = "下载: ${formatSize(item.download)}"
-                binding.tvTotal.text = "总计: ${formatSize(item.upload + item.download)}"
-                binding.root.setBackgroundColor(binding.root.context.getColor(android.R.color.darker_gray))
-            } else {
-                // 普通样式
-                binding.tvUpload.text = formatSize(item.upload)
-                binding.tvDownload.text = formatSize(item.download)
-                binding.tvTotal.text = formatSize(item.upload + item.download)
-                binding.root.setBackgroundColor(binding.root.context.getColor(android.R.color.transparent))
-            }
+        fun bind(item: TrafficLog) {
+            binding.tvDate.text = DateUtils.getDateTime(item.record_at)
+            // 普通样式
+            binding.tvUpload.text = formatSize(item.u ?: 0)
+            binding.tvDownload.text = formatSize(item.d ?: 0)
+            binding.tvTotal.text = formatSize((item.u ?: 0) + (item.d ?: 0))
         }
 
         private fun formatSize(bytes: Long): String {

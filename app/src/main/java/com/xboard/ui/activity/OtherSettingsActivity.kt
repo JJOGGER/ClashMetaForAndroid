@@ -16,6 +16,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.xboard.api.RetrofitClient
 import com.xboard.base.BaseActivity
 import com.xboard.ex.showToast
+import com.xboard.model.UpdateUserRequest
 import com.xboard.network.UserRepository
 import com.xboard.storage.MMKVManager
 import com.xboard.utils.onClick
@@ -91,13 +92,12 @@ class OtherSettingsActivity : BaseActivity<ActivityOtherSettingsBinding>() {
         binding.switchTrafficNotification.isChecked = MMKVManager.getTrafficNotification()
 
         // 到期邮件提醒
-        binding.switchExpireNotification.setOnCheckedChangeListener { _, isChecked ->
-            updateNotificationSettings("expire", isChecked)
+        binding.vExpireNotification.onClick {
+            updateNotificationSettings("expire", !binding.switchExpireNotification.isChecked)
         }
-
-        // 流量邮件提醒
-        binding.switchTrafficNotification.setOnCheckedChangeListener { _, isChecked ->
-            updateNotificationSettings("traffic", isChecked)
+        binding.vTrafficNotification.onClick {
+            // 流量邮件提醒
+            updateNotificationSettings("traffic", !binding.switchTrafficNotification.isChecked)
         }
 
         // 当前版本
@@ -117,12 +117,14 @@ class OtherSettingsActivity : BaseActivity<ActivityOtherSettingsBinding>() {
 
         // 初始化访问控制模式显示
         updateAccessControlModeDisplay()
+
     }
 
     private fun loadSettings() {
+        val userInfo = MMKVManager.getUserInfo()
         // 从本地存储加载设置
-        val expireNotification = MMKVManager.getBoolean("expire_notification", true)
-        val trafficNotification = MMKVManager.getBoolean("traffic_notification", true)
+        val expireNotification = userInfo?.remindExpire ?: true
+        val trafficNotification = userInfo?.remindTraffic ?: true
         binding.switchExpireNotification.isChecked = expireNotification
         binding.switchTrafficNotification.isChecked = trafficNotification
     }
@@ -131,47 +133,42 @@ class OtherSettingsActivity : BaseActivity<ActivityOtherSettingsBinding>() {
         lifecycleScope.launch {
             try {
                 // 调用 API 更新用户设置
-                val params = when (type) {
-                    "expire" -> mapOf(
-                        "remind_expire" to if (enabled) 1 else 0
-                    )
+                val result = when (type) {
+                    "expire" ->
+                        userRepository.updateUserInfo(UpdateUserRequest(remind_expire = if (enabled) 1 else 0))
 
-                    "traffic" -> mapOf(
-                        "remind_traffic" to if (enabled) 1 else 0
-                    )
+                    "traffic" ->
+                        userRepository.updateUserInfo(UpdateUserRequest(remind_traffic = if (enabled) 1 else 0))
 
                     else -> return@launch
                 }
 
-                val result = userRepository.updateUserInfo(params)
                 result
                     .onSuccess {
                         // 保存到本地存储
                         when (type) {
                             "expire" -> {
-                                MMKVManager.setExpireNotification(enabled)
+                                val userInfo = MMKVManager.getUserInfo()
+                                userInfo?.remindExpire = enabled
+                                MMKVManager.setUserInfo(userInfo)
                             }
 
                             "traffic" -> {
-                                MMKVManager.setTrafficNotification(enabled)
+                                val userInfo = MMKVManager.getUserInfo()
+                                userInfo?.remindTraffic = enabled
+                                MMKVManager.setUserInfo(userInfo)
                             }
                         }
                         showToast("设置已保存")
+                        loadSettings()
                     }
                     .onError { error ->
-                        // 恢复开关状态
-                        when (type) {
-                            "expire" -> binding.switchExpireNotification.isChecked = !enabled
-                            "traffic" -> binding.switchTrafficNotification.isChecked = !enabled
-                        }
+                        loadSettings()
                         showToast("设置失败: ${error.message}")
                     }
             } catch (e: Exception) {
                 // 恢复开关状态
-                when (type) {
-                    "expire" -> binding.switchExpireNotification.isChecked = !enabled
-                    "traffic" -> binding.switchTrafficNotification.isChecked = !enabled
-                }
+                loadSettings()
                 showToast("设置失败: ${e.message}")
             }
         }

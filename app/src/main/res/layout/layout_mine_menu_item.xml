@@ -1,17 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="12dp"
     android:background="@drawable/bg_card_dark"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground"
     android:gravity="center_vertical"
     android:minHeight="56dp"
     android:orientation="horizontal"
     android:paddingHorizontal="16dp"
-    android:paddingVertical="12dp"
-    android:clickable="true"
-    android:focusable="true"
-    android:foreground="?attr/selectableItemBackground">
+    android:paddingVertical="12dp">
 
     <ImageView
         android:id="@+id/iv_menu_icon"
@@ -20,8 +21,8 @@
         android:layout_marginEnd="12dp"
         android:contentDescription="@null"
         android:src="@drawable/ic_logo"
-        android:tint="@color/primary"
-        android:visibility="gone" />
+        android:visibility="gone"
+        app:tint="@color/primary" />
 
     <LinearLayout
         android:layout_width="0dp"
@@ -49,12 +50,19 @@
             android:visibility="gone" />
 
     </LinearLayout>
-
+    <com.xboard.ui.round.RoundView
+        android:id="@+id/v_handle"
+        android:layout_width="4dp"
+        android:layout_height="4dp"
+        android:layout_marginEnd="6dp"
+        android:visibility="gone"
+        app:roundBackgroundColor="@color/color_F44336"
+        app:roundCornerRadius="4dp" />
     <ImageView
         android:layout_width="18dp"
-        android:adjustViewBounds="true"
         android:layout_height="wrap_content"
         android:layout_gravity="center_vertical"
+        android:adjustViewBounds="true"
         android:contentDescription="@string/next"
         android:src="@drawable/arrow_right" />
 

@@ -11,9 +11,13 @@ import com.xboard.storage.MMKVManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.security.MessageDigest
 import java.util.*
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * 自动订阅管理器
@@ -27,7 +31,6 @@ import java.util.*
  * 用户购买订阅后，无需任何手动操作，系统会自动完成所有步骤
  */
 class AutoSubscriptionManager(
-    private val context: Context,
     private val userRepository: UserRepository,
     private val scope: CoroutineScope
 ) {
@@ -35,8 +38,9 @@ class AutoSubscriptionManager(
         private const val TAG = "AutoSubscriptionManager"
     }
 
-    private val profileManager = ProfileManager(context)
-    private val subscriptionManager = SubscriptionManager(context, userRepository, scope)
+    private val subscriptionManager = SubscriptionManager(userRepository, scope)
+    private val updatingState = AtomicBoolean(false)
+    private val updatingStateFlow = MutableStateFlow(false)
 
     /**
      * 自动导入和应用订阅
@@ -52,6 +56,11 @@ class AutoSubscriptionManager(
      * @return 是否成功完成整个流程
      */
     suspend fun autoImportAndApply(): Boolean {
+        if (!updatingState.compareAndSet(false, true)) {
+            Log.d(TAG, "Skip auto import, another update is running")
+            return false
+        }
+        updatingStateFlow.value = true
         return try {
             Log.d(TAG, "Starting auto import and apply")
 
@@ -91,6 +100,9 @@ class AutoSubscriptionManager(
         } catch (e: Exception) {
             Log.e(TAG, "Auto import and apply failed: ${e.message}", e)
             false
+        } finally {
+            updatingState.set(false)
+            updatingStateFlow.value = false
         }
     }
 
@@ -373,6 +385,10 @@ class AutoSubscriptionManager(
             }
         }
     }
+
+    fun isUpdating(): Boolean = updatingState.get()
+
+    fun updatingFlow(): StateFlow<Boolean> = updatingStateFlow.asStateFlow()
 
     /**
      * 检查是否需要自动导入

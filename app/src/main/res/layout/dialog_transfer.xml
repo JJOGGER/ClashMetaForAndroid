@@ -1,30 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.xboard.ui.round.RoundLinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:background="@drawable/bg_card_dark"
     android:orientation="vertical"
-    android:padding="24dp">
+    android:padding="24dp"
+    app:roundBackgroundColor="@color/bg_tertiary">
 
     <!-- Title -->
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="16dp"
         android:text="划转"
         android:textColor="@color/text_primary"
-        android:textSize="18sp"
-        android:layout_gravity="center_horizontal"
-        android:textStyle="bold"
-        android:layout_marginBottom="16dp" />
+        android:textSize="16dp"
+        android:textStyle="bold" />
 
     <!-- Warning Message -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="12dp"
-        android:layout_marginBottom="16dp">
+        android:layout_marginBottom="12dp"
+        android:orientation="horizontal">
 
         <ImageView
             android:layout_width="24dp"
@@ -35,8 +35,8 @@
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             android:layout_gravity="center_vertical"
+            android:layout_weight="1"
             android:text="划转后的余额仅用于当前应用消费使用"
             android:textColor="@color/text_secondary"
             android:textSize="14sp" />
@@ -47,22 +47,22 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginBottom="16dp">
+        android:layout_marginBottom="16dp"
+        android:orientation="horizontal">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
             android:text="当前推广佣金余额"
             android:textColor="@color/text_secondary"
-            android:textSize="12sp"
-            android:layout_marginBottom="8dp" />
+            android:textSize="12sp" />
 
         <TextView
             android:id="@+id/tv_current_balance"
             android:layout_width="wrap_content"
-            android:layout_marginStart="19dp"
             android:layout_height="wrap_content"
+            android:layout_marginStart="19dp"
             android:text="2.00"
             android:textColor="@color/text_primary"
             android:textSize="16sp"
@@ -70,66 +70,51 @@
 
     </LinearLayout>
 
-    <!-- Transfer Amount -->
-    <LinearLayout
+    <com.xboard.ui.round.RoundFrameLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:layout_marginBottom="24dp">
+        android:layout_height="36dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        app:roundBackgroundColor="@color/bg_secondary"
+        app:roundCornerRadius="6dp">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="划转金额"
-            android:textColor="@color/text_secondary"
-            android:textSize="12sp"
-            android:layout_marginBottom="8dp" />
-
-        <LinearLayout
+        <EditText
+            android:id="@+id/et_transfer_amount"
             android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:background="@color/bg_secondary"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:paddingStart="12dp"
-            android:paddingEnd="12dp">
+            android:layout_height="match_parent"
+            android:background="@null"
+            android:hint="请输入划转金额"
+            android:inputType="numberDecimal"
+            android:text="1"
+            android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_secondary"
+            android:textSize="14sp" />
 
-            <EditText
-                android:id="@+id/et_transfer_amount"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:background="@null"
-                android:inputType="numberDecimal"
-                android:hint="请输入划转金额"
-                android:text="1"
-                android:textColor="@color/text_primary"
-                android:textColorHint="@color/text_secondary"
-                android:textSize="14sp" />
+    </com.xboard.ui.round.RoundFrameLayout>
 
-        </LinearLayout>
-
-    </LinearLayout>
 
     <!-- Buttons -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="end">
+        android:layout_marginTop="10dp"
+        android:gravity="end"
+        android:orientation="horizontal">
 
         <com.xboard.ui.round.RoundTextView
             android:id="@+id/btn_cancel"
             android:layout_width="wrap_content"
             android:layout_height="40dp"
+            android:layout_marginEnd="12dp"
+            android:background="@color/bg_secondary"
             android:gravity="center"
             android:paddingStart="24dp"
             android:paddingEnd="24dp"
             android:text="取消"
             android:textColor="@color/text_primary"
-            android:textSize="14sp"
-            android:layout_marginEnd="12dp"
-            android:background="@color/bg_secondary" />
+            android:textSize="14sp" />
 
         <com.xboard.ui.round.RoundTextView
             android:id="@+id/btn_confirm"
@@ -146,4 +131,4 @@
 
     </LinearLayout>
 
-</LinearLayout>
+</com.xboard.ui.round.RoundLinearLayout>

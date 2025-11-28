@@ -1,7 +1,17 @@
 package com.xboard.network
 
 import com.xboard.api.ApiService
-import com.xboard.model.*
+import com.xboard.model.CommConfigResponse
+import com.xboard.model.OrderDetailResponse
+import com.xboard.model.Plan
+import com.xboard.model.Server
+import com.xboard.model.ServerGroupNode
+import com.xboard.model.SubscribeResponse
+import com.xboard.model.TrafficLog
+import com.xboard.model.UpdateUserRequest
+import com.xboard.model.UserConfigResponse
+import com.xboard.model.UserInfo
+import com.xboard.model.UserStat
 import com.xboard.storage.MMKVManager
 
 /**
@@ -16,6 +26,7 @@ class UserRepository(private val apiService: ApiService) : BaseRepository() {
             MMKVManager.setCommConfigResponse(config)
         }
     }
+
     suspend fun getUserCommonConfig(): ApiResult<UserConfigResponse> {
         return safeApiCall {
             apiService.getUserConfig()
@@ -31,10 +42,8 @@ class UserRepository(private val apiService: ApiService) : BaseRepository() {
     suspend fun getUserInfo(): ApiResult<UserInfo> {
         return safeApiCall {
             apiService.getUserInfo()
-        }.onSuccess { userInfo ->
-            // 更新缓存
-            MMKVManager.saveUserNickname(userInfo.nickname ?: "")
-            MMKVManager.saveUserAvatar(userInfo.avatar ?: "")
+        }.onSuccess {
+            MMKVManager.setUserInfo(it)
         }
     }
 
@@ -57,16 +66,16 @@ class UserRepository(private val apiService: ApiService) : BaseRepository() {
     }
 
     /**
-     * 获取用户当期用量
+     * 获取用户统计
      */
     suspend fun getUserStat(): ApiResult<UserStat> {
         return safeApiCall {
             apiService.getUserStat()
         }.map { stats ->
-            val upload = stats.getOrNull(0) ?: 0L
-            val download = stats.getOrNull(1) ?: 0L
-            val total = stats.getOrNull(2) ?: 0L
-            UserStat(upload = upload, download = download, total = total)
+            val orderCount = stats.getOrNull(0) ?: 0
+            val tickerCount = stats.getOrNull(1) ?: 0
+            val inviteCount = stats.getOrNull(2) ?: 0
+            UserStat(orderCount, tickerCount, inviteCount)
         }
     }
 
@@ -104,33 +113,12 @@ class UserRepository(private val apiService: ApiService) : BaseRepository() {
             apiService.getServersByGroup(groupId)
         }
     }
-
-    /**
-     * 更新用户信息
-     */
-    suspend fun updateUserInfo(
-        nickname: String? = null,
-        avatar: String? = null
-    ): ApiResult<UserInfo> {
-        val params = mutableMapOf<String, Any>()
-        nickname?.let { params["nickname"] = it }
-        avatar?.let { params["avatar"] = it }
-
-        return safeApiCall {
-            apiService.updateUserInfo(params)
-        }.onSuccess { userInfo ->
-            // 更新缓存
-            userInfo.nickname?.let { MMKVManager.saveUserNickname(it) }
-            userInfo.avatar?.let { MMKVManager.saveUserAvatar(it) }
-        }
-    }
-
     /**
      * 更新用户设置（通用方法）
      */
-    suspend fun updateUserInfo(params: Map<String, Any>): ApiResult<UserInfo> {
+    suspend fun updateUserInfo(request: UpdateUserRequest): ApiResult<Boolean> {
         return safeApiCall {
-            apiService.updateUserInfo(params)
+            apiService.updateUserInfo(request)
         }
     }
 
@@ -161,6 +149,7 @@ class UserRepository(private val apiService: ApiService) : BaseRepository() {
             response.subscribeUrl
         }
     }
+
     suspend fun getSubscribe(): ApiResult<SubscribeResponse> {
         return safeApiCall {
             apiService.getSubscribe()
@@ -168,12 +157,13 @@ class UserRepository(private val apiService: ApiService) : BaseRepository() {
             response
         }
     }
+
     /**
      * 获取订阅配置内容
-     * 
+     *
      * 注意：订阅URL返回的是纯文本YAML格式，不是JSON格式的ApiResponse
      * 所以需要直接处理 ResponseBody，而不是通过 safeApiCall
-     * 
+     *
      * @param subscribeUrl 订阅URL，例如：https://example.com/api/v1/client/subscribe?token=xxx
      * @return 配置内容（YAML格式）
      */
@@ -181,7 +171,7 @@ class UserRepository(private val apiService: ApiService) : BaseRepository() {
         return try {
             val responseBody = apiService.getSubscribeConfig(subscribeUrl)
             val content = responseBody.string()
-            
+
             if (content.isNotEmpty()) {
                 ApiResult.Success(content)
             } else {

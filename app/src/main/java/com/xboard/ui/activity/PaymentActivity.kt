@@ -24,7 +24,7 @@ class PaymentActivity : BaseActivity<ActivityPaymentBinding>() {
     private val orderRepository by lazy { OrderRepository(RetrofitClient.getApiService()) }
     private val userRepository by lazy { UserRepository(RetrofitClient.getApiService()) }
     private val autoSubscriptionManager by lazy { 
-        AutoSubscriptionManager(this, userRepository, lifecycleScope) 
+        AutoSubscriptionManager(userRepository, lifecycleScope)
     }
     private var tradeNo: String? = null
     private var paymentMethodId: Int? = null

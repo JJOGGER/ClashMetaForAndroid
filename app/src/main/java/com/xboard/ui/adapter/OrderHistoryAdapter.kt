@@ -2,7 +2,6 @@ package com.xboard.ui.adapter
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import androidx.core.graphics.toColorInt
 import androidx.recyclerview.widget.RecyclerView
 import com.github.kr328.clash.databinding.ItemOrderHistoryBinding
 import com.xboard.model.OrderDetailResponse
@@ -57,27 +56,11 @@ class OrderHistoryAdapter(
             binding.tvCreatedAt.text = formatTime(order.createdAt)
 
             // 状态
-            val statusText = when (order.status) {
-                0 -> "待支付"
-                1 -> "已完成"
-                2 -> "已取消"
-                else -> "未知状态"
-            }
+            val statusText = order.getStatusText()
             binding.tvStatus.text = statusText
-            val statusColor = when (order.status) {
-                1 -> "#0F1419".toColorInt()
-                else -> "#808A93".toColorInt()
-            }
-            binding.tvStatus.setTextColor(statusColor)
-            val statusDotColor = when (order.status) {
-                0 -> "#F44336".toColorInt()
-                1 -> "#259526".toColorInt()
-                2 -> "#252B33".toColorInt()
-                else -> "#252B33".toColorInt()
-            }
             // 根据状态设置颜色
-            binding.tvStatus.setTextColor(statusColor)
-            binding.vStatus.setBackgroundColor(statusDotColor)
+            binding.tvStatus.setTextColor(order.getStatusColor())
+            binding.vStatus.setBackgroundColor(order.getStatusColor())
 
             // 点击事件
             binding.root.setOnClickListener {

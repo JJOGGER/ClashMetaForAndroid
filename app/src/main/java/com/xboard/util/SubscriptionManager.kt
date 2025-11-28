@@ -27,15 +27,12 @@ import java.util.*
  * 8. 通知 UI 更新 (sendProfileChanged)
  */
 class SubscriptionManager(
-    private val context: Context,
     private val userRepository: UserRepository,
     private val scope: CoroutineScope
 ) {
     companion object {
         private const val TAG = "SubscriptionManager"
     }
-
-    private val profileManager = ProfileManager(context)
 
     /**
      * 获取订阅地址

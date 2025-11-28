@@ -19,6 +19,7 @@
     <color name="color_1B2126">#1B2126</color>
     <color name="bg_secondary">#1A1F26</color>
     <color name="bg_tertiary">#252B33</color>
+    <color name="color_F44336">#F44336</color>
 
     <!-- Text Colors -->
     <color name="text_primary">#FFFFFF</color>

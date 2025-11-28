@@ -3,8 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="@color/bg_primary">
+    android:background="@color/bg_primary"
+    android:orientation="vertical">
 
     <!-- 顶部栏 -->
     <FrameLayout
@@ -34,8 +34,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:orientation="vertical"
-            android:gravity="center">
+            android:gravity="center"
+            android:orientation="vertical">
 
             <TextView
                 android:layout_width="wrap_content"
@@ -71,41 +71,41 @@
         android:id="@+id/llReplyContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@color/bg_secondary"
         android:orientation="vertical"
-        android:padding="12dp"
-        android:background="@color/bg_secondary">
+        android:padding="12dp">
 
         <EditText
             android:id="@+id/etReply"
             android:layout_width="match_parent"
             android:layout_height="80dp"
-            android:background="@color/bg_primary"
-            android:hint="输入回复内容..."
-            android:textColorHint="@color/text_tertiary"
-            android:textColor="@color/text_primary"
-            android:padding="12dp"
-            android:gravity="top"
             android:layout_marginBottom="12dp"
-            android:minLines="3" />
+            android:background="@color/bg_primary"
+            android:gravity="top"
+            android:hint="输入回复内容..."
+            android:minLines="3"
+            android:padding="12dp"
+            android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_tertiary" />
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
             android:layout_marginBottom="20dp"
-            android:gravity="end">
+            android:gravity="end"
+            android:orientation="horizontal">
 
             <com.xboard.ui.round.RoundTextView
                 android:id="@+id/btnClose"
                 android:layout_width="wrap_content"
                 android:layout_height="40dp"
+                android:layout_marginEnd="12dp"
                 android:gravity="center"
                 android:paddingStart="20dp"
                 android:paddingEnd="20dp"
                 android:text="关闭工单"
                 android:textColor="@color/white"
                 android:textSize="14dp"
-                android:layout_marginEnd="12dp"
                 app:roundBackgroundColor="@color/text_secondary"
                 app:roundCornerRadius="8dp" />
 
@@ -131,10 +131,11 @@
         android:id="@+id/llClosedTip"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp"
+        android:layout_marginBottom="20dp"
         android:background="@color/bg_secondary"
         android:gravity="center"
+        android:orientation="vertical"
+        android:padding="16dp"
         android:visibility="gone">
 
         <TextView

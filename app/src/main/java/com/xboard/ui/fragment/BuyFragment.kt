@@ -3,7 +3,6 @@ package com.xboard.ui.fragment
 import android.content.Intent
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.github.kr328.clash.databinding.BottomSheetPlanDetailBinding
@@ -45,12 +44,83 @@ class BuyFragment : BaseFragment<FragmentBuyBinding>() {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = planAdapter
         }
-        
+
         planFeatureAdapter = PlanFeatureAdapter()
     }
 
     override fun initListener() {
-
+//capacity_limit
+//:
+//1
+//content
+//:
+//""
+//created_at
+//:
+//1764265489
+//device_limit
+//:
+//1
+//group_id
+//:
+//2
+//half_year_price
+//:
+//0
+//id
+//:
+//2
+//month_price
+//:
+//0
+//name
+//:
+//"Vip"
+//onetime_price
+//:
+//0
+//quarter_price
+//:
+//0
+//renew
+//:
+//true
+//reset_price
+//:
+//0
+//reset_traffic_method
+//:
+//null
+//sell
+//:
+//true
+//show
+//:
+//true
+//sort
+//:
+//null
+//speed_limit
+//:
+//1111
+//tags
+//:
+//[]
+//three_year_price
+//:
+//0
+//transfer_enable
+//:
+//10
+//two_year_price
+//:
+//0
+//updated_at
+//:
+//1764265492
+//year_price
+//:
+//0
     }
 
     override fun initData() {
@@ -73,9 +143,6 @@ class BuyFragment : BaseFragment<FragmentBuyBinding>() {
         }
     }
 
-    override fun showError(message: String) {
-        Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
-    }
 
     private fun showPlanDetail(plan: Plan) {
         planDetailDialog?.dismiss()
@@ -121,7 +188,7 @@ class BuyFragment : BaseFragment<FragmentBuyBinding>() {
             layoutManager = LinearLayoutManager(context)
             adapter = planFeatureAdapter
         }
-        
+
         // Update features list
         val features = buildFeatureList(plan)
         planFeatureAdapter.updateFeatures(features)
@@ -137,7 +204,7 @@ class BuyFragment : BaseFragment<FragmentBuyBinding>() {
             ?.filter { it.isNotEmpty() }
             ?: emptyList()
 
-        return (parsed ).distinct()
+        return (parsed).distinct()
     }
 
     private fun navigateToOrder(plan: Plan) {

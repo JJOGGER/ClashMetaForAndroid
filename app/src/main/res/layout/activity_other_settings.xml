@@ -227,7 +227,8 @@
                 <com.google.android.material.switchmaterial.SwitchMaterial
                     android:id="@+id/switch_expire_notification"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
+                    android:layout_height="wrap_content"
+                    android:enabled="false" />
 
             </LinearLayout>
 
@@ -245,6 +246,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:enabled="false"
                     android:gravity="center_vertical"
                     android:text="流量邮件提醒"
                     android:textColor="@color/text_primary"

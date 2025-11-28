@@ -20,7 +20,7 @@ class TicketRepository(private val apiService: ApiService) : BaseRepository() {
             apiService.createTicket(
                 CreateTicketRequest(
                     subject = subject,
-                    description = description,
+                    message = description,
                     level = level
                 )
             )

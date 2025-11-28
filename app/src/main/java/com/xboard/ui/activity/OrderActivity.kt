@@ -1,5 +1,6 @@
 package com.xboard.ui.activity
 
+import android.app.AlertDialog
 import android.content.Intent
 import android.view.View
 import android.widget.LinearLayout
@@ -12,8 +13,8 @@ import com.xboard.api.RetrofitClient
 import com.xboard.base.BaseActivity
 import com.xboard.model.Plan
 import com.xboard.network.OrderRepository
-import com.xboard.ui.adapter.PlanAdapter
 import com.xboard.ui.adapter.PlanFeatureAdapter
+import com.xboard.storage.MMKVManager
 import com.xboard.utils.onClick
 import kotlinx.coroutines.launch
 import java.text.DecimalFormat
@@ -184,7 +185,6 @@ class OrderActivity : BaseActivity<ActivityOrderBinding>() {
 
     private fun buildPeriodOptions(plan: Plan): List<PeriodOption> {
         val options = mutableListOf<PeriodOption>()
-
         // Month
         if (plan.monthPrice != null && plan.monthPrice != 0.0) {
             options.add(PeriodOption("month_price", "月付", plan.monthPrice!!))
@@ -214,10 +214,9 @@ class OrderActivity : BaseActivity<ActivityOrderBinding>() {
         if (plan.threeYearPrice != null && plan.threeYearPrice != 0.0) {
             options.add(PeriodOption("three_year_price", "三年付", plan.threeYearPrice!!))
         }
-
         // One Time
-        if (plan.onetimePrice != null && plan.onetimePrice != 0.0) {
-            options.add(PeriodOption("onetime_price", "一次性", plan.onetimePrice!!))
+        if (options.isEmpty()) {
+            options.add(PeriodOption("onetime_price", "一次性", plan.onetimePrice ?: 0.0))
         }
 
         return options
@@ -233,7 +232,8 @@ class OrderActivity : BaseActivity<ActivityOrderBinding>() {
 
         // Calculate width: (screenWidth - totalMargin) / 3
         val screenWidth = resources.displayMetrics.widthPixels
-        val totalMargin = (16 * 5 + 8 * 2).dpToPx()  // 16dp padding on sides + 8dp margin between items
+        val totalMargin =
+            (16 * 5 + 8 * 2).dpToPx()  // 16dp padding on sides + 8dp margin between items
         val cardWidth = (screenWidth - totalMargin) / 3
 
         val layoutParams =
@@ -352,6 +352,37 @@ class OrderActivity : BaseActivity<ActivityOrderBinding>() {
             return
         }
 
+        if (shouldWarnSubscriptionChange()) {
+            showSubscriptionOverwriteDialog {
+                performCreateOrder()
+            }
+        } else {
+            performCreateOrder()
+        }
+    }
+
+    private fun shouldWarnSubscriptionChange(): Boolean {
+        val subscription = MMKVManager.getSubscribe()
+        return subscription != null && subscription.planId > 0
+    }
+
+    private fun showSubscriptionOverwriteDialog(onConfirm: () -> Unit) {
+        AlertDialog.Builder(this)
+            .setIcon(android.R.drawable.ic_dialog_info)
+            .setTitle("注意")
+            .setMessage("请注意，变更订阅会导致当前订阅被覆盖。")
+            .setNegativeButton("取消") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .setPositiveButton("确定") { dialog, _ ->
+                dialog.dismiss()
+                onConfirm()
+            }
+            .create()
+            .show()
+    }
+
+    private fun performCreateOrder() {
         lifecycleScope.launch {
             showLoading("创建订单中...")
             val result = orderRepository.createOrder(
@@ -363,7 +394,7 @@ class OrderActivity : BaseActivity<ActivityOrderBinding>() {
 
             result
                 .onSuccess { tradeNo ->
-                    val intent = Intent(this@OrderActivity, PaymentActivity::class.java)
+                    val intent = Intent(this@OrderActivity, OrderDetailActivity::class.java)
                     intent.putExtra(PaymentActivity.EXTRA_TRADE_NO, tradeNo)
                     startActivityForResult(intent, REQUEST_CODE_PAYMENT)
                 }

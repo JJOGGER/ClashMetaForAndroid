@@ -1,14 +1,13 @@
 package com.xboard.ui.fragment
 
-import android.app.Dialog
 import android.content.Intent
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.EditText
-import android.widget.ImageView
-import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.github.kr328.clash.R
 import com.github.kr328.clash.databinding.FragmentShareBinding
 import com.xboard.api.RetrofitClient
 import com.xboard.base.BaseFragment
@@ -18,6 +17,7 @@ import com.xboard.storage.MMKVManager
 import com.xboard.ui.activity.CommissionRecordActivity
 import com.xboard.ui.adapter.InviteDetailAdapter
 import com.xboard.ui.round.RoundTextView
+import com.xboard.utils.onClick
 import kotlinx.coroutines.launch
 import java.text.DecimalFormat
 
@@ -40,6 +40,7 @@ class ShareFragment : BaseFragment<FragmentShareBinding>() {
     }
 
     override fun initView() {
+        binding.vBack.onClick { activity?.finish() }
         // 设置邀请明细列表
         inviteDetailAdapter = InviteDetailAdapter(activity)
         binding.tvUnit.text = MMKVManager.getUserConfig()?.currency ?: "CNY"
@@ -164,14 +165,14 @@ class ShareFragment : BaseFragment<FragmentShareBinding>() {
     }
 
     private fun showTransferDialog(maxBalance: Double) {
-        val dialog = Dialog(requireContext(), android.R.style.Theme_Dialog)
+        val builder = AlertDialog.Builder(requireContext(), R.style.CoomonDialogStyle)
         val dialogView = LayoutInflater.from(requireContext()).inflate(
-            com.github.kr328.clash.R.layout.dialog_transfer,
+            R.layout.dialog_transfer,
             null
         )
-        dialog.setContentView(dialogView)
-
+        builder.setView(dialogView)
         // 设置对话框宽度
+        val dialog = builder.show()
         val window = dialog.window
         window?.setLayout(
             (resources.displayMetrics.widthPixels * 0.9).toInt(),
@@ -180,22 +181,21 @@ class ShareFragment : BaseFragment<FragmentShareBinding>() {
 
         // 获取控件
         val tvCurrentBalance = dialogView.findViewById<android.widget.TextView>(
-            com.github.kr328.clash.R.id.tv_current_balance
+            R.id.tv_current_balance
         )
         val etTransferAmount = dialogView.findViewById<EditText>(
-            com.github.kr328.clash.R.id.et_transfer_amount
+            R.id.et_transfer_amount
         )
 
         val btnCancel = dialogView.findViewById<RoundTextView>(
-            com.github.kr328.clash.R.id.btn_cancel
+            R.id.btn_cancel
         )
         val btnConfirm = dialogView.findViewById<RoundTextView>(
-            com.github.kr328.clash.R.id.btn_confirm
+            R.id.btn_confirm
         )
 
         // 设置当前余额
         tvCurrentBalance.text = formatPrice(maxBalance)
-
         // 取消按钮
         btnCancel.setOnClickListener {
             dialog.dismiss()

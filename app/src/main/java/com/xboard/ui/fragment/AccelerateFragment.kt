@@ -1,7 +1,6 @@
 package com.xboard.ui.fragment
 
 import android.app.Activity
-import android.app.Activity.RESULT_OK
 import android.app.AlertDialog
 import android.content.Intent
 import android.util.Log
@@ -14,7 +13,6 @@ import androidx.lifecycle.lifecycleScope
 import com.github.kr328.clash.R
 import com.github.kr328.clash.core.Clash
 import com.github.kr328.clash.core.model.Proxy
-import com.github.kr328.clash.core.model.ProxySort
 import com.github.kr328.clash.databinding.FragmentAccelerateBinding
 import com.github.kr328.clash.design.store.UiStore
 import com.github.kr328.clash.remote.Remote
@@ -30,8 +28,10 @@ import com.xboard.ex.visible
 import com.xboard.model.Server
 import com.xboard.network.TicketRepository
 import com.xboard.network.UserRepository
+import com.xboard.storage.MMKVManager
 import com.xboard.ui.activity.MainActivity
 import com.xboard.ui.activity.NodeSelectionActivity
+import com.xboard.util.AutoSubscriptionManager
 import com.xboard.utils.onClick
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -46,6 +46,9 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
         private const val TAG = "AccelerateFragment"
     }
 
+    private val autoSubscriptionManager by lazy {
+        AutoSubscriptionManager(userRepository, lifecycleScope)
+    }
     private val userRepository by lazy { UserRepository(RetrofitClient.getApiService()) }
     private val ticketRepository by lazy { TicketRepository(RetrofitClient.getApiService()) }
     private val uiStore by lazy { UiStore(requireContext()) }
@@ -120,8 +123,28 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
         renderNodeCard(null, selectedServer?.name)
         loadData()
         loadCurrentNodeInfo()
+        fetchSubscribeUrl()
 //        loadLatestNotice()
 //        updateButtonState()
+    }
+
+    /**
+     *
+     * 使用 AutoSubscriptionManager 完成整个自动化流程：
+     * 1. 获取或创建配置文件 UUID
+     * 2. 自动更新配置（导入）
+     * 3. 自动选中 Profile（应用）
+     *
+     * 无论成功还是失败，都继续跳转到首页
+     */
+    private fun fetchSubscribeUrl() {
+        lifecycleScope.launch {
+            try {
+                // 自动导入和应用订阅
+                autoSubscriptionManager.autoImportAndApply()
+            } catch (e: Exception) {
+            }
+        }
     }
 
     override fun onResume() {
@@ -279,14 +302,17 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
                 }
                 currentProxyName = group.now
                 Log.d(TAG, "Current proxy: ${group.now}, total proxies: ${group.proxies.size}")
-                
+
                 val activeProxy = group.proxies.firstOrNull { it.name == group.now }
                 if (activeProxy != null) {
-                    Log.d(TAG, "Active proxy found: ${activeProxy.name}, delay: ${activeProxy.delay}")
+                    Log.d(
+                        TAG,
+                        "Active proxy found: ${activeProxy.name}, delay: ${activeProxy.delay}"
+                    )
                 } else {
                     Log.w(TAG, "Active proxy not found in group")
                 }
-                
+
                 renderNodeCard(activeProxy, group.now, connectedOverride)
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to load node info: ${e.message}", e)
@@ -432,11 +458,7 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
             // 通过 MainActivity 的 bottomNavigation 切换到购买页面
             // 使用反射或直接访问 bottomNavigation
             try {
-//                val bottomNav =
-//                    activity.findViewById<BottomNavigationView>(
-//                        R.id.bottom_navigation
-//                    )
-//                bottomNav?.selectedItemId = R.id.nav_buy
+                activity.setCurrentTab(1)
             } catch (e: Exception) {
                 // 如果找不到，尝试通过 supportFragmentManager 切换
                 Toast.makeText(requireContext(), "切换到购买页面", Toast.LENGTH_SHORT).show()
@@ -519,6 +541,15 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
 //    }
 
     private fun onToggleClashStatus() {
+        //判断是否有订阅信息
+        if (autoSubscriptionManager.isUpdating()) {
+            showToast("节点更新中，请稍后再试")
+            return
+        }
+        if (MMKVManager.getSubscribe() == null) {
+            showNoSubscriptionDialog()
+            return
+        }
         if (clashRunning) {
             activity?.stopClashService()
             binding.btnConnect.text = "开启连接"
@@ -531,6 +562,13 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
             }
         }
 
+    }
+
+    private suspend fun hasValidSubscription(): Boolean {
+        return withProfile {
+            val profiles = queryAll()
+            profiles.any { it.imported && it.type.name == "Url" }
+        }
     }
 
     private suspend fun startClash() {

@@ -117,7 +117,7 @@ class TicketDetailActivity : BaseActivity<ActivityTicketDetailBinding>() {
                     this@TicketDetailActivity.ticket = ticket
                     isClosed = ticket.status != 0
                     updateReplyInputState()
-
+                    loadTicketDetail()
                     // 构建回复列表
                     val replies = mutableListOf<TicketReply>()
 

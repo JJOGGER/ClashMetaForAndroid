@@ -21,9 +21,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
-            android:text="基础套餐"
+            android:text=""
             android:textColor="@color/text_primary"
-            android:textSize="16sp"
+            android:textSize="16dp"
             android:textStyle="bold" />
 
 
@@ -80,12 +80,11 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="end|bottom"
-        android:layout_marginEnd="16dp"
         android:layout_marginBottom="10dp"
-        android:paddingStart="25dp"
-        android:paddingTop="10dp"
-        android:paddingEnd="25dp"
-        android:paddingBottom="10dp"
+        android:paddingStart="16dp"
+        android:paddingTop="8dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="8dp"
         android:text="详情"
         android:textColor="@color/primary"
         android:textSize="16dp"

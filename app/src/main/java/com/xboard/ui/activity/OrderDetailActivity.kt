@@ -1,19 +1,19 @@
 package com.xboard.ui.activity
 
+import android.annotation.SuppressLint
 import android.util.Log
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.github.kr328.clash.databinding.ActivityOrderDetailBinding
 import com.github.kr328.clash.databinding.BottomSheetPlanDetailBinding
-import com.github.kr328.clash.util.withProfile
 import com.xboard.api.RetrofitClient
 import com.xboard.base.BaseActivity
 import com.xboard.ex.gone
 import com.xboard.ex.visible
+import com.xboard.model.OrderDetailResponse
 import com.xboard.model.Plan
 import com.xboard.network.OrderRepository
 import com.xboard.network.UserRepository
-import com.xboard.storage.MMKVManager
 import com.xboard.ui.adapter.PaymentMethodAdapter
 import com.xboard.ui.adapter.PlanFeatureAdapter
 import com.xboard.util.AutoSubscriptionManager
@@ -32,8 +32,8 @@ class OrderDetailActivity : BaseActivity<ActivityOrderDetailBinding>() {
 
     private val orderRepository by lazy { OrderRepository(RetrofitClient.getApiService()) }
     private val userRepository by lazy { UserRepository(RetrofitClient.getApiService()) }
-    private val autoSubscriptionManager by lazy { 
-        AutoSubscriptionManager(this, userRepository, lifecycleScope) 
+    private val autoSubscriptionManager by lazy {
+        AutoSubscriptionManager(userRepository, lifecycleScope)
     }
     private var tradeNo: String? = null
     private var orderStatus: Int = 0
@@ -69,6 +69,7 @@ class OrderDetailActivity : BaseActivity<ActivityOrderDetailBinding>() {
                 val response = RetrofitClient.getApiService().getPaymentMethods()
 
                 if (response.isSuccess() && response.data != null) {
+                    paymentMethodId = response.data[0].id
                     paymentMethodAdapter.updateData(response.data)
                 } else {
                     showError("加载支付方式失败")
@@ -152,12 +153,12 @@ class OrderDetailActivity : BaseActivity<ActivityOrderDetailBinding>() {
 
     /**
      * 支付成功后自动导入和应用订阅
-     * 
+     *
      * 使用 AutoSubscriptionManager 完成整个自动化流程：
      * 1. 获取或创建 Profile
      * 2. 自动更新配置（导入）
      * 3. 自动选中 Profile（应用）
-     * 
+     *
      * 用户可以手动点击开始连接来启动 VPN
      */
     private fun updateSubscribeUrlAfterPayment() {
@@ -165,22 +166,22 @@ class OrderDetailActivity : BaseActivity<ActivityOrderDetailBinding>() {
             try {
                 // 自动导入和应用订阅
                 val success = autoSubscriptionManager.autoImportAndApply()
-                
+
                 if (success) {
                     // 显示成功提示
-                    Log.e("TAG","订阅已自动导入和应用，请点击开始连接")
+                    Log.e("TAG", "订阅已自动导入和应用，请点击开始连接")
                 } else {
                     // 显示失败提示
-                    Log.e("TAG","订阅导入失败，请稍后重试")
+                    Log.e("TAG", "订阅导入失败，请稍后重试")
                 }
-                
+
                 // 延迟后返回
                 delay(2000)
                 setResult(RESULT_OK)
                 finish()
             } catch (e: Exception) {
                 // 异常处理，继续返回
-                Log.e("TAG","处理支付结果失败")
+                Log.e("TAG", "处理支付结果失败")
                 delay(2000)
                 setResult(RESULT_OK)
                 finish()
@@ -212,7 +213,7 @@ class OrderDetailActivity : BaseActivity<ActivityOrderDetailBinding>() {
 
             result
                 .onSuccess { order ->
-                    if (order.status == 0) {
+                    if (order.status == OrderDetailResponse.STATUS_WAITING) {
                         binding.vPayContainer.visible()
                         binding.vComplatedContainer.gone()
                     } else {
@@ -227,31 +228,20 @@ class OrderDetailActivity : BaseActivity<ActivityOrderDetailBinding>() {
         }
     }
 
-    private fun displayOrderDetail(order: com.xboard.model.OrderDetailResponse) {
+    @SuppressLint("UseKtx")
+    private fun displayOrderDetail(order: OrderDetailResponse) {
         // 显示状态和原因（头部）
-        val statusText = when (order.status) {
-            0 -> "待支付"
-            1 -> "已完成"
-            2 -> "已取消"
-            else -> "未知状态"
-        }
+        val statusText = order.getStatusText()
 
         // 更新两个容器中的状态显示
         binding.tvOrderStatus.text = statusText
-        binding.tvOrderStatus.setTextColor(
-            when (order.status) {
-                0 -> android.graphics.Color.parseColor("#FF9800") // 橙色 - 待支付
-                1 -> android.graphics.Color.parseColor("#4CAF50") // 绿色 - 已完成
-                -1 -> android.graphics.Color.parseColor("#F44336") // 红色 - 已取消
-                else -> android.graphics.Color.GRAY
-            }
-        )
+        binding.tvOrderStatus.setTextColor(order.getStatusColor())
 
         // 显示订单基本信息（两个容器都有）
         binding.tvTradeNo.text = order.tradeNo
         binding.tvCreatedAt.text = formatTime(order.createdAt)
         binding.tvPaidAt.visibility =
-            if (order.status != 0) android.view.View.VISIBLE else android.view.View.GONE
+            if (order.status == OrderDetailResponse.STATUS_PAID) android.view.View.VISIBLE else android.view.View.GONE
         if (order.paidAt != null && order.paidAt > 0) {
             binding.tvPaidAt.text = "支付时间: ${formatTime(order.paidAt)}"
         }
@@ -294,7 +284,7 @@ class OrderDetailActivity : BaseActivity<ActivityOrderDetailBinding>() {
         }
 
         // 加载支付方式（仅待支付状态）
-        if (order.status == 0) {
+        if (order.status == OrderDetailResponse.STATUS_WAITING) {
             loadPaymentMethods()
         }
     }

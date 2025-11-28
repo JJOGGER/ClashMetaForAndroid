@@ -19,6 +19,7 @@ class OrderHistoryActivity : BaseActivity<ActivityOrderHistoryBinding>() {
     private val userRepository by lazy { UserRepository(RetrofitClient.getApiService()) }
     private lateinit var orderAdapter: OrderHistoryAdapter
     private var currentPage = 1
+
     private var isLoading = false
 
     override fun getViewBinding(): ActivityOrderHistoryBinding {
@@ -30,9 +31,12 @@ class OrderHistoryActivity : BaseActivity<ActivityOrderHistoryBinding>() {
     }
 
     override fun initData() {
-        loadOrderHistory()
     }
 
+    override fun onResume() {
+        super.onResume()
+        loadOrderHistory()
+    }
     private fun setupUI() {
         binding.vBack.setOnClickListener {
             finish()

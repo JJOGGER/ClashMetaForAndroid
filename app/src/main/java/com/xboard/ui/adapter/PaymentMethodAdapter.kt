@@ -14,7 +14,7 @@ class PaymentMethodAdapter(private val onMethodSelect: (PaymentMethod) -> Unit) 
     RecyclerView.Adapter<PaymentMethodAdapter.PaymentMethodViewHolder>() {
 
     private val methods = mutableListOf<PaymentMethod>()
-    private var selectedPosition = -1
+    private var selectedPosition = 0
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PaymentMethodViewHolder {
         val binding = ItemPaymentMethodBinding.inflate(LayoutInflater.from(parent.context), parent, false)

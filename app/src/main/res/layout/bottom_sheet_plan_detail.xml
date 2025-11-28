@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="@color/bg_secondary"
-    android:padding="24dp">
+    android:padding="16dp">
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -85,12 +85,6 @@
                 android:textStyle="bold" />
 
         </LinearLayout>
-        <!-- Divider -->
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:layout_marginVertical="16dp"
-            android:background="@color/stroke" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rv_plan_features"
@@ -106,14 +100,13 @@
         android:layout_height="wrap_content"
         android:layout_gravity="end"
         android:layout_marginTop="40dp"
-        android:layout_marginEnd="16dp"
-        android:paddingStart="25dp"
+        android:paddingStart="16dp"
         android:paddingTop="10dp"
-        android:paddingEnd="25dp"
+        android:paddingEnd="16dp"
         android:paddingBottom="10dp"
         android:text="立即购买"
         android:textColor="@color/primary"
-        android:textSize="16dp"
+        android:textSize="14dp"
         app:roundCornerRadius="10dp"
         app:roundStrokeColor="@color/color_6F9070"
         app:roundStrokeWidth="1dp" />
