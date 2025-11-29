@@ -1,17 +1,20 @@
 package com.xboard.ui.fragment
 
+import android.annotation.SuppressLint
 import android.app.Activity
-import android.app.AlertDialog
 import android.content.Intent
+import android.graphics.Color
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.toColorInt
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.github.kr328.clash.R
-import com.github.kr328.clash.core.Clash
 import com.github.kr328.clash.core.model.Proxy
 import com.github.kr328.clash.databinding.FragmentAccelerateBinding
 import com.github.kr328.clash.design.store.UiStore
@@ -25,12 +28,14 @@ import com.xboard.base.BaseFragment
 import com.xboard.ex.gone
 import com.xboard.ex.showToast
 import com.xboard.ex.visible
-import com.xboard.model.Server
 import com.xboard.network.TicketRepository
 import com.xboard.network.UserRepository
 import com.xboard.storage.MMKVManager
 import com.xboard.ui.activity.MainActivity
 import com.xboard.ui.activity.NodeSelectionActivity
+import com.xboard.ui.adapter.NoticeBannerAdapter
+import com.xboard.ui.dialog.DialogHelper
+import com.xboard.ui.dialog.WebsiteRecommendationDialog
 import com.xboard.util.AutoSubscriptionManager
 import com.xboard.utils.onClick
 import kotlinx.coroutines.isActive
@@ -52,12 +57,14 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
     private val userRepository by lazy { UserRepository(RetrofitClient.getApiService()) }
     private val ticketRepository by lazy { TicketRepository(RetrofitClient.getApiService()) }
     private val uiStore by lazy { UiStore(requireContext()) }
-    private var selectedServer: Server? = null
+    private lateinit var noticeBannerAdapter: NoticeBannerAdapter
+    private var noticeAutoScrollJob: kotlinx.coroutines.Job? = null
     private var currentProfileUUID: UUID? = null
     private var currentGroupName: String? = null
     private var currentProxyName: String? = null
     private var connectionStartTime: Long = 0L
     private var connectionTimerJob: kotlinx.coroutines.Job? = null
+    private var configCheckJob: kotlinx.coroutines.Job? = null
     protected val clashRunning: Boolean
         get() = Remote.broadcasts.clashRunning
     private val nodeSelectionLauncher = registerForActivityResult(
@@ -65,7 +72,6 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             // 节点已选择，重新加载节点信息
-            loadCurrentNodeInfo()
         }
     }
 
@@ -80,7 +86,7 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
         } else {
             showToast("VPN 权限被拒绝，无法连接")
             binding.btnConnect.text = "开启连接"
-            binding.btnConnect.setBackgroundColor(android.graphics.Color.parseColor("#FF9800"))
+            binding.btnConnect.setBackgroundColor("#FF9800".toColorInt())
         }
     }
 
@@ -92,20 +98,17 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
         return FragmentAccelerateBinding.inflate(inflater, container, false)
     }
 
+    private var mMode = 0
     override fun initView() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            fetch()
+        binding.modeToggle.setOnTabSelectedListener { position ->
+            mMode = position
         }
-        binding.modeToggle.setOnTabSelectedListener {
-//            when (checkedId) {
-//                binding.btnModeSmart.id -> {
-//                    binding.tvModeHint.text = "使用智能模式，将自动选择最佳节点"
-//                }
-//                binding.btnModeGlobal.id -> {
-//                    binding.tvModeHint.text = "使用全局模式，将使用所有节点"
-//                }
-//            }
+        binding.vWebsite.setOnClickListener {
+            showWebsiteRecommendationDialog()
         }
+        // 初始化轮播 Banner
+        initNoticeBanner()
+
         binding.cardSelectedNode.onClick {
             navigateToNodeSelection()
         }
@@ -113,6 +116,7 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
             // 点击连接/断开按钮 - 对标 Clash 的 ToggleStatus
             onToggleClashStatus()
         }
+
     }
 
     override fun initListener() {
@@ -120,11 +124,10 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
     }
 
     override fun initData() {
-        renderNodeCard(null, selectedServer?.name)
         loadData()
-        loadCurrentNodeInfo()
+        getSiteLists()
         fetchSubscribeUrl()
-//        loadLatestNotice()
+        loadNotices()
 //        updateButtonState()
     }
 
@@ -149,68 +152,26 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
 
     override fun onResume() {
         super.onResume()
+        if (!clashRunning) {
+            binding.btnConnect.text = "开启连接"
+            binding.btnConnect.setBackgroundColor(Color.parseColor("#FF9800"))
+            stopConnectionTimer()
+            renderNodeCard(null, null, false)
+            return
+        }
         loadCurrentNodeInfo()
     }
 
     private fun loadData() {
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            val statResult = userRepository.getUserStat()
-            val serversResult = userRepository.getUserServers()
-
-            statResult
-                .onSuccess { stat ->
-                    binding.tvSelectedNodeName.text = "--"
-//                    binding.tvUpload.text = formatBytes(stat.upload)
-//                    binding.tvDownload.text = formatBytes(stat.download)
-//                    binding.tvTotal.text = formatBytes(stat.total)
-//                    binding.progressBar.progress = if (stat.total > 0) {
-//                        ((stat.upload + stat.download) * 100 / stat.total).toInt()
-//                    } else {
-//                        0
-//                    }
-                }
-                .onError { error ->
-                    showError(error.message)
-                }
-
-            serversResult
-                .onSuccess { servers ->
-                    updateSelectedServer(servers.firstOrNull())
-                }
-                .onError { error ->
-                    showError(error.message)
-                }
-
-        }
-    }
-
-    // ============ 节点和流量显示 ============
-
-    private fun loadLatestNotice() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            try {
-                val notices = ticketRepository.getNotices(page = 1, perPage = 1)
-                if (!notices?.data.isNullOrEmpty()) {
-                    val notice = notices.data.first()
-                    // 显示公告弹窗
-                    showNoticeDialog(notice.title, notice.content)
-                    Log.d(TAG, "Latest notice: ${notice.title}")
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to load notice: ${e.message}")
-            }
-        }
     }
 
     private fun showNoticeDialog(title: String, content: String) {
-        AlertDialog.Builder(requireContext())
-            .setTitle(title)
-            .setMessage(content)
-            .setPositiveButton("知道了") { dialog, _ ->
-                dialog.dismiss()
-            }
-            .show()
+        DialogHelper.showSimpleDialog(
+            fragment = this,
+            title = title,
+            message = content,
+            buttonText = "知道了"
+        )
     }
 
 
@@ -227,7 +188,6 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
 
                     val timeStr = String.format("%02d:%02d:%02d", hours, minutes, seconds)
                     binding.tvConnectionTime.text = timeStr
-                    Log.d(TAG, "Connection time: $timeStr")
                 } catch (e: Exception) {
                     Log.e(TAG, "Failed to update connection timer: ${e.message}")
                 }
@@ -244,19 +204,9 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
         binding.tvConnectionTime.gone()
     }
 
-    private fun startTrafficMonitoring() {
+    private fun getSiteLists() {
         viewLifecycleOwner.lifecycleScope.launch {
-            while (isActive) {
-                try {
-                    val traffic = Clash.queryTrafficNow()
-//                    binding.tvUploadSpeed.text = formatSpeed(traffic.upload)
-//                    binding.tvDownloadSpeed.text = formatSpeed(traffic.download)
-//                    binding.tvTotalTraffic.text = formatBytes(traffic.uploadTotal + traffic.downloadTotal)
-                } catch (e: Exception) {
-                    Log.e(TAG, "Failed to query traffic: ${e.message}")
-                }
-                kotlinx.coroutines.delay(1000) // 每秒更新一次
-            }
+            ticketRepository.getKnowledgeArticles()
         }
     }
 
@@ -269,14 +219,17 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
         }
     }
 
-    private fun loadCurrentNodeInfo(connectedOverride: Boolean? = null) {
+    private fun loadCurrentNodeInfo(
+        connectedOverride: Boolean? = null,
+        retryCount: Int = 0
+    ) {
         viewLifecycleOwner.lifecycleScope.launch {
             try {
                 val activeProfile = withProfile { queryActive() }
                 currentProfileUUID = activeProfile?.uuid
                 if (activeProfile == null) {
                     Log.w(TAG, "No active profile found")
-                    renderNodeCard(null, selectedServer?.name, false)
+                    renderNodeCard(null, null, false)
                     return@launch
                 }
 
@@ -284,7 +237,15 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
                 val groupNames = withClash {
                     queryProxyGroupNames(uiStore.proxyExcludeNotSelectable)
                 }
-                Log.d(TAG, "Available groups: $groupNames")
+                Log.d(TAG, "Available groups: $groupNames (retry: $retryCount)")
+
+                // 如果没有获取到，且还有重试机会，延迟后重试
+                if (groupNames.isEmpty() && retryCount < 2) {
+                    Log.w(TAG, "No proxy groups found, retrying... (${retryCount + 1}/2)")
+                    kotlinx.coroutines.delay(500)
+                    loadCurrentNodeInfo(connectedOverride, retryCount + 1)
+                    return@launch
+                }
 
                 // 优先选择 "Proxy" 组，否则选择第一个可用的组
                 currentGroupName = groupNames.firstOrNull { it == "Proxy" }
@@ -292,7 +253,7 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
 
                 if (currentGroupName.isNullOrBlank()) {
                     Log.w(TAG, "No proxy group found")
-                    renderNodeCard(null, selectedServer?.name, connectedOverride)
+                    renderNodeCard(null, null, connectedOverride)
                     return@launch
                 }
 
@@ -316,7 +277,7 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
                 renderNodeCard(activeProxy, group.now, connectedOverride)
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to load node info: ${e.message}", e)
-                renderNodeCard(null, selectedServer?.name, connectedOverride)
+                renderNodeCard(null, null, connectedOverride)
             }
         }
     }
@@ -335,13 +296,6 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
         Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
     }
 
-    private fun updateSelectedServer(server: Server?) {
-        selectedServer = server
-        if (!clashRunning) {
-            renderNodeCard(null, server?.name, false)
-        }
-    }
-
     private fun renderNodeCard(
         proxy: Proxy?,
         fallbackName: String? = null,
@@ -354,8 +308,9 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
             binding.cardSelectedNode.visible()
         } else {
             binding.cardSelectedNode.gone()
+            return
         }
-        val candidateName = selectedServer?.name
+        val candidateName = proxy?.name
         val displayName = when {
             proxy?.title?.isNotBlank() == true -> proxy.title
             proxy?.name?.isNotBlank() == true -> proxy.name
@@ -381,15 +336,15 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
             binding.ivNodeIcon.setImageResource(R.drawable.ico_unknown)
         }
         binding.tvSelectedNodeName.text = displayName
-        binding.tvSelectedNodeLatency.text = if (isConnected) {
-            val latencyValue = proxy?.delay?.takeIf { it > 0 }
-            val latencyText = latencyValue?.let {
-                getString(R.string.selected_node_latency_value, it)
-            } ?: getString(R.string.selected_node_latency_unknown)
-            getString(R.string.selected_node_connected_format, latencyText)
-        } else {
-            getString(R.string.selected_node_disconnected)
-        }
+//        binding.tvSelectedNodeLatency.text = if (isConnected) {
+//            val latencyValue = proxy?.delay?.takeIf { it > 0 }
+//            val latencyText = latencyValue?.let {
+//                getString(R.string.selected_node_latency_value, it)
+//            } ?: getString(R.string.selected_node_latency_unknown)
+//            getString(R.string.selected_node_connected_format, latencyText)
+//        } else {
+//            getString(R.string.selected_node_disconnected)
+//        }
 
         val dotColor = ContextCompat.getColor(
             ctx,
@@ -404,29 +359,6 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
         nodeSelectionLauncher.launch(intent)
     }
 
-    private fun updateModeHint() {
-
-    }
-
-    /**
-     * 点击连接按钮的处理
-     *
-     * 逻辑：
-     * 1. 检查是否有有效的订阅
-     * 2. 如果没有订阅，弹出提示对话框
-     * 3. 如果有订阅，调用 withProfile 连接节点
-     */
-    private fun onConnectButtonClicked() {
-        // 检查是否有有效的订阅
-//        if (!hasValidSubscription()) {
-//            // 没有有效订阅，弹出提示
-//            showNoSubscriptionDialog()
-//        } else {
-//            // 有有效订阅，连接节点
-//            connectToNode()
-//        }
-    }
-
 
     /**
      * 弹出没有订阅的提示对话框
@@ -435,18 +367,17 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
      * 点击好的，切换到第二个tab（购买页面）
      */
     private fun showNoSubscriptionDialog() {
-        AlertDialog.Builder(requireContext())
-            .setTitle("提示")
-            .setMessage("当前无任何有效订阅，请前往购买")
-            .setPositiveButton("好的") { dialog, _ ->
-                dialog.dismiss()
-                // 切换到第二个tab（购买页面）
+        DialogHelper.showConfirmDialog(
+            fragment = this,
+            title = "提示",
+            message = "当前无任何有效订阅，请前往购买",
+            positiveButtonText = "好的",
+            negativeButtonText = "取消",
+            showNegativeButton = true,
+            onPositiveClick = {
                 switchToBuyTab()
             }
-            .setNegativeButton("取消") { dialog, _ ->
-                dialog.dismiss()
-            }
-            .show()
+        )
     }
 
     /**
@@ -466,80 +397,8 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
         }
     }
 
-    /**
-     * 连接到节点
-     *
-     * 参考项目中"点此启动"的逻辑：
-     * 1. 调用 withProfile 获取 IProfileManager 实例
-     * 2. 查询所有Profile
-     * 3. 找到订阅类型的Profile（URL类型）
-     * 4. 调用 update(uuid) 更新Profile
-     * 5. Clash服务监听数据库变化
-     * 6. VPN配置生效
-     */
-//    private fun connectToNode() {
-//        viewLifecycleOwner.lifecycleScope.launch {
-//            try {
-//                // 显示连接中状态
-//                binding.btnConnect.text = "连接中..."
-//                binding.btnConnect.isEnabled = false
-//
-//                withProfile {
-//                    // 获取所有Profile
-//                    val profiles = queryAll()
-//
-//                    // 找到订阅类型的Profile（URL类型）
-//                    profiles.forEach { profile ->
-//                        if (profile.imported && profile.type.name == "Url") {
-//                            // 调用 update 方法更新Profile
-//                            update(profile.uuid)
-//                        }
-//                    }
-//                }
-//
-//                // 启动 Clash Service（会触发 VPN 权限请求）
-//                val vpnRequest = startClashService()
-//
-//                if (vpnRequest != null) {
-//                    // 需要用户授权 VPN 权限
-//                    vpnPermissionLauncher.launch(vpnRequest)
-//                } else {
-//                    // 已授权，直接启动成功
-//                    onConnectSuccess()
-//                }
-//            } catch (e: Exception) {
-//                binding.btnConnect.text = "开启连接"
-//                binding.btnConnect.isEnabled = true
-//                Toast.makeText(requireContext(), "连接失败: ${e.message}", Toast.LENGTH_SHORT)
-//                    .show()
-//            }
-//        }
-//    }
 
-//    private val vpnPermissionLauncher = registerForActivityResult(
-//        ActivityResultContracts.StartActivityForResult()
-//    ) { result ->
-//        if (result.resultCode == Activity.RESULT_OK) {
-//            // 用户授权成功，再次启动 Clash Service
-//            viewLifecycleOwner.lifecycleScope.launch {
-//                try {
-//                    startClashService()
-//                    onConnectSuccess()
-//                } catch (e: Exception) {
-//                    binding.btnConnect.text = "开启连接"
-//                    binding.btnConnect.isEnabled = true
-//                    Toast.makeText(requireContext(), "连接失败: ${e.message}", Toast.LENGTH_SHORT)
-//                        .show()
-//                }
-//            }
-//        } else {
-//            // 用户拒绝授权
-//            binding.btnConnect.text = "开启连接"
-//            binding.btnConnect.isEnabled = true
-//            Toast.makeText(requireContext(), "VPN 权限被拒绝", Toast.LENGTH_SHORT).show()
-//        }
-//    }
-
+    @SuppressLint("UseKtx")
     private fun onToggleClashStatus() {
         //判断是否有订阅信息
         if (autoSubscriptionManager.isUpdating()) {
@@ -553,10 +412,12 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
         if (clashRunning) {
             activity?.stopClashService()
             binding.btnConnect.text = "开启连接"
-            binding.btnConnect.setBackgroundColor(android.graphics.Color.parseColor("#FF9800"))
+            binding.btnConnect.setBackgroundColor(Color.parseColor("#FF9800"))
             stopConnectionTimer()
-            renderNodeCard(null, selectedServer?.name, false)
+            stopConfigurationCheckLoop()  // ← 停止轮询
+            renderNodeCard(null, null, false)
         } else {
+            switchTunnelMode()
             viewLifecycleOwner.lifecycleScope.launch {
                 startClash()
             }
@@ -564,19 +425,13 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
 
     }
 
-    private suspend fun hasValidSubscription(): Boolean {
-        return withProfile {
-            val profiles = queryAll()
-            profiles.any { it.imported && it.type.name == "Url" }
-        }
-    }
 
     private suspend fun startClash() {
         val active = withProfile { queryActive() }
 
         if (active == null || !active.imported) {
             showToast("连接失败")
-            renderNodeCard(null, selectedServer?.name, false)
+            renderNodeCard(null, null, false)
             return
         }
 
@@ -605,43 +460,277 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
 
         // 更新 UI 状态
         binding.btnConnect.text = "关闭连接"
-        binding.btnConnect.setBackgroundColor(android.graphics.Color.parseColor("#4CAF50"))
+        binding.btnConnect.setBackgroundColor("#4CAF50".toColorInt())
         connectionStartTime = System.currentTimeMillis()
         startConnectionTimer()
 
-        // 立即加载节点信息（从已知的配置中获取，不需要等待延迟数据）
-        // 这样用户能立即看到当前连接的节点
+        // 方案 1: 立即尝试加载（可能成功）
         loadCurrentNodeInfo(true)
 
-        // 延迟 1 秒后再次加载，确保 Clash 已完全初始化并获取到最新的延迟信息
-        // 这次加载会更新延迟数据
-        kotlinx.coroutines.delay(1000)
-        loadCurrentNodeInfo(true)
+        // 方案 2: 启动轮询（如果立即加载失败）
+        startConfigurationCheckLoop()
     }
 
-    private suspend fun fetch() {
-        val state = withClash {
-            queryTunnelState()
-        }
-        val providers = withClash {
-            queryProviders()
-        }
-//        withContext(Dispatchers.Main) {
-//            binding.mode = when (mode) {
-//                TunnelState.Mode.Direct -> context.getString(R.string.direct_mode)
-//                TunnelState.Mode.Global -> context.getString(R.string.global_mode)
-//                TunnelState.Mode.Rule -> context.getString(R.string.rule_mode)
-//                else -> context.getString(R.string.rule_mode)
-//            }
-//        }
-//        setMode(state.mode)
-//        setHasProviders(providers.isNotEmpty())
-    }
+    // ============ 公告轮播 Banner ============
 
-    private enum class Mode { SMART, GLOBAL }
-
-    private val isActive: Boolean
-        get() = viewLifecycleOwner.lifecycle.currentState.isAtLeast(
-            androidx.lifecycle.Lifecycle.State.STARTED
+    private fun initNoticeBanner() {
+        noticeBannerAdapter = NoticeBannerAdapter(
+            onNoticeClick = { notice ->
+                showNoticeDetailDialog(notice.title, notice.content)
+            },
+            onIndicatorUpdate = { position ->
+                updateNoticeIndicators(position)
+            }
         )
+        binding.vpNoticeBanner.adapter = noticeBannerAdapter
+        binding.vpNoticeBanner.offscreenPageLimit = 1
+
+        // 启用用户交互（手势滑动）
+        binding.vpNoticeBanner.isUserInputEnabled = true
+
+        // 添加页面变化监听器以重置自动轮播
+        binding.vpNoticeBanner.registerOnPageChangeCallback(object :
+            androidx.viewpager2.widget.ViewPager2.OnPageChangeCallback() {
+            override fun onPageScrollStateChanged(state: Int) {
+                // 用户交互时重置自动轮播计时器
+                if (state != androidx.viewpager2.widget.ViewPager2.SCROLL_STATE_IDLE) {
+                    noticeAutoScrollJob?.cancel()
+                    // 用户停止交互后，重新启动自动轮播
+                } else if (state == androidx.viewpager2.widget.ViewPager2.SCROLL_STATE_IDLE) {
+                    startNoticeAutoScroll()
+                }
+            }
+        })
+    }
+
+    private fun loadNotices() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val noticeResponse = ticketRepository.getNotices(page = 1, perPage = 10)
+                if (noticeResponse != null && noticeResponse.data.isNotEmpty()) {
+                    noticeBannerAdapter.setData(noticeResponse.data)
+                    binding.vpNoticeBanner.visible()
+
+                    // 初始化指示器
+                    createNoticeIndicators(noticeResponse.data.size)
+
+                    // 启动自动轮播
+                    startNoticeAutoScroll()
+                    Log.d(TAG, "Loaded ${noticeResponse.data.size} notices")
+                } else {
+                    binding.vpNoticeBanner.gone()
+                    Log.d(TAG, "No notices available")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to load notices: ${e.message}")
+                binding.vpNoticeBanner.gone()
+            }
+        }
+    }
+
+    private fun startNoticeAutoScroll() {
+        noticeAutoScrollJob?.cancel()
+        noticeAutoScrollJob = viewLifecycleOwner.lifecycleScope.launch {
+            while (isActive) {
+                try {
+                    kotlinx.coroutines.delay(5000) // 5秒切换一次
+                    val currentItem = binding.vpNoticeBanner.currentItem
+                    binding.vpNoticeBanner.setCurrentItem(currentItem + 1, true)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error in auto scroll: ${e.message}")
+                }
+            }
+        }
+    }
+
+    private fun showNoticeDetailDialog(title: String, content: String) {
+        DialogHelper.showSimpleDialog(
+            fragment = this,
+            title = title,
+            message = content,
+            buttonText = "知道了"
+        )
+    }
+
+    private fun showWebsiteRecommendationDialog() {
+        try {
+            // 从缓存获取网站推荐
+            val articles = MMKVManager.getWebsiteRecommendations()
+
+            if (articles.isNullOrEmpty()) {
+                showToast("暂无网站推荐")
+                return
+            }
+
+            val dialog = WebsiteRecommendationDialog.newInstance(articles)
+            dialog.show(childFragmentManager, "WebsiteRecommendationDialog")
+
+            Log.d(TAG, "Showing ${articles.size} website recommendations")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to show website recommendation dialog: ${e.message}")
+            showToast("加载网站推荐失败")
+        }
+    }
+
+    // ============ 公告指示器 ============
+
+    private fun createNoticeIndicators(count: Int) {
+        try {
+            // 获取第一个 ViewPager2 的页面视图来访问指示器容器
+            val firstPageView = binding.vpNoticeBanner.getChildAt(0) as? android.view.ViewGroup
+            val indicatorContainer =
+                firstPageView?.findViewWithTag<LinearLayout>("indicator_container")
+                    ?: return
+
+            indicatorContainer.removeAllViews()
+
+            for (i in 0 until count) {
+                val indicator = android.widget.ImageView(requireContext()).apply {
+                    setImageResource(if (i == 0) R.drawable.indicator_active else R.drawable.indicator_inactive)
+                    layoutParams = android.widget.LinearLayout.LayoutParams(
+                        android.util.TypedValue.applyDimension(
+                            android.util.TypedValue.COMPLEX_UNIT_DIP,
+                            8f,
+                            resources.displayMetrics
+                        ).toInt(),
+                        android.util.TypedValue.applyDimension(
+                            android.util.TypedValue.COMPLEX_UNIT_DIP,
+                            8f,
+                            resources.displayMetrics
+                        ).toInt()
+                    ).apply {
+                        setMargins(3, 0, 3, 0)
+                    }
+                }
+                indicatorContainer.addView(indicator)
+            }
+            Log.d(TAG, "Created $count notice indicators")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error creating notice indicators: ${e.message}")
+        }
+    }
+
+    private fun updateNoticeIndicators(position: Int) {
+        try {
+            // 获取 ViewPager2 内部的 RecyclerView
+            val recyclerView =
+                binding.vpNoticeBanner.getChildAt(0) as? androidx.recyclerview.widget.RecyclerView
+                    ?: return
+            val layoutManager = recyclerView.layoutManager as? LinearLayoutManager
+                ?: return
+
+            // 遍历所有可见的 ViewHolder，更新它们的指示器
+            for (i in 0 until recyclerView.childCount) {
+                val itemView = recyclerView.getChildAt(i) as? android.view.ViewGroup
+                val indicatorContainer =
+                    itemView?.findViewWithTag<LinearLayout>("indicator_container")
+                        ?: continue
+
+                if (indicatorContainer.childCount <= 0) {
+                    continue
+                }
+
+                val realPosition = position % (indicatorContainer.childCount)
+
+                for (j in 0 until indicatorContainer.childCount) {
+                    val indicator =
+                        indicatorContainer.getChildAt(j) as? android.widget.ImageView ?: continue
+                    indicator.setImageResource(
+                        if (j == realPosition) R.drawable.indicator_active else R.drawable.indicator_inactive
+                    )
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error updating notice indicators: ${e.message}")
+        }
+    }
+
+    /**
+     * 启动配置检查轮询
+     * 持续检查配置是否加载完成，一旦加载完成就停止轮询
+     * 这是方案 C：轮询监听（无需修改 Service）
+     */
+    private fun startConfigurationCheckLoop() {
+        configCheckJob?.cancel()
+        configCheckJob = viewLifecycleOwner.lifecycleScope.launch {
+            var lastGroupCount = 0
+            var checkCount = 0
+            val maxChecks = 20  // 最多检查 20 次 × 200ms = 4 秒
+
+            while (isActive && checkCount < maxChecks) {
+                try {
+                    val currentGroupNames = withClash {
+                        queryProxyGroupNames(uiStore.proxyExcludeNotSelectable)
+                    }
+
+                    // 如果获取到节点组，且数量有增加
+                    if (currentGroupNames.isNotEmpty() &&
+                        currentGroupNames.size > lastGroupCount
+                    ) {
+                        Log.d(TAG, "Configuration loaded: ${currentGroupNames.size} groups found")
+                        lastGroupCount = currentGroupNames.size
+
+                        // 更新节点信息
+                        loadCurrentNodeInfo()
+                        break  // 配置已加载，停止轮询
+                    }
+
+                    checkCount++
+                    kotlinx.coroutines.delay(200)  // 每 200ms 检查一次
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error checking configuration: ${e.message}")
+                    checkCount++
+                    kotlinx.coroutines.delay(500)
+                }
+            }
+
+            if (checkCount >= maxChecks) {
+                Log.w(TAG, "Configuration check timeout after 4 seconds")
+            }
+        }
+    }
+
+    /**
+     * 停止配置检查轮询
+     */
+    private fun stopConfigurationCheckLoop() {
+        configCheckJob?.cancel()
+        configCheckJob = null
+    }
+
+    /**
+     * 切换 Tunnel 模式
+     * 逻辑复用自 ProxyActivity 中的 PatchMode 处理
+     *
+     * @param position 0 = Rule (智能), 1 = Global (全局)
+     */
+    private fun switchTunnelMode() {
+        val mode = when (mMode) {
+            0 -> com.github.kr328.clash.core.model.TunnelState.Mode.Rule      // 智能模式
+            1 -> com.github.kr328.clash.core.model.TunnelState.Mode.Global    // 全局模式
+            else -> com.github.kr328.clash.core.model.TunnelState.Mode.Rule
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+
+                // 调用 Clash 核心切换模式
+                withClash {
+                    // 查询当前覆写配置
+                    val override =
+                        queryOverride(com.github.kr328.clash.core.Clash.OverrideSlot.Session)
+
+                    // 更新模式
+                    override.mode = mode
+
+                    // 应用覆写配置
+                    patchOverride(com.github.kr328.clash.core.Clash.OverrideSlot.Session, override)
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error switching tunnel mode: ${e.message}", e)
+                showToast("模式切换失败: ${e.message}")
+            }
+        }
+    }
+
 }

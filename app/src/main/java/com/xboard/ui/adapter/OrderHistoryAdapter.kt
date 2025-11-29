@@ -1,12 +1,15 @@
 package com.xboard.ui.adapter
 
+import android.annotation.SuppressLint
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.github.kr328.clash.databinding.ItemOrderHistoryBinding
 import com.xboard.model.OrderDetailResponse
+import java.text.DecimalFormat
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.math.max
 
 /**
  * 订单历史列表适配器
@@ -42,6 +45,7 @@ class OrderHistoryAdapter(
         private val binding: ItemOrderHistoryBinding
     ) : RecyclerView.ViewHolder(binding.root) {
 
+        @SuppressLint("SetTextI18n")
         fun bind(order: OrderDetailResponse) {
             // 订单号
             binding.tvTradeNo.text = order.tradeNo
@@ -50,7 +54,8 @@ class OrderHistoryAdapter(
             binding.tvPlanName.text = order.plan?.name
 
             // 价格
-            binding.tvPrice.text = "¥${String.format("%.2f", order.payableAmount)}"
+            binding.tvPrice.text =
+                "¥${formatPrice(order.plan?.getRealPlanPrice(order.period) ?: 0.0)}"
 
             // 创建时间
             binding.tvCreatedAt.text = formatTime(order.createdAt)
@@ -66,6 +71,13 @@ class OrderHistoryAdapter(
             binding.root.setOnClickListener {
                 onItemClick(order)
             }
+        }
+
+        private val priceFormatter = DecimalFormat("#.##")
+        private fun formatPrice(amount: Double): String {
+            // Round to avoid floating point precision issues
+            val rounded = (max(amount, 0.0)) / 100.0
+            return priceFormatter.format(rounded)
         }
 
         private fun formatTime(timestamp: Long): String {

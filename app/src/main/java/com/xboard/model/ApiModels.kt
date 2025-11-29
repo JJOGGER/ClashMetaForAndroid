@@ -3,7 +3,10 @@ package com.xboard.model
 import android.graphics.Color
 import androidx.core.graphics.toColorInt
 import com.google.gson.annotations.SerializedName
+import com.sunmi.background.utils.GsonUtil
 import java.io.Serializable
+import java.text.DecimalFormat
+import kotlin.math.max
 
 // ==================== 通用响应模型 ====================
 
@@ -144,8 +147,6 @@ data class UserPlanResponse(
 data class Plan(
     val id: Int,
     val name: String,
-    val price: Double = 0.0, // 元为单位
-    val period: String = "", // "month_price", "quarter_price", "half_year_price", "year_price"
     val traffic: Long = 0, // 字节
     @SerializedName("transfer_enable")
     val transferEnable: Long = 0,
@@ -204,9 +205,50 @@ data class Plan(
     val updatedAt: Long? = null
 ) : Serializable {
     companion object {
+        private val priceFormatter = DecimalFormat("#.##")
         const val MAX_TRAFFIC = Integer.MAX_VALUE
     }
 
+    fun getRealPlanPrice(period: String?): Double {
+        return when (period) {
+            "month_price" -> monthPrice
+            "quarter_price" -> quarterPrice
+            "half_year_price" -> halfYearPrice
+            "year_price" -> yearPrice
+            "two_year_price" -> twoYearPrice
+            "three_year_price" -> threeYearPrice
+            "onetime_price" -> onetimePrice
+            else -> 0.0
+        } ?: 0.0
+    }
+
+    fun getShowPrice(): Pair<String, String> {
+        if (monthPrice != null && monthPrice != 0.0) {
+            return Pair("月付", "${formatPrice(monthPrice)}")
+        } else if (quarterPrice != null && quarterPrice != 0.0) {
+            return Pair("季付", "${formatPrice(quarterPrice)}")
+        } else if (halfYearPrice != null && halfYearPrice != 0.0) {
+            return Pair("半年付", "${formatPrice(halfYearPrice)}")
+        } else if (yearPrice != null && yearPrice != 0.0) {
+            return Pair("年付", "${formatPrice(yearPrice)}")
+        } else if (twoYearPrice != null && twoYearPrice != 0.0) {
+            return Pair("两年付", "${formatPrice(twoYearPrice)}")
+        } else if (threeYearPrice != null && threeYearPrice != 0.0) {
+            return Pair("三年付", "${formatPrice(threeYearPrice)}")
+        } else if (onetimePrice != null && onetimePrice != 0.0) {
+            return Pair("一次性", "${formatPrice(onetimePrice)}")
+        } else {
+            return Pair("试用套餐", "0")
+        }
+
+    }
+
+
+    private fun formatPrice(amount: Double): String {
+        // Round to avoid floating point precision issues
+        val rounded = (max(amount, 0.0)) / 100.0
+        return priceFormatter.format(rounded)
+    }
 }
 
 // ==================== 用户统计相关 ====================
@@ -472,18 +514,14 @@ data class CheckoutRequest(
 )
 
 data class CheckoutResponse(
-    val type: Int, // 1=URL, 0=二维码
-    val data: String,
+    val type: Int, // -1=免费订单, 0=二维码, 1=支付链接
+    val data: Any?, // 根据type不同，可能是Boolean(true)、String(url)或String(二维码数据)
     @SerializedName("trade_no")
     val tradeNo: String
 )
 
 data class OrderStatusResponse(
-    @SerializedName("trade_no")
-    val tradeNo: String,
-    val status: Int, // 0=待支付, 1=已支付, 2=已过期, 3=已取消
-    @SerializedName("paid_at")
-    val paidAt: Long? = null
+    val data: Int, // 0=待支付, 1=已支付, 2=已过期, 3=已取消
 )
 
 data class OrderDetailResponse(
@@ -533,30 +571,33 @@ data class OrderDetailResponse(
     val updatedAt: Long? = null,
     val plan: Plan? = null,
     val amount: Double = 0.0,
-    @SerializedName("payable_amount")
-    val payableAmount: Double = 0.0
-){
-    companion object{
-        //0=待支付, 1=已支付, 2=已过期, 3=已取消
-        const val STATUS_PAID = 1
-        const val STATUS_CANCELED = 3
+) {
+    companion object {
+        //0=待支付, 3=已支付, 4=折扣, 2=已取消
+        const val STATUS_PAID = 3
+        const val STATUS_CANCELED = 2
         const val STATUS_WAITING = 0
         const val STATUS_EXPIRE = 2
+        const val STATUS_DISCOUNT = 4
+        const val STATUS_LOADING = 1
     }
+
     fun getStatusText(): String {
         return when (status) {
-            STATUS_PAID -> "已支付"
+            STATUS_LOADING -> "开通中"
+            STATUS_PAID -> "已完成"
             STATUS_CANCELED -> "已取消"
             STATUS_WAITING -> "待支付"
-            STATUS_EXPIRE -> "已过期"
+            STATUS_DISCOUNT -> "已折抵"
             else -> "未知"
         }
     }
+
     fun getStatusColor(): Int {
         return when (status) {
-            STATUS_PAID -> "#4CAF50".toColorInt()
-            STATUS_CANCELED -> Color.GRAY
-            STATUS_WAITING ->"#FF9800".toColorInt()
+            STATUS_LOADING,STATUS_PAID -> "#4CAF50".toColorInt()
+            STATUS_DISCOUNT, STATUS_CANCELED -> Color.GRAY
+            STATUS_WAITING -> "#FF9800".toColorInt()
             STATUS_EXPIRE -> Color.GRAY
             else -> Color.GRAY
         }
@@ -578,20 +619,37 @@ data class CancelOrderRequest(
 )
 
 data class CheckCouponRequest(
-    @SerializedName("coupon_code")
+    @SerializedName("code")
     val couponCode: String,
     @SerializedName("plan_id")
-    val planId: Int? = null
+    val planId: Int? = null,
+    @SerializedName("period")
+    val period: String? = null
 )
 
 data class CouponResponse(
     val id: Int,
     val code: String,
-    val discount: Double,
+    val name: String,
+    val type: Int,
+    val value: Double,
+    val show: Boolean,
     @SerializedName("limit_use")
     val limitUse: Int? = null,
-    @SerializedName("used")
-    val used: Int = 0
+    @SerializedName("limit_use_with_user")
+    val limitUseWithUser: Int? = null,
+    @SerializedName("limit_plan_ids")
+    val limitPlanIds: List<Int>? = null,
+    @SerializedName("limit_period")
+    val limitPeriod: List<String>? = null,
+    @SerializedName("started_at")
+    val startedAt: Long,
+    @SerializedName("ended_at")
+    val endedAt: Long,
+    @SerializedName("created_at")
+    val createdAt: Long,
+    @SerializedName("updated_at")
+    val updatedAt: Long
 )
 
 data class CheckGiftCardRequest(
@@ -707,6 +765,8 @@ data class Notice(
     val id: Int,
     val title: String,
     val content: String,
+    @SerializedName("img_url")
+    val imgUrl: String,
     @SerializedName("created_at")
     val createdAt: Long
 )
@@ -718,19 +778,26 @@ data class KnowledgeCategory(
 )
 
 data class KnowledgeArticleResponse(
-    val data: List<KnowledgeArticle>,
-    val total: Int,
-    @SerializedName("per_page")
-    val perPage: Int,
-    val current_page: Int
+    val site: List<KnowledgeArticle>
 )
 
 data class KnowledgeArticle(
     val id: Int,
     val title: String,
-    val content: String,
-    @SerializedName("category_id")
-    val categoryId: Int,
-    @SerializedName("created_at")
-    val createdAt: Long
-)
+    val body: String,
+    @SerializedName("category")
+    val category: String,
+    @SerializedName("updated_at")
+    val updatedAt: Long,
+    val show: Boolean,
+    var item: KnowledgeItem? = null,
+) {
+    fun getWebsite(): KnowledgeItem? {
+        if (item == null) {
+            item = GsonUtil.getGson().fromJson(body, KnowledgeItem::class.java)
+        }
+        return item
+    }
+}
+
+data class KnowledgeItem(val url: String? = null, val img: String? = null)

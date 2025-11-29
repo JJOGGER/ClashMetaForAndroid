@@ -41,7 +41,10 @@ class TrafficDetailAdapter : RecyclerView.Adapter<TrafficDetailAdapter.ViewHolde
         RecyclerView.ViewHolder(binding.root) {
 
         fun bind(item: TrafficLog) {
-            binding.tvDate.text = DateUtils.getDateTime(item.record_at)
+            binding.tvDate.text =  DateUtils.getStringTime(
+                (item.record_at?.toLongOrNull() ?: 0L) * 1000,
+                "yyyy-MM-dd"
+            )
             // 普通样式
             binding.tvUpload.text = formatSize(item.u ?: 0)
             binding.tvDownload.text = formatSize(item.d ?: 0)

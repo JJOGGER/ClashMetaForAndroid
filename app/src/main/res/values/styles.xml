@@ -41,6 +41,12 @@
         <item name="backgroundTint">@color/accent_button_background_color</item>
     </style>
     
+    <!-- Material Components styles -->
+    <style name="Widget.MaterialComponents.Button.OutlinedButton" parent="Widget.MaterialComponents.Button">
+        <item name="strokeColor">@color/primary</item>
+        <item name="strokeWidth">1dp</item>
+    </style>
+    
 <!--    <color name="accent_button_text_color">#7FC882</color>-->
 <!--    <color name="accent_button_background_color">#0F1419</color>-->
     
@@ -50,9 +56,7 @@
         <item name="android:layout_marginStart">30dp</item>
         <item name="android:layout_marginEnd">30dp</item>
         <item name="roundColorAngle">270</item>
-        <item name="roundStartColor">@color/main_start</item>
-        <item name="roundCenterColor">@color/main_center</item>
-        <item name="roundEndColor">@color/main_end</item>
+        <item name="roundBackgroundColor">@color/primary</item>
         <item name="roundCornerRadius">50dp</item>
         <item name="android:textColor">@color/white</item>
         <item name="android:textSize">16dp</item>

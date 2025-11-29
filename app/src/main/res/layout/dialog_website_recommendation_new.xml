@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:background="#80000000">
+
+    <!-- 对话框容器 -->
+    <com.xboard.ui.round.RoundLinearLayout
+        android:layout_width="380dp"
+        app:roundBackgroundColor="@color/bg_secondary"
+        android:layout_height="wrap_content"
+        app:roundCornerRadius="10dp"
+        android:orientation="vertical"
+        android:maxHeight="500dp">
+
+        <!-- 标题 -->
+        <TextView
+            android:id="@+id/tv_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="网站推荐"
+            android:textSize="16sp"
+            android:textColor="@color/text_primary"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:padding="16dp" />
+
+        <!-- 列表 -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_websites"
+            android:layout_width="match_parent"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
+            android:layout_height="wrap_content"
+            android:nestedScrollingEnabled="false" />
+
+        <!-- 关闭按钮 -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/bg_secondary" />
+
+        <com.xboard.ui.round.RoundTextView
+            android:id="@+id/btn_close"
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:text="关闭"
+            android:textSize="14sp"
+            android:textColor="@color/text_secondary"
+            app:roundBottomRightRadius="10dp"
+            app:roundBottomLeftRadius="10dp"
+            android:gravity="center"
+            app:roundBackgroundColor="@color/bg_tertiary"/>
+
+    </com.xboard.ui.round.RoundLinearLayout>
+
+</LinearLayout>

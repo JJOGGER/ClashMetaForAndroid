@@ -77,18 +77,4 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toBottomOf="@id/top_bar" />
 
-    <!-- 测速按钮 -->
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btn_refresh"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:layout_margin="16dp"
-        android:text="测速"
-        android:textSize="16sp"
-        app:backgroundTint="@color/primary"
-        app:cornerRadius="8dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
-
 </androidx.constraintlayout.widget.ConstraintLayout>

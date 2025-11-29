@@ -1,6 +1,6 @@
 package com.xboard.ui.activity
 
-import android.app.AlertDialog
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.view.View
 import android.widget.LinearLayout
@@ -11,13 +11,22 @@ import com.github.kr328.clash.databinding.BottomSheetPlanDetailBinding
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.xboard.api.RetrofitClient
 import com.xboard.base.BaseActivity
+import com.xboard.event.OrderPayEvent
+import com.xboard.ex.visible
+import com.xboard.model.CouponResponse
 import com.xboard.model.Plan
 import com.xboard.network.OrderRepository
-import com.xboard.ui.adapter.PlanFeatureAdapter
+import com.xboard.network.PlanRepository
 import com.xboard.storage.MMKVManager
+import com.xboard.ui.adapter.PlanFeatureAdapter
+import com.xboard.ui.dialog.ConfirmDialog
 import com.xboard.utils.onClick
 import kotlinx.coroutines.launch
+import org.greenrobot.eventbus.EventBus
+import org.greenrobot.eventbus.Subscribe
+import org.greenrobot.eventbus.ThreadMode
 import java.text.DecimalFormat
+import kotlin.math.max
 
 /**
  * 订单创建和支付页面
@@ -42,8 +51,14 @@ class OrderActivity : BaseActivity<ActivityOrderBinding>() {
     private val priceFormatter = DecimalFormat("#.##")
 
     override fun initView() {
+        EventBus.getDefault().register(this)
         selectedPlan = intent.getSerializableExtra(EXTRA_PLAN) as? Plan?
         setupUI()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        EventBus.getDefault().unregister(this)
     }
 
     override fun initData() {
@@ -60,7 +75,7 @@ class OrderActivity : BaseActivity<ActivityOrderBinding>() {
         // 显示套餐信息
         selectedPlan?.let { plan ->
             binding.tvPlanName.text = plan.name
-            binding.tvTotalPrice.text = "¥${formatPrice(plan.price)}"
+            updateOrderSummary()
             if (plan.transferEnable >= Integer.MAX_VALUE) {
                 binding.tvPlanTraffic.text = " 无限制"
             } else {
@@ -119,14 +134,8 @@ class OrderActivity : BaseActivity<ActivityOrderBinding>() {
             adapter = planFeatureAdapter
         }
         binding.tvPlanTitle.text = plan.name
-        binding.tvPlanPrice.text = "¥ ${formatPrice(plan.price)}"
-        if (plan.onetimePrice != null && plan.onetimePrice != 0.0) {
-            binding.tvPlanPrice.text = "¥ ${formatPrice(plan.onetimePrice)}"
-            binding.tvPriceType.text = "一次性"
-        } else if (plan.monthPrice != null && plan.monthPrice != 0.0) {
-            binding.tvPlanPrice.text = "¥ ${formatPrice(plan.monthPrice)}"
-            binding.tvPriceType.text = "月付"
-        }
+        binding.tvPlanPrice.text = "¥ ${plan.getShowPrice().second}"
+        binding.tvPriceType.text = plan.getShowPrice().first
         if (plan.transferEnable >= Integer.MAX_VALUE) {
             binding.tvPlanTraffic.text = " 无限制"
         } else {
@@ -214,6 +223,7 @@ class OrderActivity : BaseActivity<ActivityOrderBinding>() {
         if (plan.threeYearPrice != null && plan.threeYearPrice != 0.0) {
             options.add(PeriodOption("three_year_price", "三年付", plan.threeYearPrice!!))
         }
+
         // One Time
         if (options.isEmpty()) {
             options.add(PeriodOption("onetime_price", "一次性", plan.onetimePrice ?: 0.0))
@@ -282,19 +292,15 @@ class OrderActivity : BaseActivity<ActivityOrderBinding>() {
     private fun updateOrderSummary() {
         selectedPlan?.let { plan ->
             selectedPeriod?.let { period ->
-                val price = when (period) {
-                    "month_price" -> plan.monthPrice ?: plan.price
-                    "quarter_price" -> plan.quarterPrice ?: plan.price
-                    "half_year_price" -> plan.halfYearPrice ?: plan.price
-                    "year_price" -> plan.yearPrice ?: plan.price
-                    "two_year_price" -> plan.twoYearPrice ?: plan.price
-                    "three_year_price" -> plan.threeYearPrice ?: plan.price
-                    "onetime_price" -> plan.onetimePrice ?: plan.price
-                    else -> plan.price
-                }
-                binding.tvTotalPrice.text = "¥${formatPrice(price)}"
+                binding.tvTotalPrice.text =
+                    "¥${formatPrice(plan.getRealPlanPrice(period) - (mCouponResponse?.value ?: 0.0))}"
             }
         }
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    fun onOrderPayEvent(event: OrderPayEvent) {
+        finish()
     }
 
     data class PeriodOption(
@@ -303,6 +309,9 @@ class OrderActivity : BaseActivity<ActivityOrderBinding>() {
         val price: Double
     )
 
+    private var mCouponResponse: CouponResponse? = null
+
+    @SuppressLint("SetTextI18n")
     private fun checkCoupon() {
         val couponCode = binding.etCouponCode.text.toString().trim()
         if (couponCode.isEmpty()) {
@@ -312,15 +321,19 @@ class OrderActivity : BaseActivity<ActivityOrderBinding>() {
 
         binding.btnCheckCoupon.isEnabled = false
 
+        showLoading("验证中...")
         lifecycleScope.launch {
-            val planRepository = com.xboard.network.PlanRepository(RetrofitClient.getApiService())
-            val result = planRepository.checkCoupon(couponCode, selectedPlan?.id)
-
+            val planRepository = PlanRepository(RetrofitClient.getApiService())
+            val result = planRepository.checkCoupon(couponCode, selectedPlan?.id, selectedPeriod)
+            hideLoading()
             result
                 .onSuccess { coupon ->
-                    binding.tvCouponDiscount.text = "优惠: ¥${formatPrice(coupon.discount)}"
+                    mCouponResponse = coupon
+                    binding.vCouponDiscount.visible()
+                    binding.tvCouponDiscount.text = "-¥${formatPrice(coupon.value)}"
                     binding.tvCouponDiscount.visibility = View.VISIBLE
-                    showSuccess("优惠券有效")
+                    updateOrderSummary()
+                    showSuccess("优惠券验证成功")
                 }
                 .onError { error ->
                     showError(error.message ?: "优惠券无效")
@@ -367,19 +380,15 @@ class OrderActivity : BaseActivity<ActivityOrderBinding>() {
     }
 
     private fun showSubscriptionOverwriteDialog(onConfirm: () -> Unit) {
-        AlertDialog.Builder(this)
-            .setIcon(android.R.drawable.ic_dialog_info)
-            .setTitle("注意")
-            .setMessage("请注意，变更订阅会导致当前订阅被覆盖。")
-            .setNegativeButton("取消") { dialog, _ ->
-                dialog.dismiss()
-            }
-            .setPositiveButton("确定") { dialog, _ ->
-                dialog.dismiss()
-                onConfirm()
-            }
-            .create()
-            .show()
+        val dialog = ConfirmDialog.newInstance(
+            title = "注意",
+            message = "请注意，变更订阅会导致当前订阅被覆盖。",
+            positiveButtonText = "确定",
+            negativeButtonText = "取消",
+            showNegativeButton = true,
+            onPositiveClick = onConfirm
+        )
+        dialog.show(supportFragmentManager, "SubscriptionOverwriteDialog")
     }
 
     private fun performCreateOrder() {
@@ -415,7 +424,7 @@ class OrderActivity : BaseActivity<ActivityOrderBinding>() {
 
     private fun formatPrice(amount: Double): String {
         // Round to avoid floating point precision issues
-        val rounded = amount / 100.0
+        val rounded = (max(amount, 0.0)) / 100.0
         return priceFormatter.format(rounded)
     }
 

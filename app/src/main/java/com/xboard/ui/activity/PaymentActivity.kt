@@ -101,32 +101,35 @@ class PaymentActivity : BaseActivity<ActivityPaymentBinding>() {
         lifecycleScope.launch {
             val checkoutData = orderRepository.checkout(tradeNo!!, paymentMethodId!!)
             hideLoading()
-            when (checkoutData?.type) {
-//                        1 -> {
-//                            // 打开URL
+            checkoutData.onSuccess {
+                when (it?.type) {
+                    1 -> {
+                        // 打开URL
 //                            binding.webView.visibility = View.VISIBLE
 //                            binding.tvStatus.visibility = View.GONE
 //                            binding.progressBar.visibility = View.GONE
-//                            binding.webView.loadUrl(checkoutData.data)
-//                            startPollingPaymentStatus()
-//                        }
-//                        0 -> {
-//                            // 二维码
+//                            binding.webView.loadUrl(checkoutData.data.toString())
+                        startPollingPaymentStatus()
+                    }
+                    0 -> {
+                        // 二维码
 //                            binding.progressBar.visibility = View.GONE
 //                            binding.tvStatus.text = "请扫描二维码完成支付\n二维码: ${checkoutData.data}"
-//                            startPollingPaymentStatus()
-//                        }
-                -1 -> {
-                    // 免费订单，直接成功
-                    showSuccess("支付成功")
-                    // 支付成功，更新订阅配置
-                    updateSubscribeUrlAfterPayment()
-                }
+                        startPollingPaymentStatus()
+                    }
+                    -1 -> {
+                        // 免费订单，直接成功
+                        showSuccess("支付成功")
+                        // 支付成功，更新订阅配置
+                        updateSubscribeUrlAfterPayment()
+                    }
 //                        else -> {
 //                            binding.progressBar.visibility = View.GONE
 //                            Toast.makeText(this@PaymentActivity, "未知的支付类型", Toast.LENGTH_SHORT).show()
 //                            finish()
 //                        }
+                }
+
             }
         }
     }

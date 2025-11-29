@@ -32,6 +32,7 @@
     <color name="accent_warning">#FF9800</color>
     <color name="accent_error">#F44336</color>
     <color name="error">#F44336</color>
+    <color name="color_attention">#1C231D</color>
 
     <!-- Stroke Colors -->
     <color name="stroke">#2A3038</color>

@@ -34,6 +34,10 @@ class TicketActivity : BaseActivity<ActivityTicketBinding>() {
     }
 
     override fun initData() {
+    }
+
+    override fun onResume() {
+        super.onResume()
         loadTickets()
     }
 

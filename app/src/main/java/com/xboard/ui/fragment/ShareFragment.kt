@@ -4,7 +4,6 @@ import android.content.Intent
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.EditText
-import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.github.kr328.clash.R
@@ -16,6 +15,8 @@ import com.xboard.network.InviteRepository
 import com.xboard.storage.MMKVManager
 import com.xboard.ui.activity.CommissionRecordActivity
 import com.xboard.ui.adapter.InviteDetailAdapter
+import com.xboard.ui.dialog.DialogHelper
+import com.xboard.ui.dialog.TransferDialog
 import com.xboard.ui.round.RoundTextView
 import com.xboard.utils.onClick
 import kotlinx.coroutines.launch
@@ -165,62 +166,22 @@ class ShareFragment : BaseFragment<FragmentShareBinding>() {
     }
 
     private fun showTransferDialog(maxBalance: Double) {
-        val builder = AlertDialog.Builder(requireContext(), R.style.CoomonDialogStyle)
-        val dialogView = LayoutInflater.from(requireContext()).inflate(
-            R.layout.dialog_transfer,
-            null
-        )
-        builder.setView(dialogView)
-        // 设置对话框宽度
-        val dialog = builder.show()
-        val window = dialog.window
-        window?.setLayout(
-            (resources.displayMetrics.widthPixels * 0.9).toInt(),
-            ViewGroup.LayoutParams.WRAP_CONTENT
-        )
-
-        // 获取控件
-        val tvCurrentBalance = dialogView.findViewById<android.widget.TextView>(
-            R.id.tv_current_balance
-        )
-        val etTransferAmount = dialogView.findViewById<EditText>(
-            R.id.et_transfer_amount
-        )
-
-        val btnCancel = dialogView.findViewById<RoundTextView>(
-            R.id.btn_cancel
-        )
-        val btnConfirm = dialogView.findViewById<RoundTextView>(
-            R.id.btn_confirm
-        )
-
-        // 设置当前余额
-        tvCurrentBalance.text = formatPrice(maxBalance)
-        // 取消按钮
-        btnCancel.setOnClickListener {
-            dialog.dismiss()
-        }
-
-        // 确定按钮
-        btnConfirm.setOnClickListener {
-            val amountText = etTransferAmount.text.toString()
+        val dialog = TransferDialog.newInstance(maxBalance) { amountText ->
             val amount = amountText.toDoubleOrNull() ?: 0.0
 
             if (amount <= 0) {
                 showError("请输入有效的划转金额")
-                return@setOnClickListener
+                return@newInstance
             }
 
             if (amount > maxBalance) {
                 showError("划转金额不能超过余额")
-                return@setOnClickListener
+                return@newInstance
             }
 
-            dialog.dismiss()
             performTransfer(amount)
         }
-
-        dialog.show()
+        dialog.show(childFragmentManager, "TransferDialog")
     }
 
     private fun performTransfer(amount: Double) {

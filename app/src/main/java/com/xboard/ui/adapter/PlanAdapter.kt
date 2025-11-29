@@ -1,5 +1,6 @@
 package com.xboard.ui.adapter
 
+import android.annotation.SuppressLint
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
@@ -44,15 +45,11 @@ class PlanAdapter(private val onPlanClick: (Plan) -> Unit) :
     inner class PlanViewHolder(private val binding: ItemPlanBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
+        @SuppressLint("SetTextI18n")
         fun bind(plan: Plan) {
             binding.tvPlanName.text = plan.name
-            if (plan.onetimePrice != null && plan.onetimePrice != 0.0) {
-                binding.tvPlanPrice.text = "¥ ${formatPrice(plan.onetimePrice)}"
-                binding.tvPriceType.text = "一次性"
-            } else if (plan.monthPrice != null && plan.monthPrice != 0.0) {
-                binding.tvPlanPrice.text = "¥ ${formatPrice(plan.monthPrice)}"
-                binding.tvPriceType.text = "月付"
-            }
+            binding.tvPlanPrice.text = "¥ ${plan.getShowPrice().second}"
+            binding.tvPriceType.text = plan.getShowPrice().first
             if (plan.transferEnable >= Integer.MAX_VALUE) {
                 binding.tvPlanTraffic.text = " 无限制"
             } else {

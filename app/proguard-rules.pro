@@ -22,6 +22,37 @@
 
 -dontobfuscate
 
+# Keep Gson specific classes and methods
+-keep class com.google.gson.** { *; }
+-keep class sun.misc.Unsafe { *; }
+-keep class * implements com.google.gson.TypeAdapterFactory
+-keep class * implements com.google.gson.JsonSerializer
+-keep class * implements com.google.gson.JsonDeserializer
+
+# Keep all model classes and their members
+-keep class com.xboard.model.** { *; }
+-keep class com.xboard.api.ApiService { *; }
+
+# Keep TypeToken and its subclasses
+-keep class com.google.gson.reflect.TypeToken { *; }
+-keep class * extends com.google.gson.reflect.TypeToken
+
+# Keep ParameterizedType and related reflection classes
+-keep class java.lang.reflect.ParameterizedType
+-keep class java.lang.reflect.Type
+-keep class java.lang.reflect.GenericArrayType
+
+# Keep utility classes
+-keep class com.xboard.util.** { *; }
+-keep class com.xboard.utils.** { *; }
+-keep class com.sunmi.background.utils.GsonUtil { *; }
+
+# Keep network and repository classes
+-keep class com.xboard.network.** { *; }
+
+# Keep storage classes
+-keep class com.xboard.storage.** { *; }
+
 -assumenosideeffects class kotlin.jvm.internal.Intrinsics {
     public static void checkNotNull(...);
     public static void checkExpressionValueIsNotNull(...);

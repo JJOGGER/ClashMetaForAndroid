@@ -29,7 +29,6 @@ import kotlinx.coroutines.withContext
  * 其他设置页面
  */
 class OtherSettingsActivity : BaseActivity<ActivityOtherSettingsBinding>() {
-
     val service by lazy {
         ServiceStore(this@OtherSettingsActivity)
     }
@@ -75,6 +74,12 @@ class OtherSettingsActivity : BaseActivity<ActivityOtherSettingsBinding>() {
 
         // 访问控制模式
         binding.itemAccessControl.setOnClickListener {
+
+            if (clashRunning) {
+                launch {
+                    showToast("请先断开连接后再设置")
+                }
+            }
             showAccessControlModeBottomSheet()
         }
         // 主题设置
@@ -267,6 +272,10 @@ class OtherSettingsActivity : BaseActivity<ActivityOtherSettingsBinding>() {
         } else {
             binding.itemAccessControlPackages.visibility = View.VISIBLE
             binding.itemAccessControlPackages.onClick {
+                if (clashRunning) {
+                    showToast("请先断开连接后再设置")
+                    return@onClick
+                }
                 // 跳转到访问控制应用包列表页面
                 startActivity(AccessControlActivity::class.intent)
             }
@@ -292,18 +301,14 @@ class OtherSettingsActivity : BaseActivity<ActivityOtherSettingsBinding>() {
     }
 
     private fun openServiceAgreement() {
-        // 打开服务协议
-        val intent = Intent(this, WebViewActivity::class.java)
-        intent.putExtra(WebViewActivity.EXTRA_TITLE, "服务协议")
-        intent.putExtra(WebViewActivity.EXTRA_URL, "https://example.com/service-agreement")
-        startActivity(intent)
+        startActivity(Intent(this, AgreementActivity::class.java).apply {
+            putExtra(AgreementActivity.EXTRA_TYPE, AgreementActivity.TYPE_USER_AGREEMENT)
+        })
     }
 
     private fun openPrivacyPolicy() {
-        // 打开隐私协议
-        val intent = Intent(this, WebViewActivity::class.java)
-        intent.putExtra(WebViewActivity.EXTRA_TITLE, "隐私协议")
-        intent.putExtra(WebViewActivity.EXTRA_URL, "https://example.com/privacy-policy")
-        startActivity(intent)
+        startActivity(Intent(this, AgreementActivity::class.java).apply {
+            putExtra(AgreementActivity.EXTRA_TYPE, AgreementActivity.TYPE_PRIVACY_POLICY)
+        })
     }
 }

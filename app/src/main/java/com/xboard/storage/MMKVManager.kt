@@ -4,6 +4,7 @@ import android.content.Context
 import com.sunmi.background.utils.GsonUtil
 import com.tencent.mmkv.MMKV
 import com.xboard.model.CommConfigResponse
+import com.xboard.model.KnowledgeArticle
 import com.xboard.model.SubscribeResponse
 import com.xboard.model.UserConfigResponse
 import com.xboard.model.UserInfo
@@ -441,5 +442,46 @@ object MMKVManager {
         }
         return null
 
+    }
+
+    // ==================== 网站推荐 ====================
+
+    /**
+     * 保存网站推荐列表
+     */
+    fun saveWebsiteRecommendations(articles: List<KnowledgeArticle>) {
+        MMKVUtil.getInstance()
+            .setValue("website_recommendations", GsonUtil.getGson().toJson(articles))
+    }
+
+    /**
+     * 获取网站推荐列表
+     */
+    fun getWebsiteRecommendations(): List<KnowledgeArticle>? {
+        val json = MMKVUtil.getInstance().getStringValue("website_recommendations", "")
+        return try {
+            val type = com.google.gson.reflect.TypeToken.getParameterized(
+                List::class.java,
+                KnowledgeArticle::class.java
+            ).type
+            GsonUtil.getGson().fromJson(json, type)
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    /**
+     * 清除网站推荐缓存
+     */
+    fun clearWebsiteRecommendations() {
+        MMKVUtil.getInstance().clear(arrayOf("website_recommendations"))
+    }
+
+    fun setOrderCacheUrl(cacheOrderUrl: String) {
+        MMKVUtil.getInstance().setValue("cache_order_url", cacheOrderUrl)
+    }
+
+    fun getOrderCacheUrl(): String? {
+       return MMKVUtil.getInstance().getStringValue("cache_order_url", "")
     }
 }

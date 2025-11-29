@@ -4,6 +4,7 @@ import android.content.Intent
 import android.util.Log
 import com.github.kr328.clash.common.Global
 import com.xboard.ui.activity.LoginActivity
+import com.xboard.util.NetworkDiagnostics
 import okhttp3.Interceptor
 import okhttp3.Response
 import java.io.IOException
@@ -21,6 +22,18 @@ class ResponseInterceptor : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
         val response = chain.proceed(request)
+        
+        // 诊断 502 错误（可能是代理配置问题）
+        if (response.code == 502) {
+            try {
+                val domain = request.url.host
+                val diagnostics = NetworkDiagnostics(Global.application)
+                diagnostics.diagnoseApiFailure(domain, response.code, "Bad Gateway")
+                Log.e(TAG, "502 Error detected for domain: $domain")
+            } catch (e: Exception) {
+                Log.e(TAG, "Error during 502 diagnosis: ${e.message}")
+            }
+        }
         
         // 检查是否是403状态码（Forbidden）
         if (response.code == 403) {

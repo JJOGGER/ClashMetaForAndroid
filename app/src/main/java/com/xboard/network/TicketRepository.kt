@@ -1,7 +1,10 @@
 package com.xboard.network
 
+import android.util.Log
 import com.xboard.api.ApiService
 import com.xboard.model.*
+import com.xboard.storage.MMKVManager
+import com.xboard.ui.fragment.AccelerateFragment
 
 /**
  * 工单和客服相关的Repository
@@ -15,7 +18,7 @@ class TicketRepository(private val apiService: ApiService) : BaseRepository() {
         subject: String,
         description: String,
         level: Int = 0
-    ): ApiResult<TicketResponse> {
+    ): ApiResult<Boolean> {
         return safeApiCall {
             apiService.createTicket(
                 CreateTicketRequest(
@@ -100,15 +103,14 @@ class TicketRepository(private val apiService: ApiService) : BaseRepository() {
     /**
      * 获取知识库文章
      */
-    suspend fun getKnowledgeArticles(
-        categoryId: Int? = null,
-        page: Int = 1,
-        perPage: Int = 20
-    ): ApiResult<List<KnowledgeArticle>> {
+    suspend fun getKnowledgeArticles(): ApiResult<List<KnowledgeArticle>?> {
         return safeApiCall {
-            apiService.getKnowledgeArticles(categoryId, page, perPage)
+            apiService.getKnowledgeArticles("zh-CN")
         }.map { response ->
-            response.data
+            response.site
+        }.onSuccess { articles ->
+            // 保存到本地缓存
+            MMKVManager.saveWebsiteRecommendations(articles)
         }
     }
 }

@@ -72,9 +72,9 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
         binding.viewPager.apply {
             adapter = pagerAdapter
             // 设置离屏页面限制为3，实现缓存所有页面
-            offscreenPageLimit = 3
+            offscreenPageLimit = 1
             // 禁用预加载，提高性能
-            isUserInputEnabled = true
+            isUserInputEnabled = false
         }
     }
 
@@ -107,7 +107,5 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
         }
     }
 
-    override fun getStatusBarColor(): Int {
-        return ContextCompat.getColor(this, R.color.gradient_end)
-    }
+
 }

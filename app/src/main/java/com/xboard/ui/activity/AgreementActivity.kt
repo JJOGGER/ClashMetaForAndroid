@@ -1,17 +1,17 @@
 package com.xboard.ui.activity
 
 import android.os.Bundle
-import android.webkit.WebView
 import android.webkit.WebViewClient
-import androidx.appcompat.app.AppCompatActivity
 import com.github.kr328.clash.databinding.ActivityAgreementBinding
+import com.github.kr328.clash.databinding.ActivityCommissionRecordBinding
+import com.xboard.api.RetrofitClient
+import com.xboard.base.BaseActivity
 
 /**
  * 协议展示页面（WebView）
  */
-class AgreementActivity : AppCompatActivity() {
+class AgreementActivity : BaseActivity<ActivityAgreementBinding>() {
 
-    private lateinit var binding: ActivityAgreementBinding
 
     companion object {
         const val EXTRA_TYPE = "agreement_type"
@@ -19,13 +19,14 @@ class AgreementActivity : AppCompatActivity() {
         const val TYPE_PRIVACY_POLICY = "privacy_policy"
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        binding = ActivityAgreementBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+    override fun getViewBinding(): ActivityAgreementBinding {
+        return ActivityAgreementBinding.inflate(layoutInflater)
 
+    }
+
+    override fun initView() {
+        super.initView()
         val type = intent.getStringExtra(EXTRA_TYPE) ?: TYPE_USER_AGREEMENT
-        
         setupWebView()
         loadAgreement(type)
         setupToolbar(type)
@@ -46,15 +47,16 @@ class AgreementActivity : AppCompatActivity() {
     }
 
     private fun loadAgreement(type: String) {
-         when (type) {
-            TYPE_PRIVACY_POLICY ->  binding.webView.loadUrl(
-                "http://xiuxiujd.cc/page/privacy_policy.html",
+        when (type) {
+            TYPE_PRIVACY_POLICY -> binding.webView.loadUrl(
+                "${RetrofitClient.BASE_URL}/page/privacy_policy.html",
             )
-            else ->  binding.webView.loadUrl(
-                "http://xiuxiujd.cc/page/user_agreement.html",
+
+            else -> binding.webView.loadUrl(
+                "${RetrofitClient.BASE_URL}/page/user_agreement.html",
             )
         }
-        
+
 
     }
 
@@ -63,9 +65,9 @@ class AgreementActivity : AppCompatActivity() {
             TYPE_PRIVACY_POLICY -> "隐私政策"
             else -> "用户协议"
         }
-        
+
         binding.tvTitle.text = title
-        binding.btnBack.setOnClickListener {
+        binding.vBack.setOnClickListener {
             finish()
         }
     }

@@ -42,11 +42,12 @@ class PlanRepository(private val apiService: ApiService) : BaseRepository() {
      */
     suspend fun checkCoupon(
         couponCode: String,
-        planId: Int? = null
+        planId: Int? = null,
+        period: String? = null
     ): ApiResult<CouponResponse> {
         return safeApiCall {
             apiService.checkCoupon(
-                CheckCouponRequest(couponCode, planId)
+                CheckCouponRequest(couponCode, planId,period)
             )
         }
     }

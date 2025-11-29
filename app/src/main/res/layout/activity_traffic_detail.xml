@@ -35,7 +35,23 @@
             android:textColor="@color/white"
             android:textSize="18dp" />
     </FrameLayout>
-
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:background="@color/color_attention"
+        android:padding="15dp"
+        android:layout_height="wrap_content">
+        <ImageView
+            android:src="@drawable/attention"
+            android:layout_width="20dp"
+            android:layout_height="20dp" />
+        <TextView
+            android:layout_marginStart="30dp"
+            android:layout_width="wrap_content"
+            android:textSize="14dp"
+            android:layout_height="wrap_content"
+            android:text="流量明细仅保留近一个月数据以供查询。"
+            android:textColor="@color/text_secondary" />
+    </FrameLayout>
     <!-- Content -->
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:id="@+id/swipe_refresh"

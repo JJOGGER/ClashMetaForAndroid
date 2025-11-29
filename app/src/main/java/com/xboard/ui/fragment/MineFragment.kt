@@ -20,10 +20,10 @@ import com.xboard.network.UserRepository
 import com.xboard.storage.MMKVManager
 import com.xboard.ui.activity.LoginActivity
 import com.xboard.ui.activity.ShareActivity
+import com.xboard.utils.DateUtils
 import com.xboard.utils.onClick
 import kotlinx.coroutines.launch
 import java.text.DecimalFormat
-import java.text.SimpleDateFormat
 
 /**
  * 我的页面（用户中心）
@@ -186,10 +186,11 @@ class MineFragment : BaseFragment<FragmentMineBinding>() {
             }
 
             binding.pbTrafficPercentage.setProgress(percentage)
-
             if (subscribe.expiredAt.toLong() > 0L) {
-                val expireDate =
-                    SimpleDateFormat("yyyy-MM-dd").format(subscribe.expiredAt)
+                val expireDate = DateUtils.getStringTime(
+                    (subscribe.expiredAt.toLongOrNull() ?: 0L) * 1000,
+                    "yyyy-MM-dd"
+                )
                 binding.tvExpireDate.text = "有效期至：$expireDate"
             } else {
                 binding.tvExpireDate.text = "未订阅"

@@ -19,6 +19,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center_vertical"
         android:layout_marginEnd="12dp"
+        android:enabled="false"
         android:buttonTint="@color/primary" />
 
     <!-- Method Info -->
@@ -49,3 +50,4 @@
     </LinearLayout>
 
 </LinearLayout>
+

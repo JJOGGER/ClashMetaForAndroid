@@ -26,7 +26,6 @@ class BuyFragment : BaseFragment<FragmentBuyBinding>() {
     private val planRepository by lazy { PlanRepository(RetrofitClient.getApiService()) }
     private lateinit var planAdapter: PlanAdapter
     private var planDetailDialog: BottomSheetDialog? = null
-    private val priceFormatter by lazy { DecimalFormat("#,##0.00") }
     private lateinit var planFeatureAdapter: PlanFeatureAdapter
 
     override fun getViewBinding(
@@ -170,14 +169,8 @@ class BuyFragment : BaseFragment<FragmentBuyBinding>() {
 
     private fun bindPlanDetail(binding: BottomSheetPlanDetailBinding, plan: Plan) {
         binding.tvPlanTitle.text = plan.name
-        binding.tvPlanPrice.text = "¥ ${formatPrice(plan.price)}"
-        if (plan.onetimePrice != null && plan.onetimePrice != 0.0) {
-            binding.tvPlanPrice.text = "¥ ${formatPrice(plan.onetimePrice)}"
-            binding.tvPriceType.text = "一次性"
-        } else if (plan.monthPrice != null && plan.monthPrice != 0.0) {
-            binding.tvPlanPrice.text = "¥ ${formatPrice(plan.monthPrice)}"
-            binding.tvPriceType.text = "月付"
-        }
+        binding.tvPlanPrice.text = "¥ ${plan.getShowPrice().second}"
+        binding.tvPriceType.text = plan.getShowPrice().first
         if (plan.transferEnable >= Integer.MAX_VALUE) {
             binding.tvPlanTraffic.text = " 无限制"
         } else {
@@ -211,12 +204,6 @@ class BuyFragment : BaseFragment<FragmentBuyBinding>() {
         val intent = Intent(requireContext(), OrderActivity::class.java)
         intent.putExtra(OrderActivity.EXTRA_PLAN, plan)
         startActivity(intent)
-    }
-
-    private fun formatPrice(amount: Double): String {
-        // Round to avoid floating point precision issues
-        val rounded = Math.round(amount * 100.0) / 100.0
-        return priceFormatter.format(rounded)
     }
 
     private fun formatTraffic(bytes: Long): String {

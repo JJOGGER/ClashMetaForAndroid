@@ -37,22 +37,16 @@ class MMKVUtil private constructor(name: String) {
     }
 
     fun <T> setValue(key: String, value: T) {
-        if (value is Int) {
-            mmkv.encode(key, value as Int)
-        } else if (value is String) {
-            mmkv.encode(key, value as String)
-        } else if (value is Long) {
-            mmkv.encode(key, value as Long)
-        } else if (value is Float) {
-            mmkv.encode(key, value as Float)
-        } else if (value is Double) {
-            mmkv.encode(key, value as Double)
-        } else if (value is Boolean) {
-            mmkv.encode(key, value as Boolean)
-        } else if (value is ByteArray) {
-            mmkv.encode(key, value as ByteArray)
-        } else if (value is Set<*>) {
-            mmkv.encode(key, value as Set<String>)
+        when (value) {
+            is Int -> mmkv.encode(key, value)
+            is String -> mmkv.encode(key, value)
+            is Long -> mmkv.encode(key, value)
+            is Float -> mmkv.encode(key, value)
+            is Double -> mmkv.encode(key, value)
+            is Boolean -> mmkv.encode(key, value)
+            is ByteArray -> mmkv.encode(key, value)
+            is Set<*> -> mmkv.encode(key, value as Set<String>)
+            else -> throw IllegalArgumentException("Unsupported type: ${value?.javaClass?.name}")
         }
     }
 

@@ -6,40 +6,39 @@
     android:orientation="vertical"
     android:background="@color/bg_primary">
 
-    <!-- Toolbar -->
-    <LinearLayout
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp"
-        android:background="@color/bg_secondary"
-        android:elevation="4dp">
+        android:layout_height="@dimen/toolbar_height">
 
-        <ImageView
-            android:id="@+id/btn_back"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:src="@drawable/icon_back"
-            android:contentDescription="返回"
-            android:scaleType="centerInside"
-            android:clickable="true"
-            android:focusable="true"
-            android:background="?attr/selectableItemBackgroundBorderless" />
+        <FrameLayout
+            android:id="@+id/v_back"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingStart="20dp"
+            android:paddingTop="12dp"
+            android:paddingEnd="24dp"
+            android:paddingBottom="12dp">
+
+            <ImageView
+                android:layout_width="25dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:adjustViewBounds="true"
+                android:src="@drawable/icon_back" />
+
+        </FrameLayout>
 
         <TextView
             android:id="@+id/tv_title"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:layout_marginStart="16dp"
-            android:text="用户协议"
-            android:textColor="@color/text_primary"
+            android:layout_gravity="center"
+            android:text=""
+            android:textColor="@color/white"
             android:textSize="18sp"
             android:textStyle="bold" />
 
-    </LinearLayout>
+    </FrameLayout>
 
     <!-- WebView -->
     <WebView

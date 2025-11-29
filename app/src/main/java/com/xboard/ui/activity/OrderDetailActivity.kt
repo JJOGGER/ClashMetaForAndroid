@@ -1,27 +1,37 @@
 package com.xboard.ui.activity
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.util.Log
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.github.kr328.clash.R
 import com.github.kr328.clash.databinding.ActivityOrderDetailBinding
 import com.github.kr328.clash.databinding.BottomSheetPlanDetailBinding
 import com.xboard.api.RetrofitClient
 import com.xboard.base.BaseActivity
+import com.xboard.event.OrderPayEvent
 import com.xboard.ex.gone
+import com.xboard.ex.showToast
 import com.xboard.ex.visible
 import com.xboard.model.OrderDetailResponse
 import com.xboard.model.Plan
 import com.xboard.network.OrderRepository
 import com.xboard.network.UserRepository
+import com.xboard.storage.MMKVManager
 import com.xboard.ui.adapter.PaymentMethodAdapter
 import com.xboard.ui.adapter.PlanFeatureAdapter
 import com.xboard.util.AutoSubscriptionManager
 import com.xboard.utils.onClick
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.greenrobot.eventbus.EventBus
+import java.text.DecimalFormat
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.math.max
 
 /**
  * 订单详情页面
@@ -35,6 +45,7 @@ class OrderDetailActivity : BaseActivity<ActivityOrderDetailBinding>() {
     private val autoSubscriptionManager by lazy {
         AutoSubscriptionManager(userRepository, lifecycleScope)
     }
+    private var isPolling = false
     private var tradeNo: String? = null
     private var orderStatus: Int = 0
     private lateinit var planFeatureAdapter: PlanFeatureAdapter
@@ -118,37 +129,133 @@ class OrderDetailActivity : BaseActivity<ActivityOrderDetailBinding>() {
 //        binding.progressBar.visibility = View.VISIBLE
 //        binding.tvStatus.text = "正在发起支付..."
         showLoading("正在发起支付...")
+//        {"type":1,"data":"https:\/\/pay.bjzqth.cn\/outside\/order\/payOrderInfo\/D14443944704129105921764412077298\/0892FC463296CFA8EFEBC063F8CD05C5"}
         lifecycleScope.launch {
             val checkoutData = orderRepository.checkout(tradeNo!!, paymentMethodId!!)
             hideLoading()
-            when (checkoutData?.type) {
-//                        1 -> {
-//                            // 打开URL
-//                            binding.webView.visibility = View.VISIBLE
-//                            binding.tvStatus.visibility = View.GONE
-//                            binding.progressBar.visibility = View.GONE
-//                            binding.webView.loadUrl(checkoutData.data)
-//                            startPollingPaymentStatus()
-//                        }
+            checkoutData.onSuccess {
+                when (it?.type) {
+                    1 -> {
+                        try {
+                            val intent = Intent(
+                                Intent.ACTION_VIEW,
+                                android.net.Uri.parse(it.data.toString())
+                            )
+                            startActivity(intent)
+                            MMKVManager.setOrderCacheUrl(it.data.toString())
+                        } catch (e: Exception) {
+                            showToast("无法打开浏览器")
+                        }
+                        startPollingPaymentStatus()
+                    }
 //                        0 -> {
 //                            // 二维码
 //                            binding.progressBar.visibility = View.GONE
 //                            binding.tvStatus.text = "请扫描二维码完成支付\n二维码: ${checkoutData.data}"
 //                            startPollingPaymentStatus()
 //                        }
-                -1 -> {
-                    // 免费订单，直接成功
-                    showSuccess("支付成功")
-                    // 支付成功，更新订阅配置
-                    updateSubscribeUrlAfterPayment()
-                }
+                    -1 -> {
+                        // 免费订单，直接成功
+                        showSuccess("支付成功")
+                        // 支付成功，更新订阅配置
+                        updateSubscribeUrlAfterPayment()
+                        loadOrderDetail()
+                    }
 //                        else -> {
 //                            binding.progressBar.visibility = View.GONE
 //                            Toast.makeText(this@PaymentActivity, "未知的支付类型", Toast.LENGTH_SHORT).show()
 //                            finish()
 //                        }
+                }
+
+            }.onError {
+                if (it.message.contains("99010")) {
+                    try {
+                        val url = MMKVManager.getOrderCacheUrl()
+                        val intent = Intent(
+                            Intent.ACTION_VIEW,
+                            android.net.Uri.parse(url)
+                        )
+                        startActivity(intent)
+                    } catch (e: Exception) {
+                        showToast("无法打开浏览器")
+                    }
+                    startPollingPaymentStatus()
+                    return@launch
+                }
+                showError(it.message)
             }
         }
+    }
+
+    private fun startPollingPaymentStatus() {
+        if (isPolling || tradeNo == null) return
+        isPolling = true
+        showLoading("支付中...")
+        lifecycleScope.launch {
+            var attempts = 0
+            val maxAttempts = 120 // 2分钟（每秒检查一次）
+
+            while (isPolling && attempts < maxAttempts) {
+                try {
+                    val result = orderRepository.checkOrderStatus(tradeNo!!)
+//0 = 待支付，1 = 开通中，2 = 已取消，3 = 已完成，4 = 已折抵
+                    result
+                        .onSuccess { orderStatus ->
+                            when (orderStatus) {
+                                1, 3, 4 -> {
+//                                    // 已支付
+                                    updateSubscribeUrlAfterPayment()
+                                    loadOrderDetail()
+                                    hideLoading()
+                                    stopPolling()
+                                    EventBus.getDefault().post(OrderPayEvent())
+                                }
+
+                                -1 -> {
+                                    // 已取消
+                                    hideLoading()
+                                    loadOrderDetail()
+                                    EventBus.getDefault().post(OrderPayEvent())
+//                                    Toast.makeText(this@PaymentActivity, "支付已取消", Toast.LENGTH_SHORT).show()
+                                    stopPolling()
+//                                    finish()
+//                                    return@launch
+                                }
+
+                                0 -> {
+                                }
+
+                                else -> {
+                                    hideLoading()
+                                }
+                            }
+                        }
+                        .onError { error ->
+                            hideLoading()
+                            // 继续轮询
+                        }
+
+                    attempts++
+                    delay(2000) // 每秒检查一次
+                } catch (e: Exception) {
+                    // 继续轮询
+                    attempts++
+                    delay(2000)
+                }
+            }
+
+            // 轮询超时
+            if (isPolling) {
+//                binding.tvStatus.text = "支付超时，请确认支付结果或联系客服"
+//                Toast.makeText(this@PaymentActivity, "支付超时", Toast.LENGTH_SHORT).show()
+                stopPolling()
+            }
+        }
+    }
+
+    private fun stopPolling() {
+        isPolling = false
     }
 
     /**
@@ -175,16 +282,9 @@ class OrderDetailActivity : BaseActivity<ActivityOrderDetailBinding>() {
                     Log.e("TAG", "订阅导入失败，请稍后重试")
                 }
 
-                // 延迟后返回
-                delay(2000)
-                setResult(RESULT_OK)
-                finish()
             } catch (e: Exception) {
                 // 异常处理，继续返回
                 Log.e("TAG", "处理支付结果失败")
-                delay(2000)
-                setResult(RESULT_OK)
-                finish()
             }
         }
     }
@@ -193,9 +293,12 @@ class OrderDetailActivity : BaseActivity<ActivityOrderDetailBinding>() {
         if (tradeNo == null) {
             return
         }
+        showLoading("取消中...")
         lifecycleScope.launch {
             val result = orderRepository.cancelOrder(tradeNo!!)
-
+            withContext(Dispatchers.Main) {
+                hideLoading()
+            }
             result
                 .onSuccess { order ->
                     loadOrderDetail()
@@ -228,7 +331,7 @@ class OrderDetailActivity : BaseActivity<ActivityOrderDetailBinding>() {
         }
     }
 
-    @SuppressLint("UseKtx")
+    @SuppressLint("UseKtx", "SetTextI18n")
     private fun displayOrderDetail(order: OrderDetailResponse) {
         // 显示状态和原因（头部）
         val statusText = order.getStatusText()
@@ -236,14 +339,20 @@ class OrderDetailActivity : BaseActivity<ActivityOrderDetailBinding>() {
         // 更新两个容器中的状态显示
         binding.tvOrderStatus.text = statusText
         binding.tvOrderStatus.setTextColor(order.getStatusColor())
-
-        // 显示订单基本信息（两个容器都有）
-        binding.tvTradeNo.text = order.tradeNo
-        binding.tvCreatedAt.text = formatTime(order.createdAt)
-        binding.tvPaidAt.visibility =
-            if (order.status == OrderDetailResponse.STATUS_PAID) android.view.View.VISIBLE else android.view.View.GONE
-        if (order.paidAt != null && order.paidAt > 0) {
-            binding.tvPaidAt.text = "支付时间: ${formatTime(order.paidAt)}"
+        if (order.status == OrderDetailResponse.STATUS_PAID||
+            order.status == OrderDetailResponse.STATUS_LOADING||
+            order.status == OrderDetailResponse.STATUS_DISCOUNT){
+            binding.ivOrderStatus.setImageResource(R.drawable.ic_pay_result_ok)
+           if (order.status == OrderDetailResponse.STATUS_LOADING){
+               binding.tvOrderStatus.text = "已完成"
+                binding.tvSubStatus.text = "订单已支付，正在开通中。"
+            }else{
+               binding.tvOrderStatus.text = "已完成"
+               binding.tvSubStatus.text = "订单已支付并开通。"
+            }
+        }else{
+            binding.tvOrderStatus.text = "已取消"
+            binding.ivOrderStatus.setImageResource(R.drawable.ic_pay_result_cancel)
         }
 
         // 填充待支付容器的数据
@@ -262,11 +371,43 @@ class OrderDetailActivity : BaseActivity<ActivityOrderDetailBinding>() {
             binding.tvOrderTime.text = formatTime(order.createdAt)
 
             // 价格信息
-            binding.tvTotalTitle.text =
-                "¥${String.format("%.2f", order.totalAmount ?: order.payableAmount)}"
-            binding.tvTotalPrice.text = "¥${String.format("%.2f", order.payableAmount)}"
-
+            binding.tvPlanPrice.text = "¥${formatPrice(order.plan.getRealPlanPrice(order.period))}"
+            if ((order.discountAmount ?: 0.0) > 0.0) {
+                binding.vDiscountPrice.visible()
+            } else {
+                binding.vDiscountPrice.gone()
+            }
+            if ((order.surplusAmount ?: 0.0) > 0.0) {
+                binding.vSurplusPrice.visible()
+            } else {
+                binding.vSurplusPrice.gone()
+            }
+            if ((order.balanceAmount ?: 0.0) > 0.0) {
+                binding.vBalancePrice.visible()
+            } else {
+                binding.vBalancePrice.gone()
+            }
+            binding.tvBalancePrice.text = "-¥${formatPrice(order.balanceAmount ?: 0.0)}"
+            binding.tvSurplusPrice.text = "-¥${formatPrice(order.surplusAmount ?: 0.0)}"
+            binding.tvDiscountPrice.text = "-¥${formatPrice(order.discountAmount ?: 0.0)}"
+            binding.tvTotalPrice.text = "¥${formatPrice(order.totalAmount ?: 0.0)}"
             // 已完成容器的数据
+
+            if ((order.discountAmount ?: 0.0) > 0.0) {
+                binding.vDiscountPrice2.visible()
+            } else {
+                binding.vDiscountPrice2.gone()
+            }
+            if ((order.surplusAmount ?: 0.0) > 0.0) {
+                binding.vSurplusPrice2.visible()
+            } else {
+                binding.vSurplusPrice2.gone()
+            }
+            if ((order.balanceAmount ?: 0.0) > 0.0) {
+                binding.vBalancePrice2.visible()
+            } else {
+                binding.vBalancePrice2.gone()
+            }
             binding.tvPlanName2.text = order.plan.name
             binding.tvPlanPeriod2.text = getPeriodLabel(order.period)
             if (order.plan.transferEnable >= Integer.MAX_VALUE) {
@@ -277,16 +418,24 @@ class OrderDetailActivity : BaseActivity<ActivityOrderDetailBinding>() {
 
             binding.tvOrderId2.text = order.tradeNo
             binding.tvOrderTime2.text = formatTime(order.createdAt)
-
-            binding.tvTotalTitle2.text =
-                "¥${String.format("%.2f", order.totalAmount ?: order.payableAmount)}"
-            binding.tvTotalPrice2.text = "¥${String.format("%.2f", order.payableAmount)}"
+            binding.tvPlanPrice2.text = "¥${formatPrice(order.plan.getRealPlanPrice(order.period))}"
+            binding.tvDiscountPrice2.text = "-¥${formatPrice(order.discountAmount ?: 0.0)}"
+            binding.tvBalancePrice2.text = "-¥${formatPrice(order.balanceAmount ?: 0.0)}"
+            binding.tvSurplusPrice2.text = "-¥${formatPrice(order.surplusAmount ?: 0.0)}"
+            binding.tvTotalPrice2.text = "¥${formatPrice(order.totalAmount ?: 0.0)}"
         }
 
         // 加载支付方式（仅待支付状态）
         if (order.status == OrderDetailResponse.STATUS_WAITING) {
             loadPaymentMethods()
         }
+    }
+
+    private val priceFormatter = DecimalFormat("#.##")
+    private fun formatPrice(amount: Double): String {
+        // Round to avoid floating point precision issues
+        val rounded = (max(amount, 0.0)) / 100.0
+        return priceFormatter.format(rounded)
     }
 
     private fun getPeriodLabel(period: String?): String = when (period) {

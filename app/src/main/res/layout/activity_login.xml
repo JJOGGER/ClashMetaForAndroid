@@ -10,8 +10,8 @@
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingTop="48dp"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:paddingTop="48dp">
 
     </FrameLayout>
     <ImageView
@@ -41,11 +41,11 @@
         android:paddingEnd="20dp"
         android:textColorHint="@color/text_tertiary"
         app:boxBackgroundColor="@color/bg_secondary"
-        app:boxStrokeColor="@color/stroke"
-        app:boxCornerRadiusTopStart="10dp"
-        app:boxCornerRadiusTopEnd="10dp"
         app:boxCornerRadiusBottomEnd="10dp"
         app:boxCornerRadiusBottomStart="10dp"
+        app:boxCornerRadiusTopEnd="10dp"
+        app:boxCornerRadiusTopStart="10dp"
+        app:boxStrokeColor="@color/stroke"
         app:boxStrokeWidth="1.5dp"
         app:endIconMode="clear_text"
         app:hintTextColor="@color/text_secondary">
@@ -70,14 +70,14 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="12dp"
         android:hint="请输入密码"
-        app:boxCornerRadiusTopStart="10dp"
-        app:boxCornerRadiusTopEnd="10dp"
-        app:boxCornerRadiusBottomEnd="10dp"
-        app:boxCornerRadiusBottomStart="10dp"
         android:paddingStart="20dp"
         android:paddingEnd="20dp"
         android:textColorHint="@color/text_tertiary"
         app:boxBackgroundColor="@color/bg_secondary"
+        app:boxCornerRadiusBottomEnd="10dp"
+        app:boxCornerRadiusBottomStart="10dp"
+        app:boxCornerRadiusTopEnd="10dp"
+        app:boxCornerRadiusTopStart="10dp"
         app:boxStrokeColor="@color/stroke"
         app:boxStrokeWidth="1.5dp"
         app:endIconMode="password_toggle"
@@ -102,7 +102,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="end"
-        android:layout_marginBottom="32dp"
         android:background="?attr/selectableItemBackground"
         android:clickable="true"
         android:focusable="true"
@@ -113,11 +112,13 @@
         android:text="忘记密码？"
         android:textColor="@color/primary"
         android:textSize="13sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        android:visibility="gone" />
 
     <com.xboard.ui.round.RoundTextView
         android:id="@+id/btn_login"
         style="@style/CommonButton"
+        android:layout_marginTop="32dp"
         android:text="登录" />
 
     <!-- Toggle Mode -->
@@ -125,8 +126,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:paddingTop="10dp"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:paddingTop="10dp">
 
         <TextView
             android:layout_width="wrap_content"
@@ -155,6 +156,7 @@
     </LinearLayout>
 
 </LinearLayout>
+
 
 
 

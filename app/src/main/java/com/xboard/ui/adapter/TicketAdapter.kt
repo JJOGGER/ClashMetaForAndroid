@@ -39,17 +39,16 @@ class TicketAdapter(
                 
                 // 显示工单状态
                 tvStatus.text = when (ticket.status) {
-                    0 -> "待处理"
-                    1 -> "处理中"
-                    2 -> "已解决"
+                    0 -> "处理中"
+                    1 -> "已关闭"
                     else -> "未知"
                 }
                 
                 tvStatus.setTextColor(
                     when (ticket.status) {
-                        0 -> android.graphics.Color.parseColor("#FF9800") // 橙色
-                        1 -> android.graphics.Color.parseColor("#2196F3") // 蓝色
-                        2 -> android.graphics.Color.parseColor("#4CAF50") // 绿色
+//                        0 -> android.graphics.Color.parseColor("#FF9800") // 橙色
+                        0 -> android.graphics.Color.parseColor("#2196F3") // 蓝色
+//                        2 -> android.graphics.Color.parseColor("#4CAF50") // 绿色
                         else -> android.graphics.Color.parseColor("#999999") // 灰色
                     }
                 )

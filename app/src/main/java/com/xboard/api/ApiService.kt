@@ -6,6 +6,7 @@ import com.xboard.model.ChangePasswordRequest
 import com.xboard.model.CheckCouponRequest
 import com.xboard.model.CheckGiftCardRequest
 import com.xboard.model.CheckoutRequest
+import com.xboard.model.CheckoutResponse
 import com.xboard.model.CloseTicketRequest
 import com.xboard.model.CommConfigResponse
 import com.xboard.model.CouponResponse
@@ -239,13 +240,13 @@ interface ApiService {
      * 发起支付
      */
     @POST("user/order/checkout")
-    suspend fun checkout(@Body request: CheckoutRequest): OrderPay<Any?>?
+    suspend fun checkout(@Body request: CheckoutRequest): CheckoutResponse?
 
     /**
      * 检查支付状态
      */
     @GET("user/order/check")
-    suspend fun checkOrderStatus(@Query("trade_no") tradeNo: String): ApiResponse<OrderStatusResponse>
+    suspend fun checkOrderStatus(@Query("trade_no") tradeNo: String): ApiResponse<Int>
 
     /**
      * 获取订单详情
@@ -301,7 +302,7 @@ interface ApiService {
      * 创建工单
      */
     @POST("user/ticket/save")
-    suspend fun createTicket(@Body request: CreateTicketRequest): ApiResponse<TicketResponse>
+    suspend fun createTicket(@Body request: CreateTicketRequest): ApiResponse<Boolean>
 
     /**
      * 获取工单列表
@@ -350,9 +351,7 @@ interface ApiService {
      */
     @GET("user/knowledge/fetch")
     suspend fun getKnowledgeArticles(
-        @Query("category_id") categoryId: Int? = null,
-        @Query("page") page: Int = 1,
-        @Query("per_page") perPage: Int = 20
+        @Query("language") language: String? = null,
     ): ApiResponse<KnowledgeArticleResponse>
 
     /**

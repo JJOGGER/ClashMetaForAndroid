@@ -3,6 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:tools="http://schemas.android.com/tools"
     android:background="@color/bg_primary"
     android:orientation="vertical">
 
@@ -198,18 +199,43 @@
 
             </LinearLayout>
 
-            <!-- Coupon Discount -->
-            <TextView
-                android:id="@+id/tv_coupon_discount"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                android:text="优惠: ¥0"
-                android:textColor="@color/accent_success"
-                android:textSize="12sp"
-                android:visibility="gone" />
 
             <!-- Order Summary -->
+            <LinearLayout
+                android:id="@+id/v_coupon_discount"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                tools:visibility="visible"
+                android:visibility="gone"
+                android:layout_marginBottom="16dp"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="优惠折扣"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="12sp" />
+
+                    <TextView
+                        android:id="@+id/tv_coupon_discount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="¥0"
+                        android:textColor="@color/primary"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                </LinearLayout>
+
+            </LinearLayout>
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -221,7 +247,6 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp"
                     android:orientation="horizontal">
 
                     <TextView
@@ -244,6 +269,7 @@
                 </LinearLayout>
 
             </LinearLayout>
+
             <com.xboard.ui.round.RoundTextView
                 android:id="@+id/btn_checkout"
                 style="@style/CommonButton"

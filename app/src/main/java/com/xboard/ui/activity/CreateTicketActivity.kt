@@ -1,12 +1,12 @@
 package com.xboard.ui.activity
 
-import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
 import com.github.kr328.clash.databinding.ActivityCreateTicketBinding
 import com.xboard.api.RetrofitClient
 import com.xboard.base.BaseActivity
 import com.xboard.ex.showToast
 import com.xboard.network.TicketRepository
+import com.xboard.utils.onClick
 import kotlinx.coroutines.launch
 
 class CreateTicketActivity : BaseActivity<ActivityCreateTicketBinding>() {
@@ -22,6 +22,7 @@ class CreateTicketActivity : BaseActivity<ActivityCreateTicketBinding>() {
     }
 
     override fun initView() {
+        binding.vBack.onClick { finish() }
         binding.btnSubmit.setOnClickListener {
             submitTicket()
         }
@@ -50,9 +51,11 @@ class CreateTicketActivity : BaseActivity<ActivityCreateTicketBinding>() {
                     subject = subject,
                     description = description
                 )
-                result.onSuccess { ticket ->
-                    showToast("工单创建成功")
-                    initData()
+                result.onSuccess { result ->
+                    if (result) {
+                        showToast("工单创建成功")
+                        finish()
+                    }
                 }.onError { error ->
                     showToast("创建失败: ${error.message}")
                 }

@@ -41,7 +41,7 @@ class OrderRepository(private val apiService: ApiService) : BaseRepository() {
     /**
      * 检查订单状态
      */
-    suspend fun checkOrderStatus(tradeNo: String): ApiResult<OrderStatusResponse> {
+    suspend fun checkOrderStatus(tradeNo: String): ApiResult<Int> {
         return safeApiCall {
             apiService.checkOrderStatus(tradeNo)
         }
@@ -54,13 +54,15 @@ class OrderRepository(private val apiService: ApiService) : BaseRepository() {
     suspend fun checkout(
         tradeNo: String,
         methodId: Int
-    ): OrderPay<Any?>? {
-        return  apiService.checkout(
+    ): ApiResult<CheckoutResponse?> {
+        return safeApiDirectCall {
+            apiService.checkout(
                 CheckoutRequest(
                     tradeNo = tradeNo,
                     method = methodId
                 )
             )
+        }
     }
 
     /**
