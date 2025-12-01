@@ -376,7 +376,7 @@ class OrderActivity : BaseActivity<ActivityOrderBinding>() {
 
     private fun shouldWarnSubscriptionChange(): Boolean {
         val subscription = MMKVManager.getSubscribe()
-        return subscription != null && subscription.planId > 0
+        return subscription != null && subscription.planId != null && subscription.planId > 0
     }
 
     private fun showSubscriptionOverwriteDialog(onConfirm: () -> Unit) {

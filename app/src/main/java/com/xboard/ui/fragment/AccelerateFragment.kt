@@ -19,6 +19,8 @@ import com.github.kr328.clash.core.model.Proxy
 import com.github.kr328.clash.databinding.FragmentAccelerateBinding
 import com.github.kr328.clash.design.store.UiStore
 import com.github.kr328.clash.remote.Remote
+import com.github.kr328.clash.service.data.Selection
+import com.github.kr328.clash.service.data.SelectionDao
 import com.github.kr328.clash.util.startClashService
 import com.github.kr328.clash.util.stopClashService
 import com.github.kr328.clash.util.withClash
@@ -28,6 +30,7 @@ import com.xboard.base.BaseFragment
 import com.xboard.ex.gone
 import com.xboard.ex.showToast
 import com.xboard.ex.visible
+import com.xboard.model.Server
 import com.xboard.network.TicketRepository
 import com.xboard.network.UserRepository
 import com.xboard.storage.MMKVManager
@@ -37,9 +40,12 @@ import com.xboard.ui.adapter.NoticeBannerAdapter
 import com.xboard.ui.dialog.DialogHelper
 import com.xboard.ui.dialog.WebsiteRecommendationDialog
 import com.xboard.util.AutoSubscriptionManager
+import com.xboard.util.ConfigParser
 import com.xboard.utils.onClick
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.*
 
 /**
@@ -55,6 +61,7 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
         AutoSubscriptionManager(userRepository, lifecycleScope)
     }
     private val userRepository by lazy { UserRepository(RetrofitClient.getApiService()) }
+    private var mDefaultSelected: Server? = null
     private val ticketRepository by lazy { TicketRepository(RetrofitClient.getApiService()) }
     private val uiStore by lazy { UiStore(requireContext()) }
     private lateinit var noticeBannerAdapter: NoticeBannerAdapter
@@ -72,6 +79,17 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             // 节点已选择，重新加载节点信息
+            mDefaultSelected = MMKVManager.getDefaultServer()
+            lifecycleScope.launch {
+                if (clashRunning) {
+                    withClash {
+                        patchSelector(MMKVManager.getCurrentGroup() ?: "", mDefaultSelected!!.name)
+                    }
+                    loadCurrentNodeInfo()
+                } else {
+                    syncClashSelectedNode()
+                }
+            }
         }
     }
 
@@ -154,15 +172,55 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
         super.onResume()
         if (!clashRunning) {
             binding.btnConnect.text = "开启连接"
-            binding.btnConnect.setBackgroundColor(Color.parseColor("#FF9800"))
+            binding.btnConnect.setBackgroundColor("#FF9800".toColorInt())
             stopConnectionTimer()
             renderNodeCard(null, null, false)
             return
         }
-        loadCurrentNodeInfo()
+        renderNodeCard(mDefaultSelected)
+//        loadCurrentNodeInfo()
     }
 
     private fun loadData() {
+        lifecycleScope.launch {
+//            userRepository.getSubscribe()
+//                .onSuccess {usbscribe->
+//                    MMKVManager.saveSubscribe(usbscribe)
+//
+//                }
+            userRepository.getUserServers()
+                .onSuccess {
+                    if (it.isNotEmpty()) {
+                        ConfigParser.parseNodeFromConfig(requireContext())
+                        mDefaultSelected = MMKVManager.getDefaultServer() ?: it[0]
+                        syncClashSelectedNode()
+                    }
+                }
+        }
+    }
+
+    private suspend fun syncClashSelectedNode() {
+        val name = mDefaultSelected?.name ?: ""
+        //获取默认选中
+        val defaultSelected =
+            Proxy(name, name, name, Proxy.Type.Compatible, 0)
+        val activeProfile = withProfile { queryActive() }
+        val uuid = activeProfile?.uuid
+        if (uuid != null) {
+            withContext(Dispatchers.IO) {
+                // 在这里执行数据库操作
+                SelectionDao().setSelected(
+                    Selection(
+                        uuid,
+                        MMKVManager.getCurrentGroup() ?: "",
+                        mDefaultSelected?.name ?: MMKVManager.getCurrentProxy()
+                        ?: ""
+                    )
+                )
+
+            }
+        }
+        renderNodeCard(defaultSelected)
     }
 
     private fun showNoticeDialog(title: String, content: String) {
@@ -229,7 +287,6 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
                 currentProfileUUID = activeProfile?.uuid
                 if (activeProfile == null) {
                     Log.w(TAG, "No active profile found")
-                    renderNodeCard(null, null, false)
                     return@launch
                 }
 
@@ -253,7 +310,6 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
 
                 if (currentGroupName.isNullOrBlank()) {
                     Log.w(TAG, "No proxy group found")
-                    renderNodeCard(null, null, connectedOverride)
                     return@launch
                 }
 
@@ -263,7 +319,13 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
                 }
                 currentProxyName = group.now
                 Log.d(TAG, "Current proxy: ${group.now}, total proxies: ${group.proxies.size}")
-
+//                SelectionDao().setSelected(
+//                    Selection(
+//                        currentProfileUUID!!,
+//                        group.now,
+//                        mDefaultSelected!!.name
+//                    )
+//                )
                 val activeProxy = group.proxies.firstOrNull { it.name == group.now }
                 if (activeProxy != null) {
                     Log.d(
@@ -296,6 +358,19 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
         Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
     }
 
+    private fun renderNodeCard(server: Server?) {
+        server ?: return
+        renderNodeCard(
+            Proxy(
+                name = server.name,
+                title = server.name,
+                subtitle = "",
+                type = Proxy.Type.Compatible,
+                delay = 0
+            )
+        )
+    }
+
     private fun renderNodeCard(
         proxy: Proxy?,
         fallbackName: String? = null,
@@ -304,12 +379,10 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
         if (!isAdded) return
         val ctx = context ?: return
         val isConnected = connectedOverride ?: clashRunning
-        if (isConnected) {
-            binding.cardSelectedNode.visible()
-        } else {
-            binding.cardSelectedNode.gone()
+        if (proxy == null) {
             return
         }
+        binding.cardSelectedNode.visible()
         val candidateName = proxy?.name
         val displayName = when {
             proxy?.title?.isNotBlank() == true -> proxy.title
@@ -356,6 +429,9 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
     private fun navigateToNodeSelection() {
         val context = requireContext()
         val intent = Intent(context, NodeSelectionActivity::class.java)
+            .apply {
+                putExtra(NodeSelectionActivity.SERVER, mDefaultSelected)
+            }
         nodeSelectionLauncher.launch(intent)
     }
 
@@ -415,7 +491,6 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
             binding.btnConnect.setBackgroundColor(Color.parseColor("#FF9800"))
             stopConnectionTimer()
             stopConfigurationCheckLoop()  // ← 停止轮询
-            renderNodeCard(null, null, false)
         } else {
             switchTunnelMode()
             viewLifecycleOwner.lifecycleScope.launch {
@@ -425,6 +500,20 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
 
     }
 
+    private fun loadSubscribeInfo() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            val result = userRepository.getSubscribe()
+
+            result
+                .onSuccess { subscribe ->
+                    MMKVManager.saveSubscribe(subscribe)
+
+                }
+                .onError { error ->
+                    // 加载失败不影响页面显示
+                }
+        }
+    }
 
     private suspend fun startClash() {
         val active = withProfile { queryActive() }
@@ -467,8 +556,6 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
         // 方案 1: 立即尝试加载（可能成功）
         loadCurrentNodeInfo(true)
 
-        // 方案 2: 启动轮询（如果立即加载失败）
-        startConfigurationCheckLoop()
     }
 
     // ============ 公告轮播 Banner ============

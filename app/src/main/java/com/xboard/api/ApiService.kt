@@ -351,6 +351,7 @@ interface ApiService {
      */
     @GET("user/knowledge/fetch")
     suspend fun getKnowledgeArticles(
+        @Query("category") category: String? = null,
         @Query("language") language: String? = null,
     ): ApiResponse<KnowledgeArticleResponse>
 

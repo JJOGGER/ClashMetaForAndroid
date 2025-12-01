@@ -3,6 +3,7 @@ package com.xboard.ui.activity
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts.RequestPermission
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
@@ -22,7 +23,10 @@ import kotlinx.coroutines.launch
 class MainActivity : BaseActivity<ActivityMainBinding>() {
 
     private val userRepository by lazy { UserRepository(RetrofitClient.getApiService()) }
-
+    
+    private var backPressedTime: Long = 0
+    private val backPressedTimeout = 2000 // 2 seconds
+    
     private lateinit var pagerAdapter: MainPagerAdapter
 
     override fun getViewBinding(): ActivityMainBinding {
@@ -60,6 +64,26 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
             userRepository.getUserCommonConfig()
         }
     }
+    
+    override fun onBackPressed() {
+        when {
+            binding.viewPager.currentItem != 0 -> {
+                // If not on the first tab, switch to first tab
+                binding.viewPager.currentItem = 0
+            }
+            System.currentTimeMillis() - backPressedTime < backPressedTimeout -> {
+                // If pressed back twice within 2 seconds, exit
+                super.onBackPressed()
+                finish()
+            }
+            else -> {
+                // First time pressing back or after timeout
+                backPressedTime = System.currentTimeMillis()
+                Toast.makeText(this, "再按一次退出程序", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
     fun setCurrentTab(position: Int){
         binding.viewPager.currentItem = position
     }

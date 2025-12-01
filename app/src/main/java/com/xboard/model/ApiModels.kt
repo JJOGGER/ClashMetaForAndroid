@@ -298,7 +298,7 @@ data class Server(
     val serverPort: Int? = null,
     @SerializedName("server_cipher")
     val serverCipher: String? = null
-)
+): Serializable
 
 data class ServerGroupNode(
     val id: Int,
@@ -317,7 +317,7 @@ data class ServerGroupNode(
 
 data class SubscribeResponse(
     @SerializedName("plan_id")
-    val planId: Int,
+    val planId: Int? = null,
     @SerializedName("token")
     val token: String,
     @SerializedName("expired_at")
@@ -595,7 +595,7 @@ data class OrderDetailResponse(
 
     fun getStatusColor(): Int {
         return when (status) {
-            STATUS_LOADING,STATUS_PAID -> "#4CAF50".toColorInt()
+            STATUS_LOADING, STATUS_PAID -> "#4CAF50".toColorInt()
             STATUS_DISCOUNT, STATUS_CANCELED -> Color.GRAY
             STATUS_WAITING -> "#FF9800".toColorInt()
             STATUS_EXPIRE -> Color.GRAY

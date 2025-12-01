@@ -49,11 +49,11 @@ class AgreementActivity : BaseActivity<ActivityAgreementBinding>() {
     private fun loadAgreement(type: String) {
         when (type) {
             TYPE_PRIVACY_POLICY -> binding.webView.loadUrl(
-                "${RetrofitClient.BASE_URL}/page/privacy_policy.html",
+                "${RetrofitClient.BASE_URL}/user_privacy.html",
             )
 
             else -> binding.webView.loadUrl(
-                "${RetrofitClient.BASE_URL}/page/user_agreement.html",
+                "${RetrofitClient.BASE_URL}/user_agreement.html",
             )
         }
 

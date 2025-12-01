@@ -1,8 +1,6 @@
 package com.xboard.util
 
-import android.content.Context
 import android.util.Log
-import com.github.kr328.clash.service.ProfileManager
 import com.github.kr328.clash.service.model.Profile
 import com.github.kr328.clash.util.withProfile
 import com.xboard.model.SubscribeResponse
@@ -72,7 +70,10 @@ class AutoSubscriptionManager(
 
             val profile = ensureProfile(subscribeFromServer)
             if (profile == null) {
-                Log.w(TAG, "Unable to locate or create profile for ${subscribeFromServer.subscribeUrl}")
+                Log.w(
+                    TAG,
+                    "Unable to locate or create profile for ${subscribeFromServer.subscribeUrl}"
+                )
                 return false
             }
 
@@ -85,12 +86,18 @@ class AutoSubscriptionManager(
             remoteConfig = remoteConfig ?: fetchConfigAndHash(subscribeFromServer.subscribeUrl)
 
             val urlChanged = cachedUrl.isBlank() || cachedUrl != subscribeFromServer.subscribeUrl
-            val configChanged = remoteConfig?.second?.let { it.isNotBlank() && it != cachedHash } ?: false
+            val configChanged =
+                remoteConfig?.second?.let { it.isNotBlank() && it != cachedHash } ?: false
 
             when {
                 urlChanged -> runImportFlow(ensuredProfile, subscribeFromServer, remoteConfig)
                 configChanged -> runUpdateFlow(ensuredProfile, subscribeFromServer, remoteConfig)
-                remoteConfig == null && cachedHash.isBlank() -> runImportFlow(ensuredProfile, subscribeFromServer, null)
+                remoteConfig == null && cachedHash.isBlank() -> runImportFlow(
+                    ensuredProfile,
+                    subscribeFromServer,
+                    null
+                )
+
                 else -> {
                     saveSubscribe(subscribeFromServer, remoteConfig?.first, remoteConfig?.second)
                     ensureProfileActive(ensuredProfile)
@@ -120,6 +127,7 @@ class AutoSubscriptionManager(
             )
         }
     }
+
     suspend fun fetchConfigAndHash(subscribeUrl: String): Pair<String, String>? {
         return try {
             val configContent = getConfigContentFromUrl(subscribeUrl)
@@ -178,7 +186,11 @@ class AutoSubscriptionManager(
             withProfile {
                 val existing = queryAll().firstOrNull { it.source == subscribe.subscribeUrl }
                 existing ?: run {
-                    val uuid = create(Profile.Type.Url, buildProfileName(subscribe), subscribe.subscribeUrl)
+                    val uuid = create(
+                        Profile.Type.Url,
+                        buildProfileName(subscribe),
+                        subscribe.subscribeUrl
+                    )
                     queryByUUID(uuid)
                 }
             }
@@ -216,7 +228,12 @@ class AutoSubscriptionManager(
     ): Boolean {
         return try {
             withProfile {
-                patch(profile.uuid, buildProfileName(subscribe), subscribe.subscribeUrl, profile.interval)
+                patch(
+                    profile.uuid,
+                    buildProfileName(subscribe),
+                    subscribe.subscribeUrl,
+                    profile.interval
+                )
                 coroutineScope {
                     commit(profile.uuid) {
                         launch {
@@ -361,30 +378,6 @@ class AutoSubscriptionManager(
         }
     }
 
-
-    /**
-     * 异步自动导入和应用订阅
-     *
-     * @param onSuccess 成功回调
-     * @param onError 失败回调
-     */
-    fun autoImportAndApplyAsync(
-        onSuccess: (() -> Unit)? = null,
-        onError: ((String) -> Unit)? = null
-    ) {
-        scope.launch {
-            try {
-                val success = autoImportAndApply()
-                if (success) {
-                    onSuccess?.invoke()
-                } else {
-                    onError?.invoke("Auto import and apply failed")
-                }
-            } catch (e: Exception) {
-                onError?.invoke(e.message ?: "Unknown error")
-            }
-        }
-    }
 
     fun isUpdating(): Boolean = updatingState.get()
 

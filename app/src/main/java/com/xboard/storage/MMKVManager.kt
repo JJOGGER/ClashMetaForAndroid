@@ -5,6 +5,7 @@ import com.sunmi.background.utils.GsonUtil
 import com.tencent.mmkv.MMKV
 import com.xboard.model.CommConfigResponse
 import com.xboard.model.KnowledgeArticle
+import com.xboard.model.Server
 import com.xboard.model.SubscribeResponse
 import com.xboard.model.UserConfigResponse
 import com.xboard.model.UserInfo
@@ -128,7 +129,11 @@ object MMKVManager {
     fun getSubscribe(): SubscribeResponse? {
         val json = MMKVUtil.getInstance().getStringValue("subscribe", "")
         try {
-            return GsonUtil.getGson().fromJson(json, SubscribeResponse::class.java)
+            val subscribe = GsonUtil.getGson().fromJson(json, SubscribeResponse::class.java)
+            if (subscribe?.planId == null) {
+                return null
+            }
+            return subscribe
         } catch (e: Exception) {
 
         }
@@ -349,7 +354,7 @@ object MMKVManager {
     /**
      * 保存当前节点信息
      */
-    fun saveCurrentNode(groupName: String, proxyName: String) {
+    fun saveCurrentNode(groupName: String?, proxyName: String?) {
         MMKVUtil.getInstance().setValue("current_group", groupName)
         MMKVUtil.getInstance().setValue("current_proxy", proxyName)
     }
@@ -408,7 +413,7 @@ object MMKVManager {
 
     fun setUserConfigResponse(config: UserConfigResponse?) {
         if (config == null) {
-            MMKVUtil.getInstance().setValue("user_config", null)
+            MMKVUtil.getInstance().setValue("user_config", "")
             return
         }
         MMKVUtil.getInstance().setValue("user_config", GsonUtil.getGson().toJson(config))
@@ -427,7 +432,7 @@ object MMKVManager {
 
     fun setUserInfo(userInfo: UserInfo?) {
         if (userInfo == null) {
-            MMKVUtil.getInstance().setValue("user_info", null)
+            MMKVUtil.getInstance().setValue("user_info", "")
             return
         }
         MMKVUtil.getInstance().setValue("user_info", GsonUtil.getGson().toJson(userInfo))
@@ -449,7 +454,10 @@ object MMKVManager {
     /**
      * 保存网站推荐列表
      */
-    fun saveWebsiteRecommendations(articles: List<KnowledgeArticle>) {
+    fun saveWebsiteRecommendations(articles: List<KnowledgeArticle>?) {
+        if (articles == null) {
+            return
+        }
         MMKVUtil.getInstance()
             .setValue("website_recommendations", GsonUtil.getGson().toJson(articles))
     }
@@ -482,6 +490,23 @@ object MMKVManager {
     }
 
     fun getOrderCacheUrl(): String? {
-       return MMKVUtil.getInstance().getStringValue("cache_order_url", "")
+        return MMKVUtil.getInstance().getStringValue("cache_order_url", "")
+    }
+
+    fun setDefaultServer(server: Server?) {
+        if (server == null) {
+            MMKVUtil.getInstance().setValue("default_server", "")
+            return
+        }
+        MMKVUtil.getInstance().setValue("default_server", GsonUtil.getGson().toJson(server))
+    }
+
+    fun getDefaultServer(): Server? {
+        val json = MMKVUtil.getInstance().getStringValue("default_server", "")
+        try {
+            return GsonUtil.getGson().fromJson(json, Server::class.java)
+        } catch (e: Exception) {
+        }
+        return null
     }
 }

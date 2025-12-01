@@ -105,7 +105,7 @@ class TicketRepository(private val apiService: ApiService) : BaseRepository() {
      */
     suspend fun getKnowledgeArticles(): ApiResult<List<KnowledgeArticle>?> {
         return safeApiCall {
-            apiService.getKnowledgeArticles("zh-CN")
+            apiService.getKnowledgeArticles("site","zh-CN")
         }.map { response ->
             response.site
         }.onSuccess { articles ->

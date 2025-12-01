@@ -139,17 +139,6 @@ class UserRepository(private val apiService: ApiService) : BaseRepository() {
         }
     }
 
-    /**
-     * 获取订阅链接
-     */
-    suspend fun getSubscribeUrl(): ApiResult<String> {
-        return safeApiCall {
-            apiService.getSubscribe()
-        }.map { response ->
-            response.subscribeUrl
-        }
-    }
-
     suspend fun getSubscribe(): ApiResult<SubscribeResponse> {
         return safeApiCall {
             apiService.getSubscribe()
@@ -170,6 +159,8 @@ class UserRepository(private val apiService: ApiService) : BaseRepository() {
     suspend fun getSubscribeConfig(subscribeUrl: String): ApiResult<String> {
         return try {
             val responseBody = apiService.getSubscribeConfig(subscribeUrl)
+            // 使用 UTF-8 字符集读取，确保编码一致
+            // ResponseBody.string() 默认使用 UTF-8，但为了明确，我们显式指定
             val content = responseBody.string()
 
             if (content.isNotEmpty()) {

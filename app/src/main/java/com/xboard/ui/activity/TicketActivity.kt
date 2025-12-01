@@ -8,6 +8,7 @@ import com.xboard.api.RetrofitClient
 import com.xboard.base.BaseActivity
 import com.xboard.network.TicketRepository
 import com.xboard.ui.adapter.TicketAdapter
+import com.xboard.utils.onClick
 import kotlinx.coroutines.launch
 
 class TicketActivity : BaseActivity<ActivityTicketBinding>() {
@@ -25,6 +26,7 @@ class TicketActivity : BaseActivity<ActivityTicketBinding>() {
     }
 
     override fun initView() {
+        binding.vBack.onClick { finish() }
         setupAdapter()
         setupRefresh()
 

@@ -34,22 +34,6 @@ class SubscriptionManager(
         private const val TAG = "SubscriptionManager"
     }
 
-    /**
-     * 获取订阅地址
-     * 
-     * 从 API 获取最新的订阅地址
-     * 
-     * @return 订阅地址，如果获取失败返回 null
-     */
-    suspend fun getSubscribeUrl(): String? {
-        return try {
-            val result = userRepository.getSubscribeUrl()
-            result.getOrNull()
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to get subscribe URL: ${e.message}")
-            null
-        }
-    }
 
     /**
      * 获取订阅
