@@ -36,12 +36,12 @@ class CreateTicketActivity : BaseActivity<ActivityCreateTicketBinding>() {
         val description = binding.etDescription.text.toString().trim()
 
         if (subject.isEmpty()) {
-            showToast("请输入工单主题")
+            showToast("请输入问题")
             return
         }
 
         if (description.isEmpty()) {
-            showToast("请输入工单描述")
+            showToast("请输入问题描述")
             return
         }
 
@@ -53,14 +53,14 @@ class CreateTicketActivity : BaseActivity<ActivityCreateTicketBinding>() {
                 )
                 result.onSuccess { result ->
                     if (result) {
-                        showToast("工单创建成功")
+                        showToast("提交问题成功")
                         finish()
                     }
                 }.onError { error ->
-                    showToast("创建失败: ${error.message}")
+                    showToast("提交失败: ${error.message}")
                 }
             } catch (e: Exception) {
-                showToast("创建失败: ${e.message}")
+                showToast("提交失败: ${e.message}")
             }
         }
     }

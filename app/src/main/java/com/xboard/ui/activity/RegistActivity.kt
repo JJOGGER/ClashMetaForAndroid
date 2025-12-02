@@ -1,10 +1,12 @@
 package com.xboard.ui.activity
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.CountDownTimer
 import android.util.Patterns
 import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
+import com.github.kr328.clash.R
 import com.github.kr328.clash.databinding.ActivityRegistBinding
 import com.xboard.api.RetrofitClient
 import com.xboard.api.TokenManager
@@ -29,7 +31,9 @@ class RegistActivity : BaseActivity<ActivityRegistBinding>() {
         return ActivityRegistBinding.inflate(layoutInflater)
     }
 
+    @SuppressLint("SetTextI18n")
     override fun initView() {
+        binding.tvTitle.text = "欢迎使用" + resources.getString(R.string.app_name)
     }
 
     override fun initListener() {
@@ -46,10 +50,10 @@ class RegistActivity : BaseActivity<ActivityRegistBinding>() {
         } else {
             binding.llEmailCode.gone()
         }
-        if (config?.isEmailVerify == 1) {
-            binding.tilInviteCode.hint = "邀请码（可选）"
-        } else {
+        if (config?.isInviteForce == 1) {
             binding.tilInviteCode.hint = "邀请码"
+        } else {
+            binding.tilInviteCode.hint = "邀请码（可选）"
         }
         binding.tvToggleMode.setOnClickListener {
             startActivity(Intent(this, LoginActivity::class.java))

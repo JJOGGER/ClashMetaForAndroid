@@ -30,7 +30,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:text="我的工单"
+            android:text="在线客服"
             android:textColor="@color/white"
             android:textSize="18dp" />
         <com.xboard.ui.round.RoundTextView
@@ -42,7 +42,7 @@
             android:gravity="center"
             android:paddingStart="20dp"
             android:paddingEnd="20dp"
-            android:text="新建工单"
+            android:text="提交问题"
             android:textColor="@color/white"
             android:textSize="14dp"
             app:roundBackgroundColor="@color/primary"

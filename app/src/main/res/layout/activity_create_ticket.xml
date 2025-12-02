@@ -29,7 +29,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:text="新建工单"
+            android:text="提交问题"
             android:textColor="@color/white"
             android:textSize="18dp" />
 
@@ -42,7 +42,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
         android:layout_marginBottom="8dp"
-        android:text="工单主题"
+        android:text="问题主题"
         android:textColor="@color/text_secondary"
         android:textSize="15dp" />
 
@@ -54,7 +54,7 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="20dp"
         android:background="@color/bg_secondary"
-        android:hint="请输入工单主题"
+        android:hint="请输入问题主题"
         android:padding="15dp"
         android:textColor="@color/text_primary"
         android:textColorHint="@color/text_tertiary" />
@@ -65,7 +65,7 @@
         android:layout_marginBottom="8dp"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
-        android:text="工单描述"
+        android:text="问题描述"
         android:textColor="@color/text_secondary"
         android:textSize="15dp" />
 
@@ -79,7 +79,7 @@
         android:layout_marginBottom="20dp"
         android:background="@color/bg_secondary"
         android:gravity="top"
-        android:hint="请输入工单描述"
+        android:hint="请描述问题"
         android:padding="12dp"
         android:textColor="@color/text_primary"
         android:textColorHint="@color/text_tertiary" />
@@ -88,6 +88,6 @@
         android:id="@+id/btnSubmit"
         style="@style/CommonButton"
         android:layout_marginTop="50dp"
-        android:text="提交工单" />
+        android:text="提交问题" />
 
 </LinearLayout>

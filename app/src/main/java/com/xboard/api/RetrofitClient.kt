@@ -2,6 +2,7 @@ package com.xboard.api
 
 import android.content.Context
 import android.util.Log
+import android.provider.Settings
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonDeserializationContext
@@ -9,6 +10,7 @@ import com.google.gson.JsonDeserializer
 import com.google.gson.JsonElement
 import com.google.gson.reflect.TypeToken
 import com.xboard.model.Server
+import com.github.kr328.clash.common.Global
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Response
@@ -177,6 +179,8 @@ object RetrofitClient {
                 .writeTimeout(30, TimeUnit.SECONDS)
                 .sslSocketFactory(sslContext.socketFactory, trustManager)
                 .hostnameVerifier(createTrustAllHostnameVerifier())
+                // 为每个请求添加 X-Nonce（设备 ID 加密）
+                .addInterceptor(DeviceNonceInterceptor { getDeviceId() })
                 .addInterceptor(HeaderInterceptor())
                 .addInterceptor(ChineseLoggingInterceptor())
                 .addInterceptor(ResponseInterceptor())
@@ -202,4 +206,15 @@ object RetrofitClient {
         retrofit = null
         apiService = null
     }
+}
+
+/**
+ * 获取用于加密的设备 ID。
+ *
+ * 这里使用 ANDROID_ID，保证在同一设备上稳定且无需额外权限。
+ */
+private fun getDeviceId(): String {
+    val context = Global.application
+    return Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
+        ?: "unknown"
 }

@@ -312,7 +312,7 @@
             android:name="com.xboard.ui.activity.CreateTicketActivity"
             android:configChanges="uiMode"
             android:exported="false"
-            android:label="新建工单"
+            android:label="提交问题"
             android:theme="@style/BootstrapTheme" />
 
         <!-- Ticket Detail Activity -->
@@ -320,7 +320,7 @@
             android:name="com.xboard.ui.activity.TicketDetailActivity"
             android:configChanges="uiMode"
             android:exported="false"
-            android:label="工单详情"
+            android:label="问题详情"
             android:theme="@style/BootstrapTheme" />
 
         <!-- WebView Activity -->

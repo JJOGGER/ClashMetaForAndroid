@@ -249,7 +249,7 @@
                 <include
                     android:id="@+id/menu_my_tickets"
                     layout="@layout/layout_mine_menu_item"
-                    android:contentDescription="我的工单" />
+                    android:contentDescription="在线客服" />
 
                 <com.xboard.ui.round.RoundTextView
                     android:id="@+id/menu_logout"

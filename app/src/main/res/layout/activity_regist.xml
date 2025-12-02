@@ -38,7 +38,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
         android:letterSpacing="0.02"
-        android:text="欢迎来到加速器"
+        android:text="欢迎来到"
         android:textColor="@color/text_primary"
         android:textSize="32dp"
         android:textStyle="bold" />
@@ -233,8 +233,8 @@
     </com.google.android.material.textfield.TextInputLayout>
         <LinearLayout
             android:id="@+id/ll_agreement"
-            android:padding="16dp"
             android:layout_width="match_parent"
+            android:layout_marginTop="10dp"
             android:layout_height="wrap_content"
             android:layout_marginBottom="12dp"
             android:gravity="center_vertical"
@@ -244,16 +244,14 @@
                 android:id="@+id/cb_agreement"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="12dp"
                 android:buttonTint="@color/primary" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:lineSpacingMultiplier="1.2"
                 android:text="我已阅读并同意"
                 android:textColor="@color/text_primary"
-                android:textSize="13sp" />
+                android:textSize="13dp" />
             <TextView
                 android:id="@+id/tv_user_agreement"
                 android:layout_width="wrap_content"
@@ -261,13 +259,11 @@
                 android:background="?attr/selectableItemBackground"
                 android:clickable="true"
                 android:focusable="true"
-                android:paddingStart="4dp"
                 android:paddingTop="2dp"
-                android:paddingEnd="4dp"
                 android:paddingBottom="2dp"
                 android:text="《用户协议》"
                 android:textColor="@color/primary"
-                android:textSize="13sp"
+                android:textSize="13dp"
                 android:textStyle="bold" />
 
             <TextView
@@ -275,7 +271,7 @@
                 android:layout_height="wrap_content"
                 android:text="和"
                 android:textColor="@color/text_secondary"
-                android:textSize="13sp" />
+                android:textSize="13dp" />
 
             <TextView
                 android:id="@+id/tv_privacy_policy"
@@ -284,13 +280,11 @@
                 android:background="?attr/selectableItemBackground"
                 android:clickable="true"
                 android:focusable="true"
-                android:paddingStart="4dp"
                 android:paddingTop="2dp"
-                android:paddingEnd="4dp"
                 android:paddingBottom="2dp"
                 android:text="《隐私政策》"
                 android:textColor="@color/primary"
-                android:textSize="13sp"
+                android:textSize="13dp"
                 android:textStyle="bold" />
         </LinearLayout>
 

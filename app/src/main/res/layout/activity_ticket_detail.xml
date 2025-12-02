@@ -40,7 +40,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="工单详情"
+                android:text="问题详情"
                 android:textColor="@color/white"
                 android:textSize="18dp"
                 android:textStyle="bold" />
@@ -103,7 +103,7 @@
                 android:gravity="center"
                 android:paddingStart="20dp"
                 android:paddingEnd="20dp"
-                android:text="关闭工单"
+                android:text="关闭问题"
                 android:textColor="@color/white"
                 android:textSize="14dp"
                 app:roundBackgroundColor="@color/text_secondary"
@@ -141,7 +141,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="工单已关闭，无法继续回复"
+            android:text="问题已关闭，无法继续回复"
             android:textColor="@color/text_secondary"
             android:textSize="14dp" />
 

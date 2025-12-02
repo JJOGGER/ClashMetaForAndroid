@@ -5,6 +5,7 @@ import android.net.Uri
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import com.github.kr328.clash.databinding.FragmentMineBinding
@@ -19,6 +20,7 @@ import com.xboard.network.TicketRepository
 import com.xboard.network.UserRepository
 import com.xboard.storage.MMKVManager
 import com.xboard.ui.activity.LoginActivity
+import com.xboard.ui.activity.MainActivity
 import com.xboard.ui.activity.ShareActivity
 import com.xboard.utils.DateUtils
 import com.xboard.utils.onClick
@@ -51,6 +53,17 @@ class MineFragment : BaseFragment<FragmentMineBinding>() {
     override fun initListener() {
         binding.vCommissionBalance.onClick {
             startActivity(Intent(activity, ShareActivity::class.java))
+        }
+        binding.vBuySubscribe.onClick {
+            val activity = activity
+            if (activity is MainActivity) {
+                // 通过 MainActivity 的 bottomNavigation 切换到购买页面
+                // 使用反射或直接访问 bottomNavigation
+                try {
+                    activity.setCurrentTab(1)
+                } catch (e: Exception) {
+                }
+            }
         }
         binding.menuPurchaseRecords.root.setOnClickListener { loadOrderHistory() }
         binding.menuTraffic.root.setOnClickListener { loadTrafficDetail() }
@@ -275,7 +288,7 @@ class MineFragment : BaseFragment<FragmentMineBinding>() {
         configureMenu(binding.menuPurchaseRecords, "我的订单", "查看历史订单")
         configureMenu(binding.menuTraffic, "流量明细", showDesc = false)
         configureMenu(binding.menuSetting, "其他设置", showDesc = false)
-        configureMenu(binding.menuMyTickets, "我的工单", showDesc = false)
+        configureMenu(binding.menuMyTickets, "在线客服", showDesc = false)
     }
 
     private fun configureMenu(

@@ -199,7 +199,7 @@ class TicketDetailActivity : BaseActivity<ActivityTicketDetailBinding>() {
             try {
                 val result = ticketRepository.closeTicket(ticketId)
                 result.onSuccess {
-                    showToast("工单已关闭")
+                    showToast("问题已关闭")
                     isClosed = true
                     updateReplyInputState()
                 }.onError { error ->
