@@ -7,12 +7,14 @@ import com.xboard.model.SubscribeResponse
 import com.xboard.network.UserRepository
 import com.xboard.storage.MMKVManager
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 import java.security.MessageDigest
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
@@ -62,54 +64,134 @@ class AutoSubscriptionManager(
         return try {
             Log.d(TAG, "Starting auto import and apply")
 
-            val subscribeFromServer = subscriptionManager.getSubscribe()
-            if (subscribeFromServer == null) {
-                Log.w(TAG, "Failed to fetch subscribe information from server")
+            // 步骤1: 获取订阅信息（OkHttp 层已处理重试）
+            Log.d(TAG, "[Step 1] Fetching subscribe information from server...")
+            val subscribeFromServer = try {
+                withTimeout(20_000) { // 20秒超时
+                    subscriptionManager.getSubscribe()
+                }
+            } catch (e: TimeoutCancellationException) {
+                Log.e(TAG, "[Step 1] Timeout: getSubscribe() took more than 20 seconds")
+                return false
+            } catch (e: Exception) {
+                Log.e(TAG, "[Step 1] Exception in getSubscribe(): ${e.message}", e)
                 return false
             }
+            
+            if (subscribeFromServer == null) {
+                Log.w(TAG, "[Step 1] Failed to fetch subscribe information from server")
+                return false
+            }
+            Log.d(TAG, "[Step 1] Success: subscribeUrl=${subscribeFromServer.subscribeUrl}")
 
-            val profile = ensureProfile(subscribeFromServer)
+            // 步骤2: 确保 Profile 存在
+            Log.d(TAG, "[Step 2] Ensuring profile exists...")
+            val profile = try {
+                withTimeout(10_000) { // 10秒超时
+                    ensureProfile(subscribeFromServer)
+                }
+            } catch (e: TimeoutCancellationException) {
+                Log.e(TAG, "[Step 2] Timeout: ensureProfile() took more than 10 seconds")
+                return false
+            } catch (e: Exception) {
+                Log.e(TAG, "[Step 2] Exception in ensureProfile(): ${e.message}", e)
+                return false
+            }
+            
             if (profile == null) {
                 Log.w(
                     TAG,
-                    "Unable to locate or create profile for ${subscribeFromServer.subscribeUrl}"
+                    "[Step 2] Unable to locate or create profile for ${subscribeFromServer.subscribeUrl}"
                 )
                 return false
             }
+            Log.d(TAG, "[Step 2] Success: profile=${profile.uuid}, imported=${profile.imported}")
 
+            // 步骤3: 获取缓存信息
+            Log.d(TAG, "[Step 3] Getting cached information...")
             val cachedUrl = subscriptionManager.getCachedSubscribeUrl().orEmpty()
             val cachedHash = MMKVManager.getSubscribeConfigHash().orEmpty()
-            var remoteConfig = fetchConfigAndHash(subscribeFromServer.subscribeUrl)
+            Log.d(TAG, "[Step 3] cachedUrl=$cachedUrl, cachedHash=${if (cachedHash.isNotBlank()) "exists" else "empty"}")
 
-            val ensuredProfile = ensureProfileImported(profile, subscribeFromServer, remoteConfig)
-                ?: return false
-            remoteConfig = remoteConfig ?: fetchConfigAndHash(subscribeFromServer.subscribeUrl)
+            // 步骤4: 获取远程配置（OkHttp 层已处理重试）
+            Log.d(TAG, "[Step 4] Fetching remote config...")
+            var remoteConfig = try {
+                withTimeout(30_000) { // 30秒超时（配置下载可能较大）
+                    fetchConfigAndHash(subscribeFromServer.subscribeUrl)
+                }
+            } catch (e: TimeoutCancellationException) {
+                Log.e(TAG, "[Step 4] Timeout: fetchConfigAndHash() took more than 30 seconds")
+                null
+            } catch (e: Exception) {
+                Log.e(TAG, "[Step 4] Exception in fetchConfigAndHash(): ${e.message}", e)
+                null
+            }
+            Log.d(TAG, "[Step 4] remoteConfig=${if (remoteConfig != null) "exists" else "null"}")
 
+            // 步骤5: 确保 Profile 已导入
+            Log.d(TAG, "[Step 5] Ensuring profile is imported...")
+            val ensuredProfile = try {
+                withTimeout(30_000) { // 30秒超时（commit 可能较慢）
+                    ensureProfileImported(profile, subscribeFromServer, remoteConfig)
+                }
+            } catch (e: TimeoutCancellationException) {
+                Log.e(TAG, "[Step 5] Timeout: ensureProfileImported() took more than 30 seconds")
+                return false
+            } catch (e: Exception) {
+                Log.e(TAG, "[Step 5] Exception in ensureProfileImported(): ${e.message}", e)
+                return false
+            }
+            
+            if (ensuredProfile == null) {
+                Log.w(TAG, "[Step 5] Failed to ensure profile imported")
+                return false
+            }
+            Log.d(TAG, "[Step 5] Success: profile imported=${ensuredProfile.imported}")
+
+            // 步骤6: 判断是否需要更新
+            Log.d(TAG, "[Step 6] Checking if update is needed...")
             val urlChanged = cachedUrl.isBlank() || cachedUrl != subscribeFromServer.subscribeUrl
             val configChanged =
                 remoteConfig?.second?.let { it.isNotBlank() && it != cachedHash } ?: false
+            Log.d(TAG, "[Step 6] urlChanged=$urlChanged, configChanged=$configChanged")
 
-            when {
-                urlChanged -> runImportFlow(ensuredProfile, subscribeFromServer, remoteConfig)
-                configChanged -> runUpdateFlow(ensuredProfile, subscribeFromServer, remoteConfig)
-                remoteConfig == null && cachedHash.isBlank() -> runImportFlow(
-                    ensuredProfile,
-                    subscribeFromServer,
-                    null
-                )
-
+            // 步骤7: 执行相应的流程
+            Log.d(TAG, "[Step 7] Executing flow...")
+            val result = when {
+                urlChanged -> {
+                    Log.d(TAG, "[Step 7] Running import flow (url changed)")
+                    runImportFlow(ensuredProfile, subscribeFromServer, remoteConfig)
+                }
+                configChanged -> {
+                    Log.d(TAG, "[Step 7] Running update flow (config changed)")
+                    runUpdateFlow(ensuredProfile, subscribeFromServer, remoteConfig)
+                }
+                remoteConfig == null && cachedHash.isBlank() -> {
+                    Log.d(TAG, "[Step 7] Running import flow (no cache)")
+                    runImportFlow(ensuredProfile, subscribeFromServer, null)
+                }
                 else -> {
+                    Log.d(TAG, "[Step 7] No update needed, just saving and activating")
                     saveSubscribe(subscribeFromServer, remoteConfig?.first, remoteConfig?.second)
                     ensureProfileActive(ensuredProfile)
                     true
                 }
             }
+            
+            Log.d(TAG, "[Step 7] Flow result: $result")
+            Log.d(TAG, "Auto import and apply completed: $result")
+            result
+        } catch (e: TimeoutCancellationException) {
+            Log.e(TAG, "Auto import timeout: ${e.message}", e)
+            false
         } catch (e: Exception) {
             Log.e(TAG, "Auto import and apply failed: ${e.message}", e)
+            e.printStackTrace()
             false
         } finally {
             updatingState.set(false)
             updatingStateFlow.value = false
+            Log.d(TAG, "Auto import state reset")
         }
     }
 
@@ -288,9 +370,11 @@ class AutoSubscriptionManager(
         return try {
             Log.d(TAG, "Fetching config from: $subscribeUrl")
             val result = userRepository.getSubscribeConfig(subscribeUrl)
+            Log.d(TAG, "getSubscribeConfig() returned: ${if (result.isSuccess()) "success" else "error"}, contentLength=${result.getOrNull()?.length ?: 0}")
             result.getOrNull() ?: ""
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to fetch config: ${e.message}")
+            Log.e(TAG, "Failed to fetch config: ${e.message}", e)
+            e.printStackTrace()
             ""
         }
     }

@@ -18,6 +18,7 @@ import com.xboard.network.AuthRepository
 import com.xboard.network.InviteRepository
 import com.xboard.network.TicketRepository
 import com.xboard.network.UserRepository
+import com.xboard.event.OrderPayEvent
 import com.xboard.storage.MMKVManager
 import com.xboard.ui.activity.LoginActivity
 import com.xboard.ui.activity.MainActivity
@@ -25,6 +26,9 @@ import com.xboard.ui.activity.ShareActivity
 import com.xboard.utils.DateUtils
 import com.xboard.utils.onClick
 import kotlinx.coroutines.launch
+import org.greenrobot.eventbus.EventBus
+import org.greenrobot.eventbus.Subscribe
+import org.greenrobot.eventbus.ThreadMode
 import java.text.DecimalFormat
 
 /**
@@ -111,9 +115,27 @@ class MineFragment : BaseFragment<FragmentMineBinding>() {
 
 
     override fun initData() {
+        EventBus.getDefault().register(this)
         loadUserState()
         loadUserInfo()
         loadInviteStats()
+    }
+
+
+    override fun onDestroy() {
+        super.onDestroy()
+        EventBus.getDefault().unregister(this)
+
+    }
+    /**
+     * 监听支付成功事件，刷新订阅信息
+     */
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    fun onOrderPayEvent(event: OrderPayEvent) {
+        // 刷新用户信息（包括订阅信息）
+        loadUserInfo()
+        // 刷新用户状态
+        loadUserState()
     }
 
     private fun loadUserInfo() {

@@ -96,12 +96,12 @@ class UserRepository(private val apiService: ApiService) : BaseRepository() {
     /**
      * 获取用户服务器列表
      */
-    suspend fun getUserServers(): ApiResult<List<Server>> {
+    suspend fun getUserServers(): ApiResult<MutableList<Server>> {
         return safeApiCall {
             apiService.getUserServers()
         }.map { servers ->
             // Handle case where servers might be empty list instead of null
-            servers ?: emptyList()
+            servers ?: mutableListOf()
         }
     }
 

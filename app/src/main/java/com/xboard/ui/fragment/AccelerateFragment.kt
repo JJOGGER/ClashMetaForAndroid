@@ -39,13 +39,18 @@ import com.xboard.ui.activity.NodeSelectionActivity
 import com.xboard.ui.adapter.NoticeBannerAdapter
 import com.xboard.ui.dialog.DialogHelper
 import com.xboard.ui.dialog.WebsiteRecommendationDialog
+import com.xboard.event.OrderPayEvent
 import com.xboard.util.AutoSubscriptionManager
 import com.xboard.util.ConfigParser
+import com.xboard.util.CountryIconMapper
 import com.xboard.utils.onClick
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.greenrobot.eventbus.EventBus
+import org.greenrobot.eventbus.Subscribe
+import org.greenrobot.eventbus.ThreadMode
 import java.util.*
 
 /**
@@ -80,6 +85,7 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
         if (result.resultCode == Activity.RESULT_OK) {
             // 节点已选择，重新加载节点信息
             mDefaultSelected = MMKVManager.getDefaultServer()
+            MMKVManager.saveCurrentNode(MMKVManager.getCurrentGroup(), mDefaultSelected?.name)
             lifecycleScope.launch {
                 if (clashRunning) {
                     withClash {
@@ -149,6 +155,49 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
 //        updateButtonState()
     }
 
+    override fun onStart() {
+        super.onStart()
+        EventBus.getDefault().register(this)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        EventBus.getDefault().unregister(this)
+    }
+
+    /**
+     * 监听支付成功事件，刷新订阅和节点信息
+     */
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    fun onOrderPayEvent(event: OrderPayEvent) {
+        Log.d(TAG, "Received OrderPayEvent, refreshing UI...")
+        lifecycleScope.launch {
+            try {
+                // 先刷新订阅配置（等待完成）
+                val success = autoSubscriptionManager.autoImportAndApply()
+                if (success) {
+                    Log.d(TAG, "Subscription updated successfully, refreshing nodes...")
+                } else {
+                    Log.w(TAG, "Subscription update failed, but still refreshing nodes...")
+                }
+                
+                // 刷新节点列表
+                loadData()
+                
+                // 如果已连接，刷新当前节点信息
+                if (clashRunning) {
+                    loadCurrentNodeInfo()
+                } else {
+                    syncClashSelectedNode()
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error refreshing UI after payment: ${e.message}", e)
+                // 即使出错也尝试刷新节点列表
+                loadData()
+            }
+        }
+    }
+
     /**
      *
      * 使用 AutoSubscriptionManager 完成整个自动化流程：
@@ -174,11 +223,16 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
             binding.btnConnect.text = "开启连接"
             binding.btnConnect.setBackgroundColor("#FF9800".toColorInt())
             stopConnectionTimer()
-            renderNodeCard(null, null, false)
             return
         }
-        renderNodeCard(mDefaultSelected)
-//        loadCurrentNodeInfo()
+        switchTunnelMode()
+        // 更新 UI 状态
+        binding.btnConnect.text = "关闭连接"
+        binding.btnConnect.setBackgroundColor("#4CAF50".toColorInt())
+        if (connectionTimerJob?.isActive!=true){
+            startConnectionTimer()
+        }
+        loadCurrentNodeInfo()
     }
 
     private fun loadData() {
@@ -203,7 +257,17 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
         val name = mDefaultSelected?.name ?: ""
         //获取默认选中
         val defaultSelected =
-            Proxy(name, name, name, Proxy.Type.Compatible, 0)
+            Proxy(
+                name = name,
+                title = MMKVManager.getCurrentGroup().toString(),
+                subtitle = "",
+                type = if (name == "自动选择") {
+                    Proxy.Type.URLTest
+                } else {
+                    Proxy.Type.Selector
+                },
+                delay = 0
+            )
         val activeProfile = withProfile { queryActive() }
         val uuid = activeProfile?.uuid
         if (uuid != null) {
@@ -220,7 +284,7 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
 
             }
         }
-        renderNodeCard(defaultSelected)
+        erNodeCard(defaultSelected)
     }
 
     private fun showNoticeDialog(title: String, content: String) {
@@ -336,10 +400,10 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
                     Log.w(TAG, "Active proxy not found in group")
                 }
 
-                renderNodeCard(activeProxy, group.now, connectedOverride)
+                erNodeCard(activeProxy, connectedOverride)
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to load node info: ${e.message}", e)
-                renderNodeCard(null, null, connectedOverride)
+                erNodeCard(null, connectedOverride)
             }
         }
     }
@@ -358,22 +422,25 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
         Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
     }
 
-    private fun renderNodeCard(server: Server?) {
+    private fun erNodeCard(server: Server?) {
         server ?: return
-        renderNodeCard(
+        erNodeCard(
             Proxy(
                 name = server.name,
-                title = server.name,
+                title = MMKVManager.getCurrentGroup().toString(),
                 subtitle = "",
-                type = Proxy.Type.Compatible,
+                type = if (server.name == "自动选择") {
+                    Proxy.Type.URLTest
+                } else {
+                    Proxy.Type.Selector
+                },
                 delay = 0
             )
         )
     }
 
-    private fun renderNodeCard(
+    private fun erNodeCard(
         proxy: Proxy?,
-        fallbackName: String? = null,
         connectedOverride: Boolean? = null
     ) {
         if (!isAdded) return
@@ -383,31 +450,18 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
             return
         }
         binding.cardSelectedNode.visible()
+        if (proxy.type == Proxy.Type.URLTest) {
+            binding.ivNodeIcon.setImageResource(R.drawable.ico_unknown)
+            binding.tvSelectedNodeName.text = "自动选择"
+            return
+        }
         val candidateName = proxy?.name
-        val displayName = when {
-            proxy?.title?.isNotBlank() == true -> proxy.title
+        var displayName = when {
             proxy?.name?.isNotBlank() == true -> proxy.name
-            !fallbackName.isNullOrBlank() -> fallbackName
             !candidateName.isNullOrBlank() -> candidateName
             else -> getString(R.string.selected_node_placeholder)
         }
-        if (displayName.contains("香港")) {
-            binding.ivNodeIcon.setImageResource(R.drawable.ico_hk)
-        } else if (displayName.contains("日本")) {
-            binding.ivNodeIcon.setImageResource(R.drawable.ico_jp)
-        } else if (displayName.contains("美国")) {
-            binding.ivNodeIcon.setImageResource(R.drawable.ico_us)
-        } else if (displayName.contains("新加坡")) {
-            binding.ivNodeIcon.setImageResource(R.drawable.ico_sg)
-        } else if (displayName.contains("韩国")) {
-            binding.ivNodeIcon.setImageResource(R.drawable.ico_ko)
-        } else if (displayName.contains("荷兰")) {
-            binding.ivNodeIcon.setImageResource(R.drawable.ico_helan)
-        } else if (displayName.contains("瑞典")) {
-            binding.ivNodeIcon.setImageResource(R.drawable.ico_ruidian)
-        } else {
-            binding.ivNodeIcon.setImageResource(R.drawable.ico_unknown)
-        }
+        binding.ivNodeIcon.setImageResource(CountryIconMapper.getCountryIconResId(displayName))
         binding.tvSelectedNodeName.text = displayName
 //        binding.tvSelectedNodeLatency.text = if (isConnected) {
 //            val latencyValue = proxy?.delay?.takeIf { it > 0 }
@@ -435,6 +489,11 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
         nodeSelectionLauncher.launch(intent)
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        stopConnectionTimer()
+
+    }
 
     /**
      * 弹出没有订阅的提示对话框
@@ -520,7 +579,6 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
 
         if (active == null || !active.imported) {
             showToast("连接失败")
-            renderNodeCard(null, null, false)
             return
         }
 

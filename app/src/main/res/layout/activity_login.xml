@@ -111,9 +111,8 @@
         android:paddingBottom="4dp"
         android:text="忘记密码？"
         android:textColor="@color/primary"
-        android:textSize="13sp"
-        android:textStyle="bold"
-        android:visibility="gone" />
+        android:textSize="13dp"
+        android:textStyle="bold"/>
 
     <com.xboard.ui.round.RoundTextView
         android:id="@+id/btn_login"
@@ -156,6 +155,8 @@
     </LinearLayout>
 
 </LinearLayout>
+
+
 
 
 

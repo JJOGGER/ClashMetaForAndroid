@@ -7,7 +7,8 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.github.kr328.clash.R
 import com.github.kr328.clash.databinding.ActivityNodeSelectionBinding
-import com.github.kr328.clash.design.store.UiStore
+import com.github.kr328.clash.service.data.Selection
+import com.github.kr328.clash.service.data.SelectionDao
 import com.github.kr328.clash.util.withClash
 import com.github.kr328.clash.util.withProfile
 import com.xboard.api.RetrofitClient
@@ -36,8 +37,9 @@ class NodeSelectionActivity : BaseActivity<ActivityNodeSelectionBinding>() {
     private val userRepository by lazy { UserRepository(RetrofitClient.getApiService()) }
     private var urlTesting: Boolean = false
     private var mCurrentServer: Server? = null
-    private var serverList: List<Server> = emptyList()
-    private var serverProxyMapping: Map<String, com.github.kr328.clash.core.model.Proxy> = emptyMap()
+    private var serverList: MutableList<Server> = mutableListOf()
+    private var serverProxyMapping: Map<String, com.github.kr328.clash.core.model.Proxy> =
+        emptyMap()
 
     override fun getViewBinding(): ActivityNodeSelectionBinding {
         return ActivityNodeSelectionBinding.inflate(layoutInflater)
@@ -59,7 +61,16 @@ class NodeSelectionActivity : BaseActivity<ActivityNodeSelectionBinding>() {
                 showToast("未连接")
             }
         }
-        mCurrentServer = intent?.getSerializableExtra(SERVER) as? Server?
+        mCurrentServer = if (MMKVManager.getCurrentGroup() == "自动选择") {
+            Server(
+                id = -1,
+                name = "自动选择",
+                host = "",
+                port = 0
+            )
+        } else {
+            intent?.getSerializableExtra(SERVER) as? Server?
+        }
         setupNodeAdapter()
     }
 
@@ -76,8 +87,15 @@ class NodeSelectionActivity : BaseActivity<ActivityNodeSelectionBinding>() {
                 .onSuccess { servers ->
                     if (servers.isNotEmpty()) {
                         serverList = servers
+                        val default = Server(
+                            id = -1,
+                            name = "自动选择",
+                            host = "",
+                            port = 0
+                        )
+                        serverList.add(0,default)
                         nodeAdapter.submitList(servers, mCurrentServer?.name)
-                        
+
                         // 如果 Clash 已连接，建立映射关系并更新延迟信息
                         if (clashRunning) {
                             buildServerProxyMapping()
@@ -163,18 +181,16 @@ class NodeSelectionActivity : BaseActivity<ActivityNodeSelectionBinding>() {
      */
     private fun selectNode(serverName: String) {
         nodeAdapter.setSelectedNode(serverName)
-        
+
         lifecycleScope.launch {
             try {
                 if (!clashRunning) {
                     // 如果 Clash 未连接，提前写入 SelectionDao
                     val activeProfile = withProfile { queryActive() }
                     val uuid = activeProfile?.uuid
-                    
+
                     if (uuid != null) {
-                        // 获取入口组名（优先从映射中获取，否则使用默认值）
-                        val entryGroupName = "XBoard" // 或者从 config.yaml 解析
-                        
+
                         // 将 Server 名称映射到 Clash proxy 名称
                         val clashProxyName = if (serverProxyMapping.isNotEmpty()) {
                             ServerProxyMapper.mapToClashProxyName(serverName, serverProxyMapping)
@@ -182,31 +198,36 @@ class NodeSelectionActivity : BaseActivity<ActivityNodeSelectionBinding>() {
                             // 如果还没有映射，先尝试使用 serverName，等连接后再更新
                             serverName
                         }
-                        
+
                         // 写入 SelectionDao，等连接时 Clash 会自动应用
                         withContext(Dispatchers.IO) {
-                            com.github.kr328.clash.service.data.SelectionDao().setSelected(
-                                com.github.kr328.clash.service.data.Selection(
+                            SelectionDao().setSelected(
+                                Selection(
                                     uuid,
-                                    entryGroupName,
+                                    MMKVManager.getCurrentGroup().toString(),
                                     clashProxyName
                                 )
                             )
                         }
-                        
-                        Log.d(TAG, "Preset node selection: group=$entryGroupName, proxy=$clashProxyName")
+
+                        Log.d(
+                            TAG,
+                            "Preset node selection: group=${
+                                MMKVManager.getCurrentGroup().toString()
+                            }, proxy=$clashProxyName"
+                        )
                     }
                     return@launch
                 }
-                
+
                 // 如果 Clash 已连接，直接切换节点
                 val groupNames = withClash {
                     queryProxyGroupNames(uiStore.proxyExcludeNotSelectable)
                 }
-                
+
                 val entryGroupName = groupNames.firstOrNull { it == "XBoard" || it == "Proxy" }
                     ?: groupNames.firstOrNull()
-                
+
                 if (entryGroupName == null) {
                     showToast("代理组索引无效")
                     return@launch
@@ -257,31 +278,31 @@ class NodeSelectionActivity : BaseActivity<ActivityNodeSelectionBinding>() {
             val groupNames = withClash {
                 queryProxyGroupNames(uiStore.proxyExcludeNotSelectable)
             }
-            
+
             val entryGroupName = groupNames.firstOrNull { it == "XBoard" || it == "Proxy" }
                 ?: groupNames.firstOrNull()
-            
+
             if (entryGroupName == null) {
                 Log.w(TAG, "No proxy group found")
                 return
             }
-            
+
             // 2. 获取代理组的所有 proxy
             val group = withClash {
                 queryProxyGroup(entryGroupName, uiStore.proxySort)
             }
-            
+
             if (group == null) {
                 Log.w(TAG, "Proxy group '$entryGroupName' not found")
                 return
             }
-            
+
             // 3. 建立映射关系
             serverProxyMapping = ServerProxyMapper.buildMapping(serverList, group.proxies)
-            
+
             // 4. 更新 Server 列表的延迟信息（通过扩展 Server 或创建包装类）
             updateServerListWithDelays(group.proxies)
-            
+
         } catch (e: Exception) {
             Log.e(TAG, "Failed to build server-proxy mapping: ${e.message}", e)
         }
@@ -295,18 +316,18 @@ class NodeSelectionActivity : BaseActivity<ActivityNodeSelectionBinding>() {
         // 1. 扩展 Server 添加 delay 字段，或者
         // 2. 创建一个包装类 ServerWithDelay，或者
         // 3. 在 NodeAdapter 中维护一个 delay Map
-        
+
         // 暂时在 adapter 中处理，或者创建一个扩展的 Server 类
         // 这里先建立映射，延迟信息在 adapter 中显示
         val delayMap = mutableMapOf<String, Int>()
-        
+
         for (server in serverList) {
             val proxy = serverProxyMapping[server.name]
             if (proxy != null) {
                 delayMap[server.name] = proxy.delay
             }
         }
-        
+
         // 通知 adapter 更新延迟信息
         nodeAdapter.updateDelays(delayMap)
     }
@@ -321,10 +342,10 @@ class NodeSelectionActivity : BaseActivity<ActivityNodeSelectionBinding>() {
                 val groupNames = withClash {
                     queryProxyGroupNames(uiStore.proxyExcludeNotSelectable)
                 }
-                
+
                 val entryGroupName = groupNames.firstOrNull { it == "XBoard" || it == "Proxy" }
                     ?: groupNames.firstOrNull()
-                
+
                 if (entryGroupName == null) {
                     showToast("没有可用的代理组")
                     urlTesting = false
@@ -339,7 +360,7 @@ class NodeSelectionActivity : BaseActivity<ActivityNodeSelectionBinding>() {
 
                 // 3. 重新建立映射关系并更新延迟信息
                 buildServerProxyMapping()
-                
+
                 showToast("测速完成")
 
             } catch (e: Exception) {

@@ -10,12 +10,16 @@ import com.github.kr328.clash.databinding.FragmentBuyBinding
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.xboard.api.RetrofitClient
 import com.xboard.base.BaseFragment
+import com.xboard.event.OrderPayEvent
 import com.xboard.model.Plan
 import com.xboard.network.PlanRepository
 import com.xboard.ui.activity.OrderActivity
 import com.xboard.ui.adapter.PlanAdapter
 import com.xboard.ui.adapter.PlanFeatureAdapter
 import kotlinx.coroutines.launch
+import org.greenrobot.eventbus.EventBus
+import org.greenrobot.eventbus.Subscribe
+import org.greenrobot.eventbus.ThreadMode
 import java.text.DecimalFormat
 
 /**
@@ -47,79 +51,25 @@ class BuyFragment : BaseFragment<FragmentBuyBinding>() {
         planFeatureAdapter = PlanFeatureAdapter()
     }
 
+
+
+    override fun onDestroy() {
+        super.onDestroy()
+        EventBus.getDefault().unregister(this)
+
+    }
+    /**
+     * 监听支付成功事件，刷新订阅信息
+     */
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    fun onOrderPayEvent(event: OrderPayEvent) {
+        loadData()
+    }
     override fun initListener() {
-//capacity_limit
-//:
-//1
-//content
-//:
-//""
-//created_at
-//:
-//1764265489
-//device_limit
-//:
-//1
-//group_id
-//:
-//2
-//half_year_price
-//:
-//0
-//id
-//:
-//2
-//month_price
-//:
-//0
-//name
-//:
-//"Vip"
-//onetime_price
-//:
-//0
-//quarter_price
-//:
-//0
-//renew
-//:
-//true
-//reset_price
-//:
-//0
-//reset_traffic_method
-//:
-//null
-//sell
-//:
-//true
-//show
-//:
-//true
-//sort
-//:
-//null
-//speed_limit
-//:
-//1111
-//tags
-//:
-//[]
-//three_year_price
-//:
-//0
-//transfer_enable
-//:
-//10
-//two_year_price
-//:
-//0
-//updated_at
-//:
-//1764265492
-//year_price
-//:
-//0
+        // 设置下拉刷新监听器
+        binding.swipeRefresh.setOnRefreshListener {
+            loadData()
+        }
     }
 
     override fun initData() {
@@ -127,6 +77,10 @@ class BuyFragment : BaseFragment<FragmentBuyBinding>() {
     }
 
     private fun loadData() {
+        // 显示刷新指示器（如果不是用户手动下拉刷新，则不显示）
+        if (!binding.swipeRefresh.isRefreshing) {
+            binding.swipeRefresh.isRefreshing = true
+        }
 
         viewLifecycleOwner.lifecycleScope.launch {
             val result = planRepository.getAllPlans()
@@ -139,6 +93,8 @@ class BuyFragment : BaseFragment<FragmentBuyBinding>() {
                     showError(error.message)
                 }
 
+            // 停止刷新指示器
+            binding.swipeRefresh.isRefreshing = false
         }
     }
 

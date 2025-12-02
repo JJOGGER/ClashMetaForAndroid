@@ -9,6 +9,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.github.kr328.clash.R
 import com.github.kr328.clash.databinding.ActivityMainBinding
+import com.github.kr328.clash.util.stopClashService
 import com.google.android.material.tabs.TabLayoutMediator
 import com.xboard.api.RetrofitClient
 import com.xboard.base.BaseActivity
@@ -131,5 +132,8 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
         }
     }
 
-
+    override fun onDestroy() {
+        super.onDestroy()
+        stopClashService()
+    }
 }

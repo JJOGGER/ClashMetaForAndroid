@@ -160,6 +160,7 @@ class OrderDetailActivity : BaseActivity<ActivityOrderDetailBinding>() {
                         // 支付成功，更新订阅配置
                         updateSubscribeUrlAfterPayment()
                         loadOrderDetail()
+                        EventBus.getDefault().post(OrderPayEvent())
                     }
 //                        else -> {
 //                            binding.progressBar.visibility = View.GONE

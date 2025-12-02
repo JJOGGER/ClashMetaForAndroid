@@ -84,6 +84,7 @@
         app:roundCornerRadius="30dp"
         app:roundStrokeColor="@color/text_tertiary"
         app:roundStrokeWidth="1dp"
+
         tools:visibility="visible">
 
         <com.github.kr328.clash.design.view.RoundedImageView

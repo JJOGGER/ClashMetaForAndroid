@@ -40,10 +40,13 @@ class SubscriptionManager(
      */
     suspend fun getSubscribe(): SubscribeResponse? {
         return try {
+            Log.d(TAG, "Calling userRepository.getSubscribe()...")
             val result = userRepository.getSubscribe()
+            Log.d(TAG, "getSubscribe() returned: ${if (result.isSuccess()) "success" else "error"}, ${if (result.isError()) "message=${(result as com.xboard.network.ApiResult.Error).message}" else ""}")
             result.getOrNull()
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to get subscribe URL: ${e.message}")
+            Log.e(TAG, "Failed to get subscribe URL: ${e.message}", e)
+            e.printStackTrace()
             null
         }
     }

@@ -8,6 +8,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.github.kr328.clash.R
 import com.github.kr328.clash.databinding.ItemNodeSelectionBinding
 import com.xboard.model.Server
+import com.xboard.util.CountryIconMapper
 
 class NodeAdapter(
     private val onItemClick: (Server) -> Unit
@@ -96,23 +97,7 @@ class NodeAdapter(
                 binding.ivSignal.visibility = View.GONE
 //            }
             val displayName = node.name.ifEmpty { node.name }
-            if (displayName.contains("香港")) {
-                binding.ivIcon.setImageResource(R.drawable.ico_hk)
-            } else if (displayName.contains("日本")) {
-                binding.ivIcon.setImageResource(R.drawable.ico_jp)
-            } else if (displayName.contains("美国")) {
-                binding.ivIcon.setImageResource(R.drawable.ico_us)
-            } else if (displayName.contains("新加坡")) {
-                binding.ivIcon.setImageResource(R.drawable.ico_sg)
-            } else if (displayName.contains("韩国")) {
-                binding.ivIcon.setImageResource(R.drawable.ico_ko)
-            } else if (displayName.contains("荷兰")) {
-                binding.ivIcon.setImageResource(R.drawable.ico_helan)
-            } else if (displayName.contains("瑞典")) {
-                binding.ivIcon.setImageResource(R.drawable.ico_ruidian)
-            } else {
-                binding.ivIcon.setImageResource(R.drawable.ico_unknown)
-            }
+            binding.ivIcon.setImageResource(CountryIconMapper.getCountryIconResId(displayName))
             // 显示选中状态：比较节点名称与 selectedNodeName
             val isSelected = node.name == selectedNodeName
             binding.root.isSelected = isSelected

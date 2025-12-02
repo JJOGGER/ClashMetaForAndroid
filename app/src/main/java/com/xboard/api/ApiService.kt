@@ -137,7 +137,7 @@ interface ApiService {
 //    @GET("user/server/fetch")
 //    suspend fun getUserServers(): ApiResponse<List<Server>?>
     @GET("guest/server/fetch")
-    suspend fun getUserServers(): ApiResponse<List<Server>?>
+    suspend fun getUserServers(): ApiResponse<MutableList<Server>?>
 
     /**
      * 根据套餐分组获取节点

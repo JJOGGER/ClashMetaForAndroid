@@ -15,6 +15,7 @@ import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Response
 import okio.Buffer
+import okio.IOException
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.lang.reflect.Type
@@ -25,6 +26,76 @@ import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
+
+/**
+ * 重试拦截器，自动重试失败的请求
+ * 
+ * 重试策略：
+ * - 网络异常（IOException）：自动重试
+ * - 服务器错误（5xx）：自动重试
+ * - 客户端错误（4xx）：不重试，直接返回
+ * - 成功响应（2xx）：直接返回
+ */
+class RetryInterceptor(
+    private val maxRetries: Int = 3,
+    private val retryDelayMs: Long = 1000L
+) : Interceptor {
+    override fun intercept(chain: Interceptor.Chain): Response {
+        val request = chain.request()
+        var lastException: IOException? = null
+
+        // 尝试请求，最多重试 maxRetries 次（总共 maxRetries + 1 次尝试）
+        for (attempt in 0..maxRetries) {
+            try {
+                val response = chain.proceed(request)
+                
+                // 如果响应成功（2xx），直接返回
+                if (response.isSuccessful) {
+                    return response
+                }
+                
+                // 如果是客户端错误（4xx），不重试，直接返回
+                if (response.code in 400..499) {
+                    return response
+                }
+                
+                // 服务器错误（5xx），关闭响应后重试
+                response.close()
+                
+                if (attempt < maxRetries) {
+                    val delay = retryDelayMs * (1 shl attempt) // 指数退避：1s, 2s, 4s
+                    try {
+                        Thread.sleep(delay)
+                    } catch (ie: InterruptedException) {
+                        Thread.currentThread().interrupt()
+                        throw IOException("Retry interrupted", ie)
+                    }
+                } else {
+                    // 最后一次尝试也失败，返回错误响应
+                    return response
+                }
+            } catch (e: IOException) {
+                lastException = e
+                // 网络异常，重试
+                if (attempt < maxRetries) {
+                    val delay = retryDelayMs * (1 shl attempt)
+                    try {
+                        Thread.sleep(delay)
+                    } catch (ie: InterruptedException) {
+                        Thread.currentThread().interrupt()
+                        throw IOException("Retry interrupted", ie)
+                    }
+                } else {
+                    // 最后一次尝试也失败，抛出异常
+                    throw e
+                }
+            }
+        }
+
+        // 理论上不会到这里
+        throw lastException ?: IOException("Request failed after $maxRetries retries")
+    }
+}
 
 /**
  * 自定义日志拦截器，支持中文显示
@@ -179,9 +250,11 @@ object RetrofitClient {
                 .writeTimeout(30, TimeUnit.SECONDS)
                 .sslSocketFactory(sslContext.socketFactory, trustManager)
                 .hostnameVerifier(createTrustAllHostnameVerifier())
+                // 重试拦截器（放在最前面，确保其他拦截器也能重试）
+                .addInterceptor(RetryInterceptor(maxRetries = 3, retryDelayMs = 1000L))
                 // 为每个请求添加 X-Nonce（设备 ID 加密）
                 .addInterceptor(DeviceNonceInterceptor { getDeviceId() })
-                .addInterceptor(HeaderInterceptor())
+                .addInterceptor(HeaderInterceptor{getDeviceId() })
                 .addInterceptor(ChineseLoggingInterceptor())
                 .addInterceptor(ResponseInterceptor())
                 .build()

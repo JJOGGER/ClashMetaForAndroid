@@ -1,6 +1,7 @@
 package com.xboard.util
 
 import android.content.Context
+import android.text.TextUtils
 import android.util.Log
 import com.github.kr328.clash.service.data.SelectionDao
 import com.github.kr328.clash.service.util.importedDir
@@ -46,7 +47,7 @@ object ConfigParser {
 //                    return Pair(selection.proxy, selection.selected)
 //                }
 //            }
-            if (currentGroup==null) {
+//            if (TextUtils.isEmpty(currentGroup)) {
                 // 2. 如果没有保存的状态，从配置文件读取默认节点（第一个 proxy-group 的第一个节点）
                 val configFile = context.importedDir.resolve(activeProfile.uuid.toString())
                     .resolve("config.yaml")
@@ -65,7 +66,7 @@ object ConfigParser {
                     )
                 }
                 MMKVManager.saveCurrentNode(configNode?.first,configNode?.second)
-            }
+//            }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to parse config: ${e.message}", e)
         }
@@ -307,7 +308,7 @@ object ConfigParser {
             // 3. 找到第一个 select 类型的 group（优先 "Proxy" 或 "XBoard"）
             val targetGroupName = groupTypes.entries
                 .firstOrNull { (name, type) ->
-                    type == "select" && (name == "Proxy" || name == "XBoard")
+                    type == "select"
                 }?.key
                 ?: groupTypes.entries.firstOrNull { it.value == "select" }?.key
 
