@@ -24,6 +24,8 @@ dependencies {
     implementation(libs.androidx.coordinator)
     implementation(libs.androidx.recyclerview)
     implementation(libs.google.material)
+    implementation(libs.quickie.bundled)
+    implementation(libs.androidx.activity.ktx)
 
     implementation("com.tencent:mmkv:2.2.4")
     // Network
@@ -32,14 +34,14 @@ dependencies {
     implementation(libs.okhttp.core)
     implementation(libs.okhttp.logging)
     implementation(libs.gson)
-    
+
     // Image loading
     implementation(libs.glide.core)
     kapt(libs.glide.compiler)
-    
+
     // Material Design 3
     implementation(libs.material3)
-    
+
     // Lifecycle
     implementation(libs.androidx.lifecycle.runtime)
     implementation(libs.androidx.lifecycle.viewmodel)
@@ -48,7 +50,7 @@ dependencies {
     // Navigation
     implementation(libs.androidx.navigation.fragment)
     implementation(libs.androidx.navigation.ui)
-    
+
     // UI
     implementation(libs.lottie)
     implementation(libs.androidx.swiperefreshlayout)
@@ -85,12 +87,12 @@ task("downloadGeoFiles") {
 afterEvaluate {
     // 禁用自动下载GeoFiles任务，避免SSL错误
     // 如需下载，请手动运行: ./gradlew downloadGeoFiles
-    // val downloadGeoFilesTask = tasks["downloadGeoFiles"]
-    // tasks.forEach {
-    //     if (it.name.startsWith("assemble")) {
-    //         it.dependsOn(downloadGeoFilesTask)
-    //     }
-    // }
+     val downloadGeoFilesTask = tasks["downloadGeoFiles"]
+     tasks.forEach {
+         if (it.name.startsWith("assemble")) {
+             it.dependsOn(downloadGeoFilesTask)
+         }
+     }
 }
 
 tasks.getByName("clean", type = Delete::class) {
