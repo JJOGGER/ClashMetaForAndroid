@@ -114,7 +114,7 @@ data class SendEmailVerifyRequest(
 
 data class ForgetPasswordRequest(
     val email: String,
-    val code: String,
+    val email_code: String,
     val password: String
 )
 

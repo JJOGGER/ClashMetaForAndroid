@@ -50,7 +50,7 @@ class AuthRepository(private val apiService: ApiService) : BaseRepository() {
     /**
      * 发送邮箱验证码
      */
-    suspend fun sendEmailVerifyCode(email: String, scene: String = "register"): ApiResult<Unit> {
+    suspend fun sendEmailVerifyCode(email: String, scene: String = "forget"): ApiResult<Unit> {
         return safeApiCallVoid {
             apiService.sendEmailVerify(SendEmailVerifyRequest(email, scene))
         }

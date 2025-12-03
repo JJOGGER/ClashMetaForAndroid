@@ -63,6 +63,7 @@ class ForgotPasswordActivity : BaseActivity<ActivityForgotPasswordBinding>() {
                     showSuccess("验证码已发送")
                     binding.tilCode.visibility = View.VISIBLE
                     binding.tilNewPassword.visibility = View.VISIBLE
+                    binding.tilConfirmPassword.visibility = View.VISIBLE
                     binding.btnReset.visibility = View.VISIBLE
                     startCountdown()
                 }
@@ -96,14 +97,20 @@ class ForgotPasswordActivity : BaseActivity<ActivityForgotPasswordBinding>() {
         val email = binding.etEmail.text.toString().trim()
         val code = binding.etCode.text.toString().trim()
         val newPassword = binding.etNewPassword.text.toString().trim()
+        val confirmPassword = binding.etConfirmPassword.text.toString().trim()
 
-        if (email.isEmpty() || code.isEmpty() || newPassword.isEmpty()) {
+        if (email.isEmpty() || code.isEmpty() || newPassword.isEmpty() || confirmPassword.isEmpty()) {
             showError("请填写所有字段")
             return
         }
 
         if (newPassword.length < 6) {
             showError("密码至少6位")
+            return
+        }
+
+        if (newPassword != confirmPassword) {
+            showError("两次输入的密码不一致")
             return
         }
 
