@@ -29,7 +29,7 @@ import javax.net.ssl.X509TrustManager
 
 /**
  * 重试拦截器，自动重试失败的请求
- * 
+ *
  * 重试策略：
  * - 网络异常（IOException）：自动重试
  * - 服务器错误（5xx）：自动重试
@@ -48,20 +48,20 @@ class RetryInterceptor(
         for (attempt in 0..maxRetries) {
             try {
                 val response = chain.proceed(request)
-                
+
                 // 如果响应成功（2xx），直接返回
                 if (response.isSuccessful) {
                     return response
                 }
-                
+
                 // 如果是客户端错误（4xx），不重试，直接返回
                 if (response.code in 400..499) {
                     return response
                 }
-                
+
                 // 服务器错误（5xx），关闭响应后重试
                 response.close()
-                
+
                 if (attempt < maxRetries) {
                     val delay = retryDelayMs * (1 shl attempt) // 指数退避：1s, 2s, 4s
                     try {
@@ -221,7 +221,6 @@ object RetrofitClient {
     private var retrofit: Retrofit? = null
     private var apiService: ApiService? = null
     private var baseUrl: String = ""
-    const val BASE_URL = "http://xiuxiujd.cc"
     fun initialize( baseUrl: String) {
         this.baseUrl = baseUrl
         retrofit = null
@@ -230,6 +229,28 @@ object RetrofitClient {
 
     private fun getRetrofit(): Retrofit {
         if (retrofit == null) {
+            // 如果 baseUrl 为空，尝试从缓存获取
+            val finalBaseUrl = if (baseUrl.isEmpty()) {
+                val cachedBaseUrl = com.xboard.storage.MMKVManager.getApiBaseUrl()
+                if (!cachedBaseUrl.isNullOrEmpty()) {
+                    Log.w("RetrofitClient", "baseUrl 为空，使用缓存的 baseUrl: $cachedBaseUrl")
+                    cachedBaseUrl
+                } else {
+                    // 如果缓存也没有，尝试从 DomainFallbackManager 获取
+                    val cachedApiDomain = com.xboard.util.DomainFallbackManager.getCachedApiDomain()
+                    if (!cachedApiDomain.isNullOrEmpty()) {
+                        val fallbackUrl = "$cachedApiDomain/api/v1/"
+                        Log.w("RetrofitClient", "baseUrl 为空，使用缓存的接口域名: $fallbackUrl")
+                        fallbackUrl
+                    } else {
+                        // 如果完全没有缓存，抛出异常，避免使用无效的 baseUrl
+                        throw IllegalStateException("baseUrl 未初始化且没有缓存的域名，请先调用 initialize() 或初始化域名配置")
+                    }
+                }
+            } else {
+                baseUrl
+            }
+
             val gson: Gson = GsonBuilder()
                 .setDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
                 .disableHtmlEscaping()
@@ -260,7 +281,7 @@ object RetrofitClient {
                 .build()
 
             retrofit = Retrofit.Builder()
-                .baseUrl(baseUrl)
+                .baseUrl(finalBaseUrl)
                 .client(httpClient)
                 .addConverterFactory(GsonConverterFactory.create(gson))
                 .build()

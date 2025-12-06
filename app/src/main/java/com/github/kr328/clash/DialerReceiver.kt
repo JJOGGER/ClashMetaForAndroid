@@ -3,6 +3,7 @@ package com.github.kr328.clash
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import com.xboard.ui.activity.MainActivity
 
 class DialerReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {

@@ -283,7 +283,7 @@ class AutoSubscriptionManager(
     }
 
     private fun buildProfileName(subscribe: SubscribeResponse): String {
-        return subscribe.plan.name.takeIf { it.isNotBlank() }
+        return subscribe.plan?.name.takeIf { it?.isNotBlank()==true }
             ?: subscribe.email
     }
 

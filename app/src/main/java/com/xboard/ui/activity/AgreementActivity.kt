@@ -6,6 +6,8 @@ import com.github.kr328.clash.databinding.ActivityAgreementBinding
 import com.github.kr328.clash.databinding.ActivityCommissionRecordBinding
 import com.xboard.api.RetrofitClient
 import com.xboard.base.BaseActivity
+import com.xboard.storage.MMKVManager
+import com.xboard.util.DomainFallbackManager
 
 /**
  * 协议展示页面（WebView）
@@ -49,11 +51,11 @@ class AgreementActivity : BaseActivity<ActivityAgreementBinding>() {
     private fun loadAgreement(type: String) {
         when (type) {
             TYPE_PRIVACY_POLICY -> binding.webView.loadUrl(
-                "${RetrofitClient.BASE_URL}/user_privacy.html",
+                "${DomainFallbackManager.getCachedMainDomain()}/user_privacy.html",
             )
 
             else -> binding.webView.loadUrl(
-                "${RetrofitClient.BASE_URL}/user_agreement.html",
+                "${DomainFallbackManager.getCachedMainDomain()}/user_agreement.html",
             )
         }
 

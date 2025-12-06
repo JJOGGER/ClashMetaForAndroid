@@ -221,6 +221,7 @@
             android:name="com.xboard.ui.activity.MainActivity"
             android:configChanges="uiMode"
             android:exported="false"
+            android:launchMode="singleTop"
             android:label="@string/app_name"
             android:theme="@style/BootstrapTheme" />
         

@@ -197,7 +197,11 @@ object MMKVManager {
      * 获取API基础URL
      */
     fun getApiBaseUrl(): String? {
-        return MMKVUtil.getInstance().getStringValue("api_base_url", "")
+        val baseUrl=MMKVUtil.getInstance().getStringValue("api_base_url", "")
+        if (baseUrl?.startsWith("http")!=true){
+            return null
+        }
+        return baseUrl
     }
 
     /**

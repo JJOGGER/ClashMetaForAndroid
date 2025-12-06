@@ -11,6 +11,7 @@ import com.github.kr328.clash.databinding.ItemInviteDetailBinding
 import com.xboard.api.RetrofitClient
 import com.xboard.ex.showToast
 import com.xboard.model.InviteCode
+import com.xboard.util.DomainFallbackManager
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -57,7 +58,7 @@ class InviteDetailAdapter (val context: Context?): RecyclerView.Adapter<InviteDe
 
         private fun copyInviteLink(code: InviteCode) {
 
-            copyToClipboard("邀请链接", "${ RetrofitClient.BASE_URL}/#/register?code=${code.code}")
+            copyToClipboard("邀请链接", "${DomainFallbackManager.getCachedMainDomain()}/#/register?code=${code.code}")
         }
 
         private fun copyToClipboard(label: String, text: String) {
