@@ -7,7 +7,6 @@ import com.github.kr328.clash.service.data.SelectionDao
 import com.github.kr328.clash.service.util.importedDir
 import com.github.kr328.clash.util.withProfile
 import com.xboard.storage.MMKVManager
-import java.io.File
 import java.util.regex.Pattern
 
 /**
@@ -23,8 +22,8 @@ object ConfigParser {
      * @param context Context
      * @return Pair<groupName, nodeName> 或 null
      */
-    suspend fun parseNodeFromConfig(context: Context){
-         try {
+    suspend fun parseNodeFromConfig(context: Context) {
+        try {
             val activeProfile = withProfile { queryActive() }
             if (activeProfile == null) {
                 Log.w(TAG, "No active profile found")
@@ -47,7 +46,7 @@ object ConfigParser {
 //                    return Pair(selection.proxy, selection.selected)
 //                }
 //            }
-//            if (TextUtils.isEmpty(currentGroup)) {
+            if (TextUtils.isEmpty(currentGroup)) {
                 // 2. 如果没有保存的状态，从配置文件读取默认节点（第一个 proxy-group 的第一个节点）
                 val configFile = context.importedDir.resolve(activeProfile.uuid.toString())
                     .resolve("config.yaml")
@@ -65,8 +64,8 @@ object ConfigParser {
                         "Found node from config: group=${configNode.first}, node=${configNode.second}"
                     )
                 }
-                MMKVManager.saveCurrentNode(configNode?.first,configNode?.second)
-//            }
+                MMKVManager.saveCurrentNode(configNode?.first, configNode?.second)
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to parse config: ${e.message}", e)
         }
@@ -319,11 +318,16 @@ object ConfigParser {
 
             // 4. 在它的 proxies 列表中，找到第一个实际节点（不在 group 名称集合中的）
             val proxies = groupProxies[targetGroupName] ?: emptyList()
-            val actualNode = proxies.firstOrNull { proxyName ->
+            var actualNode = proxies.firstOrNull { proxyName ->
                 // 节点名称不在 group 名称集合中，说明是实际节点
-                !groupNames.contains(proxyName)
+                proxyName == "自动选择"
             }
-
+            if (actualNode == null) {
+                proxies.firstOrNull { proxyName ->
+                    // 节点名称不在 group 名称集合中，说明是实际节点
+                    !groupNames.contains(proxyName)
+                }
+            }
             if (actualNode != null) {
                 Log.d(TAG, "Parsed node: group=$targetGroupName, node=$actualNode")
                 return Pair(targetGroupName, actualNode)
