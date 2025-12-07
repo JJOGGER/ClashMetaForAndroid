@@ -10,7 +10,6 @@ import com.xboard.network.ApiResult
 import com.xboard.network.UserRepository
 import com.xboard.storage.MMKVManager
 import com.xboard.util.DomainFallbackManager
-import com.xboard.util.DomainFallbackManager.cacheApiDomain
 import kotlinx.coroutines.launch
 
 /**
@@ -53,7 +52,8 @@ class SplashActivity : BaseActivity<ActivitySplashBinding>() {
                     // 使用缓存的域名
                     Log.d(TAG, "使用缓存的域名配置")
                     // 如果域名不可用，会在实际请求时失败，然后走备用流程
-                    DomainFallbackManager.switchToApiDomain(cachedApiDomain)
+                    // cachedApiDomain 已经通过 hasApiDomain 检查，不为空
+                    DomainFallbackManager.switchToApiDomain(cachedApiDomain!!)
                     // 重新创建 Repository
                     val newUserRepository = UserRepository(RetrofitClient.getApiService())
                     // 直接请求，如果失败再走备用流程
@@ -82,7 +82,23 @@ class SplashActivity : BaseActivity<ActivitySplashBinding>() {
             if (initResult is ApiResult.Success) {
                 val availableDomain = initResult.data
                 Log.i(TAG, "域名配置初始化成功，使用接口域名: $availableDomain")
-                navigateToNextScreen()
+                
+                // 切换到可用的接口域名
+                DomainFallbackManager.switchToApiDomain(availableDomain)
+                
+                // 重新创建 Repository
+                val newUserRepository = UserRepository(RetrofitClient.getApiService())
+                
+                // 请求公共配置
+                val configResult = newUserRepository.getCommonConfig()
+                configResult.onSuccess {
+                    Log.d(TAG, "公共配置请求成功")
+                    navigateToNextScreen()
+                }.onError { error ->
+                    Log.e(TAG, "公共配置请求失败: ${error.message}")
+                    // 即使失败也跳转，避免阻塞用户
+                    navigateToNextScreen()
+                }
             } else {
                 Log.e(TAG, "域名配置初始化失败: ${(initResult as ApiResult.Error).message}")
                 // 初始化失败，尝试使用默认域名
@@ -101,9 +117,7 @@ class SplashActivity : BaseActivity<ActivitySplashBinding>() {
 
             if (availableDomain != null) {
                 Log.i(TAG, "从备用列表找到可用域名: $availableDomain")
-                val baseUrl = "$availableDomain/api/v1/"
-                MMKVManager.saveApiBaseUrl(baseUrl)
-                cacheApiDomain(availableDomain)
+                DomainFallbackManager.switchToApiDomain(availableDomain)
                 navigateToNextScreen()
             } else {
                 // 缓存的备用列表都不可用，需要重新请求 api.json

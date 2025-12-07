@@ -4,8 +4,8 @@
     <string name="receive_broadcasts_of_clash">Receive broadcasts of clash services</string>
     
     <!-- Required for build configuration -->
-    <string name="launch_name_alpha">Clash Meta Alpha</string>
-    <string name="application_name_alpha">Clash Meta for Android Alpha</string>
-    <string name="launch_name_meta">Clash Meta</string>
-    <string name="application_name_meta">Clash Meta for Android</string>
+    <string name="launch_name_alpha">咻咻云</string>
+    <string name="application_name_alpha">咻咻云</string>
+    <string name="launch_name_meta">咻咻云</string>
+    <string name="application_name_meta">咻咻云</string>
 </resources>

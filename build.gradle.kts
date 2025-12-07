@@ -151,7 +151,18 @@ subprojects {
                         keystore.inputStream().use(this::load)
                     }
 
-                    storeFile = rootProject.file("doc/clashkey.jks")
+                    val keystorePath = prop.getProperty("keystore.path")
+                    if (keystorePath != null) {
+                        // 如果是绝对路径（以 / 开头），直接使用；否则作为相对路径
+                        storeFile = if (keystorePath.startsWith("/")) {
+                            file(keystorePath)
+                        } else {
+                            rootProject.file(keystorePath)
+                        }
+                    } else {
+                        // 如果没有配置路径，使用默认路径
+                        storeFile = rootProject.file("doc/clashkey.jks")
+                    }
                     storePassword = prop.getProperty("keystore.password")!!
                     keyAlias = prop.getProperty("key.alias")!!
                     keyPassword = prop.getProperty("key.password")!!

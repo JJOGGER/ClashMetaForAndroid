@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Required for build configuration -->
-    <string name="launch_name_alpha">Clash Meta Alpha</string>
-    <string name="application_name_alpha">Clash Meta for Android Alpha</string>
-    <string name="launch_name_meta">Clash Meta</string>
-    <string name="application_name_meta">Clash Meta for Android</string>
+    <string name="launch_name_alpha">咻咻云</string>
+    <string name="application_name_alpha">咻咻云</string>
+    <string name="launch_name_meta">咻咻云</string>
+    <string name="application_name_meta">咻咻云</string>
 </resources>
 
 
