@@ -36,7 +36,7 @@ class NodeSelectionActivity : BaseActivity<ActivityNodeSelectionBinding>() {
     private var currentGroupIndex: Int = -1
     private val userRepository by lazy { UserRepository(RetrofitClient.getApiService()) }
     private var urlTesting: Boolean = false
-    private var mCurrentServer: Server? = null
+    private var mCurrentServer: String? = null
     private var serverList: MutableList<Server> = mutableListOf()
     private var serverProxyMapping: Map<String, com.github.kr328.clash.core.model.Proxy> =
         emptyMap()
@@ -62,14 +62,9 @@ class NodeSelectionActivity : BaseActivity<ActivityNodeSelectionBinding>() {
             }
         }
         mCurrentServer = if (MMKVManager.getCurrentGroup() == "自动选择") {
-            Server(
-                id = -1,
-                name = "自动选择",
-                host = "",
-                port = 0
-            )
+            "自动选择"
         } else {
-            intent?.getSerializableExtra(SERVER) as? Server?
+            intent?.getStringExtra(SERVER)
         }
         setupNodeAdapter()
     }
@@ -93,8 +88,8 @@ class NodeSelectionActivity : BaseActivity<ActivityNodeSelectionBinding>() {
                             host = "",
                             port = 0
                         )
-                        serverList.add(0,default)
-                        nodeAdapter.submitList(servers, mCurrentServer?.name)
+                        serverList.add(0, default)
+                        nodeAdapter.submitList(servers, mCurrentServer)
 
                         // 如果 Clash 已连接，建立映射关系并更新延迟信息
                         if (clashRunning) {
@@ -168,9 +163,7 @@ class NodeSelectionActivity : BaseActivity<ActivityNodeSelectionBinding>() {
     private fun setupNodeAdapter() {
         nodeAdapter = NodeAdapter { proxy ->
             selectNode(proxy.name)
-            MMKVManager.setDefaultServer(proxy)
-            setResult(RESULT_OK)
-            finish()
+
         }
         binding.rvNodes.adapter = nodeAdapter
         binding.rvNodes.layoutManager = LinearLayoutManager(this)
@@ -216,7 +209,12 @@ class NodeSelectionActivity : BaseActivity<ActivityNodeSelectionBinding>() {
                                 MMKVManager.getCurrentGroup().toString()
                             }, proxy=$clashProxyName"
                         )
+                        MMKVManager.saveCurrentNode(
+                            MMKVManager.getCurrentGroup().toString(), clashProxyName
+                        )
                     }
+                    setResult(RESULT_OK)
+                    finish()
                     return@launch
                 }
 
@@ -225,8 +223,7 @@ class NodeSelectionActivity : BaseActivity<ActivityNodeSelectionBinding>() {
                     queryProxyGroupNames(uiStore.proxyExcludeNotSelectable)
                 }
 
-                val entryGroupName = groupNames.firstOrNull { it == "XBoard" || it == "Proxy" }
-                    ?: groupNames.firstOrNull()
+                val entryGroupName = groupNames.firstOrNull()
 
                 if (entryGroupName == null) {
                     showToast("代理组索引无效")
@@ -246,13 +243,14 @@ class NodeSelectionActivity : BaseActivity<ActivityNodeSelectionBinding>() {
                 val success = withClash {
                     patchSelector(entryGroupName, clashProxyName)
                 }
-
+                MMKVManager.saveCurrentNode(entryGroupName, clashProxyName)
                 if (success) {
                     showToast("已切换到 $serverName")
                 } else {
                     showToast("切换节点失败")
                 }
-
+                setResult(RESULT_OK)
+                finish()
             } catch (e: Exception) {
                 Log.e(TAG, "Error selecting node: ${e.message}")
                 showToast("切换节点失败: ${e.message}")

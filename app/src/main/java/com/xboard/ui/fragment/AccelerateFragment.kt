@@ -66,7 +66,7 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
         AutoSubscriptionManager(userRepository, lifecycleScope)
     }
     private val userRepository by lazy { UserRepository(RetrofitClient.getApiService()) }
-    private var mDefaultSelected: Server? = null
+    private var mDefaultSelected: String? = null
     private val ticketRepository by lazy { TicketRepository(RetrofitClient.getApiService()) }
     private val uiStore by lazy { UiStore(requireContext()) }
     private lateinit var noticeBannerAdapter: NoticeBannerAdapter
@@ -84,13 +84,9 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             // 节点已选择，重新加载节点信息
-            mDefaultSelected = MMKVManager.getDefaultServer()
-            MMKVManager.saveCurrentNode(MMKVManager.getCurrentGroup(), mDefaultSelected?.name)
+            mDefaultSelected = MMKVManager.getCurrentProxy()
             lifecycleScope.launch {
                 if (clashRunning) {
-                    withClash {
-                        patchSelector(MMKVManager.getCurrentGroup() ?: "", mDefaultSelected!!.name)
-                    }
                     loadCurrentNodeInfo()
                 } else {
                     syncClashSelectedNode()
@@ -246,7 +242,7 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
                 .onSuccess {
                     if (it.isNotEmpty()) {
                         ConfigParser.parseNodeFromConfig(requireContext())
-                        mDefaultSelected = MMKVManager.getDefaultServer() ?: it[0]
+                        mDefaultSelected = MMKVManager.getCurrentProxy() ?: it[0].name
                         syncClashSelectedNode()
                     }
                 }
@@ -254,7 +250,7 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
     }
 
     private suspend fun syncClashSelectedNode() {
-        val name = mDefaultSelected?.name ?: ""
+        val name = mDefaultSelected ?: ""
         //获取默认选中
         val defaultSelected =
             Proxy(
@@ -277,7 +273,7 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
                     Selection(
                         uuid,
                         MMKVManager.getCurrentGroup() ?: "",
-                        mDefaultSelected?.name ?: MMKVManager.getCurrentProxy()
+                        mDefaultSelected ?: MMKVManager.getCurrentProxy()
                         ?: ""
                     )
                 )
@@ -353,7 +349,7 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
                     Log.w(TAG, "No active profile found")
                     return@launch
                 }
-
+                kotlinx.coroutines.delay(500)
                 // 使用 withClash 获取代理组名称
                 val groupNames = withClash {
                     queryProxyGroupNames(uiStore.proxyExcludeNotSelectable)
@@ -363,14 +359,13 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
                 // 如果没有获取到，且还有重试机会，延迟后重试
                 if (groupNames.isEmpty() && retryCount < 2) {
                     Log.w(TAG, "No proxy groups found, retrying... (${retryCount + 1}/2)")
-                    kotlinx.coroutines.delay(500)
+                    kotlinx.coroutines.delay(200)
                     loadCurrentNodeInfo(connectedOverride, retryCount + 1)
                     return@launch
                 }
 
                 // 优先选择 "Proxy" 组，否则选择第一个可用的组
-                currentGroupName = groupNames.firstOrNull { it == "Proxy" }
-                    ?: groupNames.firstOrNull()
+                currentGroupName =  groupNames.firstOrNull()
 
                 if (currentGroupName.isNullOrBlank()) {
                     Log.w(TAG, "No proxy group found")
@@ -381,15 +376,8 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
                 val group = withClash {
                     queryProxyGroup(currentGroupName!!, uiStore.proxySort)
                 }
-                currentProxyName = group.now
+                currentProxyName = group.now//当前代理组选中的节点
                 Log.d(TAG, "Current proxy: ${group.now}, total proxies: ${group.proxies.size}")
-//                SelectionDao().setSelected(
-//                    Selection(
-//                        currentProfileUUID!!,
-//                        group.now,
-//                        mDefaultSelected!!.name
-//                    )
-//                )
                 val activeProxy = group.proxies.firstOrNull { it.name == group.now }
                 if (activeProxy != null) {
                     Log.d(
@@ -790,50 +778,6 @@ class AccelerateFragment : BaseFragment<FragmentAccelerateBinding>() {
         }
     }
 
-    /**
-     * 启动配置检查轮询
-     * 持续检查配置是否加载完成，一旦加载完成就停止轮询
-     * 这是方案 C：轮询监听（无需修改 Service）
-     */
-    private fun startConfigurationCheckLoop() {
-        configCheckJob?.cancel()
-        configCheckJob = viewLifecycleOwner.lifecycleScope.launch {
-            var lastGroupCount = 0
-            var checkCount = 0
-            val maxChecks = 20  // 最多检查 20 次 × 200ms = 4 秒
-
-            while (isActive && checkCount < maxChecks) {
-                try {
-                    val currentGroupNames = withClash {
-                        queryProxyGroupNames(uiStore.proxyExcludeNotSelectable)
-                    }
-
-                    // 如果获取到节点组，且数量有增加
-                    if (currentGroupNames.isNotEmpty() &&
-                        currentGroupNames.size > lastGroupCount
-                    ) {
-                        Log.d(TAG, "Configuration loaded: ${currentGroupNames.size} groups found")
-                        lastGroupCount = currentGroupNames.size
-
-                        // 更新节点信息
-                        loadCurrentNodeInfo()
-                        break  // 配置已加载，停止轮询
-                    }
-
-                    checkCount++
-                    kotlinx.coroutines.delay(200)  // 每 200ms 检查一次
-                } catch (e: Exception) {
-                    Log.e(TAG, "Error checking configuration: ${e.message}")
-                    checkCount++
-                    kotlinx.coroutines.delay(500)
-                }
-            }
-
-            if (checkCount >= maxChecks) {
-                Log.w(TAG, "Configuration check timeout after 4 seconds")
-            }
-        }
-    }
 
     /**
      * 停止配置检查轮询

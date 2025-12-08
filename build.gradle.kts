@@ -200,7 +200,7 @@ subprojects {
             splits {
                 abi {
                     isEnable = true
-                    isUniversalApk = true
+                    isUniversalApk = false
                     reset()
                     include("arm64-v8a", "armeabi-v7a")
                 }
