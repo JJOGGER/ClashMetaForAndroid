@@ -4,7 +4,7 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
-import com.github.kr328.clash.databinding.ItemCommissionRecordBinding
+import com.xboard.databinding.ItemCommissionRecordBinding
 import com.xboard.model.InviteDetail
 import java.text.DecimalFormat
 import java.text.SimpleDateFormat

@@ -321,7 +321,7 @@ data class SubscribeResponse(
     @SerializedName("token")
     val token: String,
     @SerializedName("expired_at")
-    val expiredAt: String,
+    val expiredAt: String? = null,
     @SerializedName("u")
     val upload: Long,
     @SerializedName("d")
@@ -358,7 +358,10 @@ data class PlanInfo(
     @SerializedName("name")
     val name: String,
     @SerializedName("transfer_enable")
-    val transferEnable: Long
+    val transferEnable: Long,
+    // 当前套餐所属的节点分组ID，用于过滤可用节点
+    @SerializedName("group_id")
+    val groupId: Int? = null
 )
 
 // ==================== 公共配置 ====================

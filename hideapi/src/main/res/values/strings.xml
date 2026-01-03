@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Required for build configuration -->
-    <string name="launch_name_alpha">咻咻云</string>
-    <string name="application_name_alpha">咻咻云</string>
-    <string name="launch_name_meta">咻咻云</string>
-    <string name="application_name_meta">咻咻云</string>
+    <string name="launch_name_alpha">妈祖VPN</string>
+    <string name="application_name_alpha">妈祖VPN</string>
+    <string name="launch_name_meta">妈祖VPN</string>
+    <string name="application_name_meta">妈祖VPN</string>
 </resources>
+
+
 
 
 

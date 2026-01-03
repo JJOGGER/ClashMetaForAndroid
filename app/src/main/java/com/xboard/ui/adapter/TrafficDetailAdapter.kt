@@ -3,7 +3,7 @@ package com.xboard.ui.adapter
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import com.github.kr328.clash.databinding.ItemTrafficDetailBinding
+import com.xboard.databinding.ItemTrafficDetailBinding
 import com.xboard.model.TrafficLog
 import com.xboard.utils.DateUtils
 import java.text.DecimalFormat

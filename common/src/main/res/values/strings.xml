@@ -4,8 +4,8 @@
     <string name="receive_broadcasts_of_clash">Receive broadcasts of clash services</string>
     
     <!-- Required for build configuration -->
-    <string name="launch_name_alpha">咻咻云</string>
-    <string name="application_name_alpha">咻咻云</string>
-    <string name="launch_name_meta">咻咻云</string>
-    <string name="application_name_meta">咻咻云</string>
+    <string name="launch_name_alpha">妈祖VPN</string>
+    <string name="application_name_alpha">妈祖VPN</string>
+    <string name="launch_name_meta">妈祖VPN</string>
+    <string name="application_name_meta">妈祖VPN</string>
 </resources>

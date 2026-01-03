@@ -2,6 +2,7 @@ package com.github.kr328.clash
 
 import android.app.Application
 import android.content.Context
+import androidx.appcompat.app.AppCompatDelegate
 import com.github.kr328.clash.common.Global
 import com.github.kr328.clash.common.compat.currentProcessName
 import com.github.kr328.clash.common.log.Log
@@ -9,6 +10,7 @@ import com.github.kr328.clash.remote.Remote
 import com.github.kr328.clash.service.util.sendServiceRecreated
 import com.github.kr328.clash.util.clashDir
 import com.tencent.mmkv.MMKV
+import com.xboard.storage.MMKVManager
 import java.io.File
 import java.io.FileOutputStream
 
@@ -27,6 +29,9 @@ class MainApplication : Application() {
         val processName = currentProcessName
         extractGeoFiles()
 
+        // 根据用户偏好应用主题模式（0=浅色，1=深色，2=跟随系统）
+        applyThemeMode()
+
         Log.d("Process $processName started")
 
         // 初始化 API 客户端
@@ -37,6 +42,14 @@ class MainApplication : Application() {
             Remote.launch()
         } else {
             sendServiceRecreated()
+        }
+    }
+
+    private fun applyThemeMode() {
+        when (MMKVManager.getThemeMode()) {
+            0 -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+            1 -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+            else -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
         }
     }
 

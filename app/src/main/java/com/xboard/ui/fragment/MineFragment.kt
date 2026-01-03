@@ -1,357 +1,93 @@
 package com.xboard.ui.fragment
 
-import android.content.Intent
-import android.net.Uri
+import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
-import androidx.core.view.isVisible
-import androidx.lifecycle.lifecycleScope
-import com.github.kr328.clash.databinding.FragmentMineBinding
-import com.github.kr328.clash.databinding.LayoutMineMenuItemBinding
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.ComposeView
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import com.xboard.api.RetrofitClient
-import com.xboard.base.BaseFragment
-import com.xboard.ex.gone
-import com.xboard.ex.visible
-import com.xboard.network.AuthRepository
-import com.xboard.network.InviteRepository
-import com.xboard.network.TicketRepository
+import com.xboard.event.ThemeChangedEvent
 import com.xboard.network.UserRepository
-import com.xboard.event.OrderPayEvent
-import com.xboard.storage.MMKVManager
-import com.xboard.ui.activity.LoginActivity
-import com.xboard.ui.activity.MainActivity
-import com.xboard.ui.activity.ShareActivity
-import com.xboard.utils.DateUtils
-import com.xboard.utils.onClick
-import kotlinx.coroutines.launch
+import com.xboard.ui.compose.MineScreen
+import com.xboard.ui.theme.MaClashTheme
+import com.xboard.ui.viewmodel.MineViewModel
+import com.xboard.ui.viewmodel.ThemeViewModel
+import com.xboard.utils.ThemeHelper
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
-import java.text.DecimalFormat
 
 /**
  * 我的页面（用户中心）
+ * 已重构为 Compose 实现
  */
-class MineFragment : BaseFragment<FragmentMineBinding>() {
+class MineFragment : Fragment() {
 
     private val userRepository by lazy { UserRepository(RetrofitClient.getApiService()) }
-    private val authRepository by lazy { AuthRepository(RetrofitClient.getApiService()) }
-    private val ticketRepository by lazy { TicketRepository(RetrofitClient.getApiService()) }
-    private val inviteRepository by lazy { InviteRepository(RetrofitClient.getApiService()) }
-    private val priceFormatter by lazy { DecimalFormat("#,##0.00") }
+    
+    private val viewModel: MineViewModel by viewModels {
+        MineViewModel.Factory(
+            requireActivity().application,
+            userRepository
+        )
+    }
+    
+    private val themeViewModel = ThemeViewModel.getInstance()
 
-    override fun getViewBinding(
+    override fun onCreateView(
         inflater: LayoutInflater,
-        container: ViewGroup?
-    ): FragmentMineBinding {
-        return FragmentMineBinding.inflate(inflater, container, false)
-    }
-
-    override fun initView() {
-        super.initView()
-        setupMenuItems()
-    }
-
-    override fun initListener() {
-        binding.vCommissionBalance.onClick {
-            startActivity(Intent(activity, ShareActivity::class.java))
-        }
-        binding.vBuySubscribe.onClick {
-            val activity = activity
-            if (activity is MainActivity) {
-                // 通过 MainActivity 的 bottomNavigation 切换到购买页面
-                // 使用反射或直接访问 bottomNavigation
-                try {
-                    activity.setCurrentTab(1)
-                } catch (e: Exception) {
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        // 加载主题设置
+        ThemeHelper.loadThemeSettings(themeViewModel, resources)
+        
+        return ComposeView(requireContext()).apply {
+            setContent {
+                val themeState by themeViewModel.uiState.collectAsState()
+                MaClashTheme(
+                    colorSchemeSelection = themeState.colorScheme,
+                    darkTheme = themeState.isDarkMode
+                ) {
+                    MineScreen(
+                        viewModel = viewModel,
+                        onRefresh = { viewModel.refreshData() }
+                    )
                 }
             }
         }
-        binding.menuPurchaseRecords.root.setOnClickListener { loadOrderHistory() }
-        binding.menuTraffic.root.setOnClickListener { loadTrafficDetail() }
-        binding.menuSetting.root.setOnClickListener { openOtherSettings() }
-//        binding.menuOfficialSite.root.setOnClickListener { openWebsite(getSiteBaseUrl()) }
-//        binding.menuFaq.root.setOnClickListener { openWebsite(getSiteBaseUrl("/faq")) }
-//        binding.menuOnlineService.root.setOnClickListener { openWebsite(getSiteBaseUrl("/contact")) }
-        binding.menuMyTickets.root.setOnClickListener { loadTickets() }
-//        binding.menuAboutUs.root.setOnClickListener { openWebsite(getSiteBaseUrl("/about")) }
-        binding.menuLogout.setOnClickListener { logout() }
+    }
 
-        binding.swipeRefresh.setOnRefreshListener {
-            loadUserState()
-            loadUserInfo()
-            loadInviteStats()
+    override fun onStart() {
+        super.onStart()
+        // 注册 EventBus 监听主题变化事件
+        if (!EventBus.getDefault().isRegistered(this)) {
+            EventBus.getDefault().register(this)
+        }
+        // 重新加载主题设置，确保从其他页面返回时主题正确
+        ThemeHelper.loadThemeSettings(themeViewModel, resources)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        // 注销 EventBus
+        if (EventBus.getDefault().isRegistered(this)) {
+            EventBus.getDefault().unregister(this)
         }
     }
 
-    private fun loadUserState() {
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            val result = userRepository.getUserStat()
-
-            result
-                .onSuccess { user ->
-                    binding.menuPurchaseRecords.vHandle.visibility =
-                        if (user.orderCount > 0) {
-                            View.VISIBLE
-                        } else {
-                            View.GONE
-                        }
-                    binding.menuMyTickets.vHandle.visibility =
-                        if (user.tickerCount > 0) {
-                            View.VISIBLE
-                        } else {
-                            View.GONE
-                        }
-                }
-                .onError { error ->
-                    showError(error.message)
-                }
-
-        }
-    }
-
-
-    override fun initData() {
-        EventBus.getDefault().register(this)
-        loadUserState()
-        loadUserInfo()
-        loadInviteStats()
-    }
-
-
-    override fun onDestroy() {
-        super.onDestroy()
-        EventBus.getDefault().unregister(this)
-
-    }
     /**
-     * 监听支付成功事件，刷新订阅信息
+     * 监听主题变化事件
+     * ComposeView 会自动响应 themeViewModel.uiState 的变化，无需手动触发
      */
     @Subscribe(threadMode = ThreadMode.MAIN)
-    fun onOrderPayEvent(event: OrderPayEvent) {
-        // 刷新用户信息（包括订阅信息）
-        loadUserInfo()
-        // 刷新用户状态
-        loadUserState()
+    fun onThemeChanged(event: ThemeChangedEvent) {
+        // 重新加载主题设置
+        // themeViewModel.uiState 的变化会自动触发 Compose 重新组合
+        ThemeHelper.loadThemeSettings(themeViewModel, resources)
     }
-
-    private fun loadUserInfo() {
-        binding.swipeRefresh.isRefreshing = true
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            val result = userRepository.getUserInfo()
-
-            result
-                .onSuccess { user ->
-                    binding.tvUserEmail.text = user.email
-                    binding.tvUserNickname.text = "欢迎回来"
-                    binding.tvBalance.text = "¥${formatCurrency(user.balance)}"
-
-                    // 加载订阅信息
-                    loadSubscribeInfo()
-                }
-                .onError { error ->
-                    showError(error.message)
-                }
-
-            binding.swipeRefresh.isRefreshing = false
-
-        }
-    }
-
-    /**
-     * 加载订阅信息
-     *
-     * 从 /user/getSubscribe 接口获取订阅详情，包括：
-     * - 总流量 (transfer_enable)
-     * - 已用流量 (u + d)
-     * - 速度限制 (speed_limit)
-     * - 设备限制 (device_limit)
-     */
-    private fun loadSubscribeInfo() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            val result = userRepository.getSubscribe()
-
-            result
-                .onSuccess { subscribe ->
-                    MMKVManager.saveSubscribe(subscribe)
-                    loadSubscribeDetails()
-                }
-                .onError { error ->
-                    // 加载失败不影响页面显示
-                }
-        }
-    }
-
-    /**
-     * 加载订阅详情
-     *
-     * 需要在 UserRepository 中添加一个新方法来获取完整的订阅信息
-     */
-    private fun loadSubscribeDetails() {
-        val subscribe = MMKVManager.getSubscribe()
-        if (subscribe == null) {
-            binding.vBuySubscribe.visible()
-            binding.vSubscribeInfo.gone()
-            return
-        } else {
-            binding.vBuySubscribe.gone()
-            binding.vSubscribeInfo.visible()
-        }
-        try {
-            binding.tvPlanName.text = subscribe.plan.name
-            // 总流量：transfer_enable (字节)
-            val totalTraffic = subscribe.transferEnable
-
-            // 已用流量：u (上传) + d (下载)
-            // 注意：API返回的是 u 和 d 字段，也可能是 upload 和 download
-            val uploadTraffic = subscribe.upload ?: 0L
-            val downloadTraffic = subscribe.download ?: 0L
-            val usedTraffic = uploadTraffic + downloadTraffic
-            binding.tvTraffic.text =
-                formatTraffic(usedTraffic) + " / " + formatTraffic(totalTraffic)
-            // 流量百分比
-            val percentage = if (totalTraffic > 0) {
-                ((usedTraffic * 100) / totalTraffic).toInt()
-            } else {
-                0
-            }
-
-            binding.pbTrafficPercentage.setProgress(percentage)
-            if (subscribe.expiredAt.toLong() > 0L) {
-                val expireDate = DateUtils.getStringTime(
-                    (subscribe.expiredAt.toLongOrNull() ?: 0L) * 1000,
-                    "yyyy-MM-dd"
-                )
-                binding.tvExpireDate.text = "有效期至：$expireDate"
-            } else {
-                binding.tvExpireDate.text = "未订阅"
-            }
-        } catch (e: Exception) {
-            // 异常处理
-        }
-    }
-
-    private fun loadInviteStats() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            // 从用户信息中获取返利余额
-            val userResult = userRepository.getUserInfo()
-
-            userResult
-                .onSuccess { user ->
-                    // 返利余额单位是分，需要转换为元
-                    binding.tvCommissionBalance.text =
-                        "返利余额 ¥${formatCurrency(user.commissionBalance)}"
-                }
-                .onError { error ->
-                    // 加载失败不影响页面显示
-                }
-        }
-    }
-
-    private fun loadOrderHistory() {
-        val intent =
-            Intent(requireContext(), com.xboard.ui.activity.OrderHistoryActivity::class.java)
-        startActivity(intent)
-    }
-
-    private fun loadTrafficDetail() {
-        val intent =
-            Intent(requireContext(), com.xboard.ui.activity.TrafficDetailActivity::class.java)
-        startActivity(intent)
-    }
-
-    private fun openOtherSettings() {
-        val intent =
-            Intent(requireContext(), com.xboard.ui.activity.OtherSettingsActivity::class.java)
-        startActivity(intent)
-    }
-
-    private fun loadTickets() {
-        val intent = Intent(requireContext(), com.xboard.ui.activity.TicketActivity::class.java)
-        startActivity(intent)
-    }
-
-    private fun logout() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            authRepository.logout()
-            MMKVManager.clearToken()
-            MMKVManager.clearUserInfo()
-            MMKVManager.clearSubscribeCache()
-            MMKVManager.setUserConfigResponse(null)
-            startActivity(Intent(requireContext(), LoginActivity::class.java))
-            requireActivity().finish()
-        }
-    }
-
-    private fun openWebsite(url: String?) {
-        if (url.isNullOrEmpty()) {
-            showError("暂无可用地址")
-            return
-        }
-
-        runCatching {
-            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
-        }.onFailure {
-            showError("无法打开链接")
-        }
-    }
-
-    private fun getSiteBaseUrl(path: String = ""): String? {
-        val apiUrl = MMKVManager.getApiBaseUrl() ?: return null
-        val base = apiUrl.substringBefore("/api")
-        return "$base$path"
-    }
-
-    private fun setupMenuItems() {
-        configureMenu(binding.menuPurchaseRecords, "我的订单", "查看历史订单")
-        configureMenu(binding.menuTraffic, "流量明细", showDesc = false)
-        configureMenu(binding.menuSetting, "其他设置", showDesc = false)
-        configureMenu(binding.menuMyTickets, "在线客服", showDesc = false)
-    }
-
-    private fun configureMenu(
-        menuBinding: LayoutMineMenuItemBinding,
-        title: String,
-        desc: String? = null,
-        showDesc: Boolean = false
-    ) {
-        menuBinding.tvMenuTitle.text = title
-        if (desc != null || showDesc) {
-            menuBinding.tvMenuDesc.isVisible = true
-            menuBinding.tvMenuDesc.text = desc ?: ""
-        } else {
-            menuBinding.tvMenuDesc.isVisible = false
-        }
-    }
-
-    private fun formatCurrency(amount: Double): String {
-        // Round to avoid floating point precision issues
-        val rounded = amount / 100.0
-        return priceFormatter.format(rounded)
-    }
-
-    /**
-     * 格式化流量大小
-     *
-     * @param bytes 字节数
-     * @return 格式化后的流量字符串（B/KB/MB/GB/TB）
-     */
-    private fun formatTraffic(bytes: Long): String {
-        return when {
-            bytes < 1024 -> "$bytes B"
-            bytes < 1024 * 1024 -> "${bytes / 1024} KB"
-            bytes < 1024 * 1024 * 1024 -> "${bytes / (1024 * 1024)} MB"
-            bytes < 1024L * 1024 * 1024 * 1024 -> String.format(
-                "%.2f GB",
-                bytes / (1024.0 * 1024 * 1024)
-            )
-
-            else -> String.format("%.2f TB", bytes / (1024.0 * 1024 * 1024 * 1024))
-        }
-    }
-
 }

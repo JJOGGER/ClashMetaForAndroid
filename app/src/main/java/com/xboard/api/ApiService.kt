@@ -110,11 +110,6 @@ interface ApiService {
     @GET("user/plan/fetch")
     suspend fun getUserPlans(): ApiResponse<List<Plan>>
 
-    /**
-     * 获取用户订阅的套餐
-     */
-    @GET("user/plan/fetch")
-    suspend fun getUserPlan(): ApiResponse<Plan>
 
     /**
      * 获取用户统计

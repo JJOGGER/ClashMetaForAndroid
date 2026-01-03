@@ -377,6 +377,22 @@ object MMKVManager {
         return MMKVUtil.getInstance().getStringValue("current_proxy", "")
     }
 
+    // ==================== 隧道模式 ====================
+
+    /**
+     * 保存隧道模式（"智能" 或 "全局"）
+     */
+    fun saveTunnelMode(mode: String) {
+        MMKVUtil.getInstance().setValue("tunnel_mode", mode)
+    }
+
+    /**
+     * 获取保存的隧道模式，默认返回 "智能"
+     */
+    fun getTunnelMode(): String {
+        return MMKVUtil.getInstance().getStringValue("tunnel_mode", "智能") ?: "智能"
+    }
+
     fun setExpireNotification(enabled: Boolean) {
         MMKVUtil.getInstance().setValue("expire_notification", enabled)
     }

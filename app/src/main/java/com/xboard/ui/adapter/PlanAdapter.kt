@@ -5,7 +5,7 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
-import com.github.kr328.clash.databinding.ItemPlanBinding
+import com.xboard.databinding.ItemPlanBinding
 import com.xboard.model.Plan
 import java.text.DecimalFormat
 

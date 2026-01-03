@@ -14,7 +14,7 @@ import com.xboard.model.KnowledgeArticle
 import com.xboard.ui.activity.WebViewActivity
 import com.xboard.ui.adapter.WebsiteRecommendationAdapter
 import com.xboard.ex.showToast
-import com.github.kr328.clash.R
+import com.xboard.R
 
 /**
  * 网站推荐对话框 - 中间弹窗样式

@@ -6,8 +6,8 @@ import android.view.ViewGroup
 import android.widget.EditText
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.github.kr328.clash.R
-import com.github.kr328.clash.databinding.FragmentShareBinding
+import com.xboard.R
+import com.xboard.databinding.FragmentShareBinding
 import com.xboard.api.RetrofitClient
 import com.xboard.base.BaseFragment
 import com.xboard.model.InviteDetailsResponse

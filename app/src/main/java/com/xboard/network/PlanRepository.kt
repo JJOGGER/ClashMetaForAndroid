@@ -8,16 +8,16 @@ import com.xboard.model.*
  */
 class PlanRepository(private val apiService: ApiService) : BaseRepository() {
 
-    /**
-     * 获取所有可用套餐（游客）
-     */
-    suspend fun getGuestPlans(): ApiResult<List<Plan>> {
-        return safeApiCall {
-            apiService.getGuestPlans()
-        }.map { response ->
-            response.plans
-        }
-    }
+//    /**
+//     * 获取所有可用套餐（游客）
+//     */
+//    suspend fun getGuestPlans(): ApiResult<List<Plan>> {
+//        return safeApiCall {
+//            apiService.getGuestPlans()
+//        }.map { response ->
+//            response.plans
+//        }
+//    }
 
     /**
      * 获取用户套餐列表
@@ -28,14 +28,6 @@ class PlanRepository(private val apiService: ApiService) : BaseRepository() {
         }
     }
 
-    /**
-     * 获取用户订阅的套餐
-     */
-    suspend fun getUserPlan(): ApiResult<Plan> {
-        return safeApiCall {
-            apiService.getUserPlan()
-        }
-    }
 
     /**
      * 检查优惠券

@@ -4,7 +4,7 @@ import android.content.Context
 import android.graphics.drawable.GradientDrawable
 import android.util.AttributeSet
 import androidx.recyclerview.widget.RecyclerView
-import com.github.kr328.clash.R
+import com.xboard.R
 
 /**
  *    author : jogger

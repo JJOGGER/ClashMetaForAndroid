@@ -6,6 +6,7 @@ plugins {
     kotlin("android")
     kotlin("kapt")
     id("com.android.application")
+    alias(libs.plugins.compose.compiler)
 }
 
 dependencies {
@@ -54,6 +55,21 @@ dependencies {
     // UI
     implementation(libs.lottie)
     implementation(libs.androidx.swiperefreshlayout)
+
+    // Jetpack Compose
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.bundles.compose)
+    implementation(libs.androidx.compose.material) // Material 2 for PullRefresh API
+    implementation(libs.coil.compose)
+    implementation("androidx.compose.animation:animation")
+    implementation("androidx.compose.material:material-icons-extended")
+}
+
+android {
+    buildFeatures {
+        compose = true
+    }
+    namespace = "com.xboard"
 }
 
 tasks.getByName("clean", type = Delete::class) {
@@ -62,8 +78,7 @@ tasks.getByName("clean", type = Delete::class) {
 
 val geoFilesDownloadDir = "src/main/assets"
 
-task("downloadGeoFiles") {
-
+tasks.register("downloadGeoFiles") {
     val geoFilesUrls = mapOf(
         "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.metadb" to "geoip.metadb",
         "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geosite.dat" to "geosite.dat",
@@ -71,30 +86,32 @@ task("downloadGeoFiles") {
         "https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/GeoLite2-ASN.mmdb" to "ASN.mmdb",
     )
 
+    // 只有在本地文件不存在时才下载，避免每次构建都重复下载
     doLast {
         geoFilesUrls.forEach { (downloadUrl, outputFileName) ->
-            val url = URL(downloadUrl)
             val outputPath = file("$geoFilesDownloadDir/$outputFileName")
-            outputPath.parentFile.mkdirs()
-            url.openStream().use { input ->
-                Files.copy(input, outputPath.toPath(), StandardCopyOption.REPLACE_EXISTING)
-                println("$outputFileName downloaded to $outputPath")
+            if (outputPath.exists()) {
+                println("$outputFileName already exists, skip downloading")
+            } else {
+                val url = URL(downloadUrl)
+                outputPath.parentFile.mkdirs()
+                url.openStream().use { input ->
+                    Files.copy(input, outputPath.toPath(), StandardCopyOption.REPLACE_EXISTING)
+                    println("$outputFileName downloaded to $outputPath")
+                }
             }
         }
     }
 }
 
 afterEvaluate {
-    // 禁用自动下载GeoFiles任务，避免SSL错误
-    // 如需下载，请手动运行: ./gradlew downloadGeoFiles
-     val downloadGeoFilesTask = tasks["downloadGeoFiles"]
-     tasks.forEach {
-         if (it.name.startsWith("assemble")) {
-             it.dependsOn(downloadGeoFilesTask)
-         }
-     }
-}
-
-tasks.getByName("clean", type = Delete::class) {
-    delete(file(geoFilesDownloadDir))
+    // 默认不再强制在 assemble 任务前下载 GeoFiles，避免每次编译都触发网络下载
+    // 如需在构建前自动下载，可使用:
+    //   ./gradlew -PwithGeoFiles assembleDebug
+    if (project.hasProperty("withGeoFiles")) {
+        val downloadGeoFilesTask = tasks.named("downloadGeoFiles")
+        tasks.matching { it.name.startsWith("assemble") }.configureEach {
+            dependsOn(downloadGeoFilesTask)
+        }
+    }
 }

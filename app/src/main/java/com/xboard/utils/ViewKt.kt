@@ -1,7 +1,7 @@
 package com.xboard.utils
 
 import android.view.View
-import com.github.kr328.clash.R
+import com.xboard.R
 
 fun throttleClick(wait: Long = 200, block: ((View) -> Unit)): View.OnClickListener {
 

@@ -13,14 +13,13 @@
         <FrameLayout
             android:id="@+id/v_back"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:paddingStart="20dp"
-            android:paddingTop="12dp"
-            android:paddingEnd="24dp"
-            android:paddingBottom="12dp">
+            android:paddingEnd="24dp">
+
             <ImageView
                 android:layout_width="25dp"
-                android:layout_height="wrap_content"
+                android:layout_height="25dp"
                 android:layout_gravity="center_vertical"
                 android:adjustViewBounds="true"
                 android:src="@drawable/icon_back" />
@@ -28,11 +27,12 @@
 
         <TextView
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
+            android:layout_height="match_parent"
+            android:gravity="center"
             android:text="我的邀请"
             android:textColor="@color/white"
-            android:textSize="18dp" />
+            android:textSize="18sp"
+            android:textStyle="bold" />
 
     </FrameLayout>
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
@@ -41,41 +41,38 @@
         android:layout_height="match_parent">
         <androidx.core.widget.NestedScrollView
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            android:fillViewport="true">
 
             <!-- Content -->
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
+                android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="24dp">
-                <FrameLayout
+                android:padding="20dp">
+
+                <!-- 标题 -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="我的邀请"
+                    android:textColor="@color/white"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <!-- 佣金余额卡片 -->
+                <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="15dp">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center_vertical"
-                        android:text="我的邀请"
-                        android:textColor="@color/white"
-                        android:textSize="16dp" />
+                    android:layout_marginTop="16dp"
+                    app:cardCornerRadius="20dp"
+                    app:cardUseCompatPadding="false"
+                    app:cardElevation="3dp"
+                    app:cardBackgroundColor="?attr/colorSurface">
 
-                </FrameLayout>
-                <!-- Stats Cards -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:orientation="horizontal">
-
-                    <!-- Commission Balance Card -->
                     <LinearLayout
-                        android:layout_width="0dp"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:background="@drawable/bg_card_dark"
                         android:orientation="vertical"
                         android:padding="16dp">
 
@@ -92,14 +89,16 @@
                             android:layout_height="wrap_content"
                             android:gravity="center_vertical"
                             android:orientation="horizontal">
+
                             <TextView
                                 android:id="@+id/tv_commission_balance"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="0"
                                 android:textColor="@color/primary"
-                                android:textSize="30dp"
+                                android:textSize="28sp"
                                 android:textStyle="bold" />
+
                             <TextView
                                 android:id="@+id/tv_unit"
                                 android:layout_width="wrap_content"
@@ -109,13 +108,15 @@
                                 android:layout_marginBottom="2dp"
                                 android:text="CNY"
                                 android:textColor="@color/text_secondary"
-                                android:textSize="20dp" />
+                                android:textSize="16sp" />
                         </LinearLayout>
+
                         <LinearLayout
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="10dp"
+                            android:layout_marginTop="12dp"
                             android:orientation="horizontal">
+
                             <com.xboard.ui.round.RoundTextView
                                 android:id="@+id/btn_transfer"
                                 android:layout_width="wrap_content"
@@ -126,9 +127,10 @@
                                 android:paddingEnd="18dp"
                                 android:text="划转"
                                 android:textColor="@color/white"
-                                android:textSize="15dp"
+                                android:textSize="14sp"
                                 app:roundBackgroundColor="@color/primary"
                                 app:roundCornerRadius="8dp" />
+
                             <com.xboard.ui.round.RoundTextView
                                 android:id="@+id/btn_withdraw"
                                 android:layout_width="wrap_content"
@@ -140,138 +142,168 @@
                                 android:paddingEnd="18dp"
                                 android:text="推广佣金提现"
                                 android:textColor="@color/white"
-                                android:textSize="15dp"
+                                android:textSize="14sp"
                                 android:visibility="gone"
                                 app:roundCornerRadius="8dp"
                                 app:roundStrokeColor="@color/text_secondary"
                                 app:roundStrokeWidth="1dp" />
                         </LinearLayout>
                     </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
 
-                </LinearLayout>
-                <FrameLayout
+                <!-- 我的佣金 + 发放记录 -->
+                <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="15dp">
-                    <TextView
-                        android:layout_width="wrap_content"
+                    android:layout_marginTop="16dp"
+                    app:cardCornerRadius="16dp"
+                    app:cardUseCompatPadding="false"
+                    app:cardElevation="2dp"
+                    app:cardBackgroundColor="?attr/colorSurface">
+
+                    <FrameLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_gravity="center_vertical"
-                        android:text="我的佣金"
-                        android:textColor="@color/white"
-                        android:textSize="16dp" />
-                    <com.xboard.ui.round.RoundTextView
-                        android:id="@+id/tv_record"
-                        android:layout_width="wrap_content"
-                        android:layout_height="36dp"
-                        android:layout_gravity="end|center_vertical"
-                        android:gravity="center"
-                        android:paddingStart="18dp"
-                        android:paddingEnd="18dp"
-                        android:text="发放记录"
-                        android:textColor="@color/white"
-                        android:textSize="15dp"
-                        app:roundBackgroundColor="@color/primary"
-                        app:roundCornerRadius="20dp" />
-                </FrameLayout>
+                        android:padding="16dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_vertical"
+                            android:text="我的佣金"
+                            android:textColor="@color/white"
+                            android:textSize="16sp" />
+
+                        <com.xboard.ui.round.RoundTextView
+                            android:id="@+id/tv_record"
+                            android:layout_width="wrap_content"
+                            android:layout_height="36dp"
+                            android:layout_gravity="end|center_vertical"
+                            android:gravity="center"
+                            android:paddingStart="18dp"
+                            android:paddingEnd="18dp"
+                            android:text="发放记录"
+                            android:textColor="@color/white"
+                            android:textSize="14sp"
+                            app:roundBackgroundColor="@color/primary"
+                            app:roundCornerRadius="20dp" />
+                    </FrameLayout>
+                </com.google.android.material.card.MaterialCardView>
+
                 <!-- Commission Rate -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    app:cardCornerRadius="16dp"
+                    app:cardUseCompatPadding="false"
+                    app:cardElevation="2dp"
+                    app:cardBackgroundColor="?attr/colorSurface">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <FrameLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center_vertical"
+                                android:text="已注册用户数"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="14sp" />
+
+                            <TextView
+                                android:id="@+id/tv_invite_count"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="end|center_vertical"
+                                android:text=""
+                                android:textColor="@color/white"
+                                android:textSize="14sp" />
+                        </FrameLayout>
+
+                        <FrameLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center_vertical"
+                                android:text="佣金比例"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="14sp" />
+
+                            <TextView
+                                android:id="@+id/tv_commission_rate"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="end|center_vertical"
+                                android:text=""
+                                android:textColor="@color/white"
+                                android:textSize="14sp" />
+                        </FrameLayout>
+
+                        <FrameLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center_vertical"
+                                android:text="确认中的佣金"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="14sp" />
+
+                            <TextView
+                                android:id="@+id/tv_reconfirm_balance"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="end|center_vertical"
+                                android:text=""
+                                android:textColor="@color/white"
+                                android:textSize="14sp" />
+                        </FrameLayout>
+
+                        <FrameLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center_vertical"
+                                android:text="累计获得佣金"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="14sp" />
+
+                            <TextView
+                                android:id="@+id/tv_total_balance"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="end|center_vertical"
+                                android:text=""
+                                android:textColor="@color/white"
+                                android:textSize="14sp" />
+                        </FrameLayout>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Invite Code Section -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="15dp"
-                    android:background="@drawable/bg_card_dark"
-                    android:orientation="vertical"
-                    android:padding="16dp">
-                    <FrameLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical">
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center_vertical"
-                            android:text="已注册用户数"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="14dp" />
-                        <TextView
-                            android:id="@+id/tv_invite_count"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="end|center_vertical"
-                            android:text=""
-                            android:textColor="@color/white"
-                            android:textSize="14dp" />
-                    </FrameLayout>
-                    <FrameLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:orientation="vertical">
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center_vertical"
-                            android:text="佣金比例"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="14dp" />
-                        <TextView
-                            android:id="@+id/tv_commission_rate"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="end|center_vertical"
-                            android:text=""
-                            android:textColor="@color/white"
-                            android:textSize="14dp" />
-                    </FrameLayout>
-                    <FrameLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:orientation="vertical">
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center_vertical"
-                            android:text="确认中的佣金"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="14dp" />
-                        <TextView
-                            android:id="@+id/tv_reconfirm_balance"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="end|center_vertical"
-                            android:text=""
-                            android:textColor="@color/white"
-                            android:textSize="14dp" />
-                    </FrameLayout>
-                    <FrameLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:orientation="vertical">
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center_vertical"
-                            android:text="累计获得佣金"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="14dp" />
-                        <TextView
-                            android:id="@+id/tv_total_balance"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="end|center_vertical"
-                            android:text=""
-                            android:textColor="@color/white"
-                            android:textSize="14dp" />
-                    </FrameLayout>
-                </LinearLayout>
-
-                <!-- Invite Code Section -->
-                <FrameLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="15dp"
+                    android:layout_marginTop="16dp"
                     android:orientation="horizontal">
 
                     <TextView
@@ -280,63 +312,78 @@
                         android:layout_gravity="center_vertical"
                         android:text="邀请码管理"
                         android:textColor="@color/text_primary"
-                        android:textSize="16dp"
+                        android:textSize="16sp"
                         android:textStyle="bold" />
+
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="0dp"
+                        android:layout_weight="1" />
+
                     <com.xboard.ui.round.RoundTextView
                         android:id="@+id/btn_generate_code"
                         android:layout_width="wrap_content"
                         android:layout_height="36dp"
-                        android:layout_gravity="end|center_vertical"
                         android:gravity="center"
                         android:paddingStart="18dp"
                         android:paddingEnd="18dp"
                         android:text="生成邀请码"
                         android:textColor="@color/white"
-                        android:textSize="15dp"
+                        android:textSize="14sp"
                         app:roundBackgroundColor="@color/primary"
                         app:roundCornerRadius="20dp" />
 
-                </FrameLayout>
-                <LinearLayout
+                </LinearLayout>
+
+                <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="15dp"
-                    android:background="@drawable/bg_card_dark"
-                    android:orientation="vertical"
-                    android:padding="16dp">
-                    <FrameLayout
+                    android:layout_marginTop="12dp"
+                    app:cardCornerRadius="16dp"
+                    app:cardUseCompatPadding="false"
+                    app:cardElevation="1dp"
+                    app:cardBackgroundColor="?attr/colorSurface">
+
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal">
+                        android:orientation="vertical"
+                        android:padding="16dp">
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center_vertical"
-                            android:text="邀请码"
-                            android:textColor="@color/text_primary"
-                            android:textSize="16dp"
-                            android:textStyle="bold" />
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="end|center_vertical"
-                            android:gravity="center"
-                            android:paddingStart="18dp"
-                            android:paddingEnd="18dp"
-                            android:text="创建时间"
-                            android:textColor="@color/white"
-                            android:textSize="15dp" />
+                        <FrameLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content">
 
-                    </FrameLayout>
-                    <androidx.recyclerview.widget.RecyclerView
-                        android:id="@+id/rv_invite_details"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:clipToPadding="false"
-                        android:paddingBottom="12dp" />
-                </LinearLayout>
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center_vertical"
+                                android:text="邀请码"
+                                android:textColor="@color/text_primary"
+                                android:textSize="16sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="end|center_vertical"
+                                android:gravity="center"
+                                android:paddingStart="18dp"
+                                android:paddingEnd="18dp"
+                                android:text="创建时间"
+                                android:textColor="@color/white"
+                                android:textSize="14sp" />
+                        </FrameLayout>
+
+                        <androidx.recyclerview.widget.RecyclerView
+                            android:id="@+id/rv_invite_details"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:clipToPadding="false"
+                            android:paddingBottom="12dp" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
             </LinearLayout>
         </androidx.core.widget.NestedScrollView>
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>

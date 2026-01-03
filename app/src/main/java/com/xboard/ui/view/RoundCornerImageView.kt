@@ -7,8 +7,7 @@ import android.graphics.Path
 import android.graphics.RectF
 import android.util.AttributeSet
 import android.widget.ImageView
-import androidx.appcompat.widget.AppCompatImageView
-import com.github.kr328.clash.R
+import com.xboard.R
 
 /**
  * 自定义圆角 ImageView

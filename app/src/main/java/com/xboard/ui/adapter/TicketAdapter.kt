@@ -5,7 +5,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.github.kr328.clash.databinding.ItemTicketBinding
+import com.xboard.databinding.ItemTicketBinding
 import com.xboard.model.TicketResponse
 import java.text.SimpleDateFormat
 import java.util.*

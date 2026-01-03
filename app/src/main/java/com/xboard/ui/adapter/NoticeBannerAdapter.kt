@@ -4,7 +4,7 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.github.kr328.clash.databinding.ItemNoticeBannerBinding
+import com.xboard.databinding.ItemNoticeBannerBinding
 import com.xboard.model.Notice
 
 /**

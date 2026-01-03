@@ -14,7 +14,7 @@ import android.widget.HorizontalScrollView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.content.ContextCompat
-import com.github.kr328.clash.R
+import com.xboard.R
 
 class SlidingTabLayout @JvmOverloads constructor(
     context: Context,

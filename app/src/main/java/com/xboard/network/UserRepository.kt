@@ -47,14 +47,6 @@ class UserRepository(private val apiService: ApiService) : BaseRepository() {
         }
     }
 
-    /**
-     * 获取用户套餐
-     */
-    suspend fun getUserPlan(): ApiResult<Plan> {
-        return safeApiCall {
-            apiService.getUserPlan()
-        }
-    }
 
     /**
      * 获取用户套餐列表

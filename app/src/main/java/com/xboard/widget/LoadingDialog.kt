@@ -4,8 +4,8 @@ import android.app.Dialog
 import android.content.Context
 import android.view.LayoutInflater
 import android.view.WindowManager
-import com.github.kr328.clash.R
-import com.github.kr328.clash.databinding.DialogLoadingBinding
+import com.xboard.R
+import com.xboard.databinding.DialogLoadingBinding
 
 /**
  * 加载对话框

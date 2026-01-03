@@ -1,25 +1,23 @@
 package com.xboard.ui.activity
 
-import com.github.kr328.clash.R
-import com.github.kr328.clash.databinding.ActivityShareBinding
-import com.xboard.base.BaseActivity
-import com.xboard.ui.fragment.ShareFragment
+import android.os.Bundle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.xboard.base.BaseComposeActivity
+import com.xboard.ui.compose.ShareScreen
 
 /**
- *    author : jogger
- *    date   : 2025/11/27
- *    desc   :
+ * 分享/返利页面
  */
-class ShareActivity : BaseActivity<ActivityShareBinding>() {
-    override fun getViewBinding(): ActivityShareBinding {
-       return ActivityShareBinding.inflate(layoutInflater)
-    }
-
-    override fun initView() {
-        super.initView()
-        supportFragmentManager
-            .beginTransaction()
-            .replace(R.id.fl_share, ShareFragment())
-            .commitAllowingStateLoss()
+class ShareActivity : BaseComposeActivity() {
+    
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        
+        setThemeContent {
+            ShareScreen(
+                viewModel = viewModel(),
+                onNavigateBack = { finish() }
+            )
+        }
     }
 }

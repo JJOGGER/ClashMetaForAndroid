@@ -1,8 +1,8 @@
 <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="PluralsCandidate">
-    <string name="launch_name_meta">咻咻云</string>
-    <string name="launch_name_alpha">咻咻云</string>
-    <string name="application_name_meta">咻咻云</string>
-    <string name="application_name_alpha">咻咻云</string>
+    <string name="launch_name_meta">妈祖VPN</string>
+    <string name="launch_name_alpha">妈祖VPN</string>
+    <string name="application_name_meta">妈祖VPN</string>
+    <string name="application_name_alpha">妈祖VPN</string>
 
     <string name="stopped">Stopped</string>
     <string name="tap_to_start">Tap to start</string>
@@ -211,7 +211,7 @@
     <string name="import_from_clipboard">Import from Clipboard</string>
     <string name="export_to_clipboard">Export to Clipboard</string>
 
-    <string name="clash_meta_for_android">咻咻云</string>
+    <string name="clash_meta_for_android">妈祖VPN</string>
 
     <string name="document">Document</string>
     <string name="feedback">Feedback</string>

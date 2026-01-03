@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- XBoard App Colors - Dark Theme (Material 3 Expressive) -->
+    
+    <!-- Primary Colors -->
+    <color name="primary_main_light">#81C784</color>
+    <color name="primary">#66BB6A</color>
+    <color name="primary_dark">#4CAF50</color>
+    <color name="primary_light">#A5D6A7</color>
+    <color name="main_start">#66BB6A</color>
+    <color name="main_center">#4CAF50</color>
+    <color name="main_end">#388E3C</color>
+    <color name="color_6F9070">#81C784</color>
+    <color name="color_259526">#66BB6A</color>
+
+    <!-- Background Colors (Dark Theme) -->
+    <color name="bg_primary">#121212</color>
+    <color name="color_1B2126">#1E1E1E</color>
+    <color name="bg_secondary">#1E1E1E</color>
+    <color name="bg_tertiary">#2C2C2C</color>
+    <color name="color_F44336">#EF5350</color>
+
+    <!-- Text Colors (Dark Theme) -->
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#B3B3B3</color>
+    <color name="text_tertiary">#808080</color>
+
+    <!-- Accent Colors -->
+    <color name="accent_primary">#66BB6A</color>
+    <color name="accent_success">#66BB6A</color>
+    <color name="accent_warning">#FFB74D</color>
+    <color name="accent_error">#EF5350</color>
+    <color name="error">#EF5350</color>
+    <color name="color_attention">#2C2C1C</color>
+
+    <!-- Stroke Colors (Dark Theme) -->
+    <color name="stroke">#3A3A3A</color>
+
+    <!-- Gradient Colors (Dark Theme) -->
+    <color name="gradient_start">#1E1E1E</color>
+    <color name="gradient_end">#121212</color>
+
+    <!-- Utility Colors -->
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="transparent">#00000000</color>
+
+</resources>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

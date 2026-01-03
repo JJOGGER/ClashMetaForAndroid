@@ -7,7 +7,7 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
-import com.github.kr328.clash.databinding.ItemInviteDetailBinding
+import com.xboard.databinding.ItemInviteDetailBinding
 import com.xboard.api.RetrofitClient
 import com.xboard.ex.showToast
 import com.xboard.model.InviteCode

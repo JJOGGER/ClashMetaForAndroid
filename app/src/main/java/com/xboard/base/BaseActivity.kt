@@ -10,18 +10,20 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.viewbinding.ViewBinding
-import com.github.kr328.clash.BaseActivity
-import com.github.kr328.clash.BaseActivity.Event
-import com.github.kr328.clash.R
-import com.github.kr328.clash.core.bridge.ClashException
 import com.github.kr328.clash.design.store.UiStore
 import com.github.kr328.clash.design.ui.DayNight
-import com.github.kr328.clash.design.util.showExceptionToast
 import com.github.kr328.clash.remote.Broadcasts
 import com.github.kr328.clash.remote.Remote
 import com.github.kr328.clash.util.ActivityResultLifecycle
+import com.xboard.R
+import com.xboard.event.ThemeChangedEvent
 import com.xboard.ex.showToast
+import com.xboard.ui.viewmodel.ThemeViewModel
+import com.xboard.utils.ThemeHelper
 import com.xboard.widget.LoadingDialog
+import org.greenrobot.eventbus.EventBus
+import org.greenrobot.eventbus.Subscribe
+import org.greenrobot.eventbus.ThreadMode
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
@@ -30,7 +32,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.util.UUID
+import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
@@ -53,20 +55,29 @@ abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity(),
     protected lateinit var binding: VB
     protected val events = Channel<Event>(Channel.UNLIMITED)
     private val loadingDialog by lazy { LoadingDialog(this) }
+    
+    /**
+     * 主题 ViewModel，子类可以使用
+     */
+    protected val themeViewModel = ThemeViewModel.getInstance()
 
     fun defer(operation: suspend () -> Unit) {
         this.defer = operation
     }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // 加载主题设置
+        ThemeHelper.loadThemeSettings(themeViewModel, resources)
 
         // 绑定视图
         binding = getViewBinding()
         setContentView(binding.root)
 
         // 设置沉浸式状态栏
-        setupImmersiveStatusBar()
-        applyWindowInsetsToContent()
+//        setupImmersiveStatusBar()
+//        applyWindowInsetsToContent()
 
         // 初始化
         initView()
@@ -95,6 +106,13 @@ abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity(),
         activityStarted = true
         Remote.broadcasts.addObserver(this)
         events.trySend(Event.ActivityStart)
+        
+        // 注册 EventBus 监听主题变化事件
+        if (!EventBus.getDefault().isRegistered(this)) {
+            EventBus.getDefault().register(this)
+        }
+        // 重新加载主题设置，确保从其他页面返回时主题正确
+        ThemeHelper.loadThemeSettings(themeViewModel, resources)
     }
 
     override fun onStop() {
@@ -102,6 +120,21 @@ abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity(),
         activityStarted = false
         Remote.broadcasts.removeObserver(this)
         events.trySend(Event.ActivityStop)
+        
+        // 注销 EventBus
+        if (EventBus.getDefault().isRegistered(this)) {
+            EventBus.getDefault().unregister(this)
+        }
+    }
+    
+    /**
+     * 监听主题变化事件
+     * 子类可以覆盖此方法实现自定义的主题更新逻辑
+     */
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    open fun onThemeChanged(event: ThemeChangedEvent) {
+        // 重新加载主题设置
+        ThemeHelper.loadThemeSettings(themeViewModel, resources)
     }
 
     override fun onDestroy() {
@@ -123,6 +156,7 @@ abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity(),
             }
         }
     }
+
     /**
      * 设置沉浸式状态栏
      */
@@ -139,7 +173,7 @@ abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity(),
         WindowInsetsControllerCompat(window, window.decorView).apply {
             isAppearanceLightStatusBars = isStatusBarDarkText()
             isAppearanceLightNavigationBars = isNavigationBarDarkText()
-            systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_BARS_BY_SWIPE
+            systemBarsBehavior = androidx.core.view.WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         }
     }
 
@@ -163,7 +197,8 @@ abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity(),
             val statusInsets = insets.getInsets(WindowInsetsCompat.Type.statusBars())
             val navigationInsets = insets.getInsets(WindowInsetsCompat.Type.navigationBars())
 
-            val topPadding = initialPadding[1] + if (shouldApplyStatusBarInsets()) statusInsets.top else 0
+            val topPadding =
+                initialPadding[1] + if (shouldApplyStatusBarInsets()) statusInsets.top else 0
             val bottomPadding =
                 initialPadding[3] + if (shouldApplyNavigationBarInsets()) navigationInsets.bottom else 0
 
@@ -305,6 +340,7 @@ abstract class BaseActivity<VB : ViewBinding> : AppCompatActivity(),
 
         }
     }
+
     enum class Event {
         ServiceRecreated,
         ActivityStart,

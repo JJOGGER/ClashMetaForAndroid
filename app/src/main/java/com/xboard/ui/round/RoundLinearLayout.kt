@@ -1,6 +1,6 @@
 package com.xboard.ui.round
 
-import com.github.kr328.clash.R
+import com.xboard.R
 import android.content.Context
 import android.graphics.drawable.GradientDrawable
 import android.util.AttributeSet

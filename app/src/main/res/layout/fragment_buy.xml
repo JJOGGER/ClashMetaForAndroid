@@ -5,23 +5,19 @@
     android:layout_height="match_parent"
     android:background="@color/bg_primary">
 
-    <FrameLayout
+    <!-- 顶部标题栏（接近 MaterialToolbar 风格） -->
+    <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/top_bar"
         android:layout_width="match_parent"
         android:layout_height="@dimen/toolbar_height"
-        android:orientation="vertical"
+        android:background="@color/bg_primary"
+        android:paddingHorizontal="16dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:text="购买订阅"
-            android:textColor="@color/white"
-            android:textSize="18dp" />
-    </FrameLayout>
+        app:layout_constraintTop_toTopOf="parent"
+        app:title="购买订阅"
+        app:titleTextColor="@color/text_primary"
+        app:titleCentered="true" />
 
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:id="@+id/swipe_refresh"
@@ -36,9 +32,11 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:clipToPadding="false"
-            android:paddingHorizontal="16dp"
+            android:paddingHorizontal="20dp"
             android:paddingTop="16dp"
-            android:paddingBottom="16dp" />
+            android:paddingBottom="16dp"
+            android:fadingEdgeLength="8dp"
+            android:requiresFadingEdge="vertical" />
 
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 

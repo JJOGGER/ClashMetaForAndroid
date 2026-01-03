@@ -87,12 +87,30 @@ class AutoSubscriptionManager(
             // 步骤2: 确保 Profile 存在
             Log.d(TAG, "[Step 2] Ensuring profile exists...")
             val profile = try {
-                withTimeout(10_000) { // 10秒超时
-                    ensureProfile(subscribeFromServer)
+                withTimeout(20_000) { // 20秒超时（增加超时时间以处理服务启动慢的情况）
+                    ensureProfileWithRetry(subscribeFromServer)
                 }
             } catch (e: TimeoutCancellationException) {
-                Log.e(TAG, "[Step 2] Timeout: ensureProfile() took more than 10 seconds")
-                return false
+                Log.e(TAG, "[Step 2] Timeout: ensureProfile() took more than 20 seconds")
+                // 超时后尝试查找已存在的 profile，避免完全失败
+                Log.d(TAG, "[Step 2] Trying to find existing profile after timeout...")
+                val existingProfile = try {
+                    withTimeout(5_000) { // 5秒超时用于快速检查
+                        ensureProfile(subscribeFromServer, checkOnly = true)
+                    }
+                } catch (e2: TimeoutCancellationException) {
+                    Log.e(TAG, "[Step 2] Timeout while checking existing profile")
+                    null
+                } catch (e2: Exception) {
+                    Log.e(TAG, "[Step 2] Failed to find existing profile: ${e2.message}")
+                    null
+                }
+                if (existingProfile != null) {
+                    Log.d(TAG, "[Step 2] Found existing profile after timeout: ${existingProfile.uuid}")
+                    existingProfile
+                } else {
+                    return false
+                }
             } catch (e: Exception) {
                 Log.e(TAG, "[Step 2] Exception in ensureProfile(): ${e.message}", e)
                 return false
@@ -222,6 +240,7 @@ class AutoSubscriptionManager(
                     Log.w(TAG, "Failed to calculate config hash for $subscribeUrl")
                     null
                 } else {
+
                     Log.d(TAG, "Config hash: $configHash")
                     configContent to configHash
                 }
@@ -258,27 +277,75 @@ class AutoSubscriptionManager(
         }
     }
 
-    private suspend fun ensureProfile(subscribe: SubscribeResponse): Profile? {
+    /**
+     * 带重试的 ensureProfile
+     * 最多重试 3 次，每次间隔 1 秒
+     */
+    private suspend fun ensureProfileWithRetry(subscribe: SubscribeResponse): Profile? {
+        var lastException: Exception? = null
+        repeat(3) { attempt ->
+            try {
+                val result = ensureProfile(subscribe, checkOnly = false)
+                if (result != null) {
+                    Log.d(TAG, "[Step 2] Success on attempt ${attempt + 1}")
+                    return result
+                }
+            } catch (e: TimeoutCancellationException) {
+                lastException = e
+                Log.w(TAG, "[Step 2] Attempt ${attempt + 1}/3 timed out: ${e.message}")
+                if (attempt < 2) {
+                    delay(1000) // 等待 1 秒后重试
+                }
+            } catch (e: Exception) {
+                lastException = e
+                Log.w(TAG, "[Step 2] Attempt ${attempt + 1}/3 failed: ${e.message}")
+                if (attempt < 2) {
+                    delay(1000) // 等待 1 秒后重试
+                }
+            }
+        }
+        lastException?.let {
+            Log.e(TAG, "[Step 2] All retry attempts failed: ${it.message}", it)
+        }
+        return null
+    }
+
+    /**
+     * 确保 Profile 存在
+     * @param subscribe 订阅响应
+     * @param checkOnly 如果为 true，只检查已存在的 profile，不创建新的
+     */
+    private suspend fun ensureProfile(subscribe: SubscribeResponse, checkOnly: Boolean = false): Profile? {
         if (subscribe.subscribeUrl.isBlank()) {
             Log.w(TAG, "Subscribe url is empty, skip ensureProfile")
             return null
         }
 
         return try {
-            withProfile {
-                val existing = queryAll().firstOrNull { it.source == subscribe.subscribeUrl }
-                existing ?: run {
-                    val uuid = create(
-                        Profile.Type.Url,
-                        buildProfileName(subscribe),
-                        subscribe.subscribeUrl
-                    )
-                    queryByUUID(uuid)
+            // 为 withProfile 添加超时保护，防止无限等待
+            withTimeout(15_000) { // 15秒超时，给外层的 20 秒超时留出缓冲
+                withProfile {
+                    val existing = queryAll().firstOrNull { it.source == subscribe.subscribeUrl }
+                    if (existing != null) {
+                        existing
+                    } else if (checkOnly) {
+                        null
+                    } else {
+                        val uuid = create(
+                            Profile.Type.Url,
+                            buildProfileName(subscribe),
+                            subscribe.subscribeUrl
+                        )
+                        queryByUUID(uuid)
+                    }
                 }
             }
+        } catch (e: TimeoutCancellationException) {
+            Log.e(TAG, "Failed to ensure profile: Timed out waiting for ${e.message ?: "15 seconds"}")
+            throw e // 重新抛出，让重试逻辑处理
         } catch (e: Exception) {
             Log.e(TAG, "Failed to ensure profile: ${e.message}", e)
-            null
+            throw e // 重新抛出，让重试逻辑处理
         }
     }
 

@@ -1,80 +1,35 @@
 package com.xboard.ui.activity
 
 import android.content.Intent
-import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.LinearLayoutManager
-import com.github.kr328.clash.databinding.ActivityTicketBinding
-import com.xboard.api.RetrofitClient
-import com.xboard.base.BaseActivity
-import com.xboard.network.TicketRepository
-import com.xboard.ui.adapter.TicketAdapter
-import com.xboard.utils.onClick
-import kotlinx.coroutines.launch
+import android.os.Bundle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.xboard.base.BaseComposeActivity
+import com.xboard.ui.compose.TicketScreen
+import com.xboard.ui.viewmodel.TicketViewModel
 
-class TicketActivity : BaseActivity<ActivityTicketBinding>() {
+/**
+ * 工单列表页面
+ */
+class TicketActivity : BaseComposeActivity() {
 
-    companion object {
-        private const val TAG = "TicketActivity"
-    }
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
 
-    private val ticketRepository by lazy { TicketRepository(RetrofitClient.getApiService()) }
-    private lateinit var ticketAdapter: TicketAdapter
-    private var currentPage = 1
-
-    override fun getViewBinding(): ActivityTicketBinding {
-        return ActivityTicketBinding.inflate(layoutInflater)
-    }
-
-    override fun initView() {
-        binding.vBack.onClick { finish() }
-        setupAdapter()
-        setupRefresh()
-
-        binding.btnCreateTicket.setOnClickListener {
-            startActivity(Intent(this, CreateTicketActivity::class.java))
-        }
-    }
-
-    override fun initData() {
-    }
-
-    override fun onResume() {
-        super.onResume()
-        loadTickets()
-    }
-
-    private fun setupAdapter() {
-        ticketAdapter = TicketAdapter { ticket ->
-            // 点击工单项，进入工单详情
-            val intent = Intent(this, TicketDetailActivity::class.java)
-            intent.putExtra("ticketId", ticket.id)
-            intent.putExtra("ticket", ticket)
-            startActivity(intent)
-        }
-        binding.rvTickets.adapter = ticketAdapter
-        binding.rvTickets.layoutManager = LinearLayoutManager(this)
-    }
-
-    private fun loadTickets() {
-        lifecycleScope.launch {
-            try {
-                val result = ticketRepository.getTickets(page = currentPage, perPage = 20)
-                result.onSuccess { tickets ->
-                    ticketAdapter.submitList(tickets)
-                    binding.swipeRefresh.isRefreshing = false
-                }.onError { error ->
-                    binding.swipeRefresh.isRefreshing = false
+        setThemeContent {
+            val viewModel: TicketViewModel = viewModel()
+            TicketScreen(
+                viewModel = viewModel,
+                onNavigateBack = { finish() },
+                onNavigateToCreate = {
+                    startActivity(Intent(this, CreateTicketActivity::class.java))
+                },
+                onNavigateToDetail = { ticketId, ticket ->
+                    val intent = Intent(this, TicketDetailActivity::class.java)
+                    intent.putExtra("ticketId", ticketId)
+                    intent.putExtra("ticket", ticket)
+                    startActivity(intent)
                 }
-            } catch (e: Exception) {
-                binding.swipeRefresh.isRefreshing = false
-            }
-        }
-    }
-
-    private fun setupRefresh() {
-        binding.swipeRefresh.setOnRefreshListener {
-            currentPage = 1
-            loadTickets()
+            )
         }
     }
 }

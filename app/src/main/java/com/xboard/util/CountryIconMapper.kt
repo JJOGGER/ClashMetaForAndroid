@@ -1,6 +1,6 @@
 package com.xboard.util
 
-import com.github.kr328.clash.R
+import com.xboard.R
 
 /**
  * 国家图标映射工具类

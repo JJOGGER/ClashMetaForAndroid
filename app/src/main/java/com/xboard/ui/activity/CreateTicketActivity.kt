@@ -1,67 +1,28 @@
 package com.xboard.ui.activity
 
-import androidx.lifecycle.lifecycleScope
-import com.github.kr328.clash.databinding.ActivityCreateTicketBinding
-import com.xboard.api.RetrofitClient
-import com.xboard.base.BaseActivity
-import com.xboard.ex.showToast
-import com.xboard.network.TicketRepository
-import com.xboard.utils.onClick
-import kotlinx.coroutines.launch
+import android.os.Bundle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.xboard.base.BaseComposeActivity
+import com.xboard.ui.compose.CreateTicketScreen
+import com.xboard.ui.viewmodel.CreateTicketViewModel
 
-class CreateTicketActivity : BaseActivity<ActivityCreateTicketBinding>() {
+/**
+ * 创建工单页面
+ */
+class CreateTicketActivity : BaseComposeActivity() {
 
-    companion object {
-        private const val TAG = "CreateTicketActivity"
-    }
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
 
-    private val ticketRepository by lazy { TicketRepository(RetrofitClient.getApiService()) }
-
-    override fun getViewBinding(): ActivityCreateTicketBinding {
-        return ActivityCreateTicketBinding.inflate(layoutInflater)
-    }
-
-    override fun initView() {
-        binding.vBack.onClick { finish() }
-        binding.btnSubmit.setOnClickListener {
-            submitTicket()
-        }
-    }
-
-    override fun initData() {
-    }
-
-    private fun submitTicket() {
-        val subject = binding.etSubject.text.toString().trim()
-        val description = binding.etDescription.text.toString().trim()
-
-        if (subject.isEmpty()) {
-            showToast("请输入问题")
-            return
-        }
-
-        if (description.isEmpty()) {
-            showToast("请输入问题描述")
-            return
-        }
-
-        lifecycleScope.launch {
-            try {
-                val result = ticketRepository.createTicket(
-                    subject = subject,
-                    description = description
-                )
-                result.onSuccess { result ->
-                    if (result) {
-                        showToast("提交问题成功")
-                        finish()
-                    }
-                }.onError { error ->
-                    showToast("提交失败: ${error.message}")
+        setThemeContent {
+            val viewModel: CreateTicketViewModel = viewModel()
+            CreateTicketScreen(
+                viewModel = viewModel,
+                onNavigateBack = { finish() },
+                onSubmitSuccess = {
+                    finish()
                 }
-            } catch (e: Exception) {
-                showToast("提交失败: ${e.message}")
-            }
+            )
         }
     }
 }

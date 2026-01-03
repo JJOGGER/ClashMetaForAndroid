@@ -5,7 +5,7 @@ import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.util.AttributeSet
 import androidx.annotation.ColorInt
-import com.github.kr328.clash.R
+import com.xboard.R
 
 /**
  *    author : jogger

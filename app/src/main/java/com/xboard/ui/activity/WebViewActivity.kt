@@ -2,7 +2,7 @@ package com.xboard.ui.activity
 
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import com.github.kr328.clash.databinding.ActivityWebViewBinding
+import com.xboard.databinding.ActivityWebViewBinding
 import com.xboard.base.BaseActivity
 
 /**
@@ -28,7 +28,7 @@ class WebViewActivity : BaseActivity<ActivityWebViewBinding>() {
         binding.tvTitle.text = title
 
         // 返回按钮
-        binding.vBack.setOnClickListener {
+        binding.topBar.setNavigationOnClickListener {
             finish()
         }
 

@@ -8,8 +8,14 @@ import androidx.activity.result.contract.ActivityResultContract
 import androidx.fragment.app.Fragment
 import androidx.viewbinding.ViewBinding
 import com.github.kr328.clash.util.ActivityResultLifecycle
+import com.xboard.event.ThemeChangedEvent
+import com.xboard.ui.viewmodel.ThemeViewModel
+import com.xboard.utils.ThemeHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.greenrobot.eventbus.EventBus
+import org.greenrobot.eventbus.Subscribe
+import org.greenrobot.eventbus.ThreadMode
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
@@ -22,6 +28,11 @@ abstract class BaseFragment<VB : ViewBinding> : Fragment() {
     private val nextRequestKey = AtomicInteger(0)
     protected lateinit var binding: VB
     private var isViewCreated = false
+    
+    /**
+     * 主题 ViewModel，子类可以使用
+     */
+    protected val themeViewModel = ThemeViewModel.getInstance()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -35,12 +46,43 @@ abstract class BaseFragment<VB : ViewBinding> : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         
+        // 加载主题设置
+        ThemeHelper.loadThemeSettings(themeViewModel, resources)
+        
         if (!isViewCreated) {
             isViewCreated = true
             initView()
             initData()
             initListener()
         }
+    }
+    
+    override fun onStart() {
+        super.onStart()
+        // 注册 EventBus 监听主题变化事件
+        if (!EventBus.getDefault().isRegistered(this)) {
+            EventBus.getDefault().register(this)
+        }
+        // 重新加载主题设置，确保从其他页面返回时主题正确
+        ThemeHelper.loadThemeSettings(themeViewModel, resources)
+    }
+    
+    override fun onStop() {
+        super.onStop()
+        // 注销 EventBus
+        if (EventBus.getDefault().isRegistered(this)) {
+            EventBus.getDefault().unregister(this)
+        }
+    }
+    
+    /**
+     * 监听主题变化事件
+     * 子类可以覆盖此方法实现自定义的主题更新逻辑
+     */
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    open fun onThemeChanged(event: ThemeChangedEvent) {
+        // 重新加载主题设置
+        ThemeHelper.loadThemeSettings(themeViewModel, resources)
     }
 
     /**

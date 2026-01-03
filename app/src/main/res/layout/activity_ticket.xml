@@ -5,49 +5,32 @@
     android:layout_height="match_parent"
     android:background="@color/bg_primary"
     android:orientation="vertical">
-    <FrameLayout
+    <!-- 顶部 AppBar：在线客服 + 提交问题 -->
+    <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/top_bar"
         android:layout_width="match_parent"
         android:layout_height="@dimen/toolbar_height"
-        android:orientation="vertical">
-        <FrameLayout
-            android:id="@+id/v_back"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:paddingStart="20dp"
-            android:paddingTop="12dp"
-            android:paddingEnd="24dp"
-            android:paddingBottom="12dp">
-            <ImageView
-                android:layout_width="25dp"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical"
-                android:adjustViewBounds="true"
-                android:src="@drawable/icon_back" />
-        </FrameLayout>
+        android:background="@color/bg_primary"
+        android:paddingHorizontal="8dp"
+        app:navigationIcon="@drawable/icon_back"
+        app:navigationIconTint="@color/text_primary"
+        app:title="在线客服"
+        app:titleTextColor="@color/text_primary">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:text="在线客服"
-            android:textColor="@color/white"
-            android:textSize="18dp" />
         <com.xboard.ui.round.RoundTextView
             android:id="@+id/btn_create_ticket"
             android:layout_width="wrap_content"
-            android:layout_height="38dp"
+            android:layout_height="32dp"
             android:layout_gravity="end|center_vertical"
-            android:layout_marginEnd="10dp"
             android:gravity="center"
-            android:paddingStart="20dp"
-            android:paddingEnd="20dp"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
             android:text="提交问题"
             android:textColor="@color/white"
-            android:textSize="14dp"
+            android:textSize="14sp"
             app:roundBackgroundColor="@color/primary"
             app:roundCornerRadius="10dp" />
-    </FrameLayout>
+    </com.google.android.material.appbar.MaterialToolbar>
 
 
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout

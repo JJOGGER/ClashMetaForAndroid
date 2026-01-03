@@ -2,7 +2,7 @@ package com.xboard.ui.dialog
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import com.github.kr328.clash.databinding.DialogTransferBinding
+import com.xboard.databinding.DialogTransferBinding
 
 /**
  * 转账对话框

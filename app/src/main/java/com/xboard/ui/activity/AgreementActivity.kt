@@ -1,19 +1,14 @@
 package com.xboard.ui.activity
 
 import android.os.Bundle
-import android.webkit.WebViewClient
-import com.github.kr328.clash.databinding.ActivityAgreementBinding
-import com.github.kr328.clash.databinding.ActivityCommissionRecordBinding
-import com.xboard.api.RetrofitClient
-import com.xboard.base.BaseActivity
-import com.xboard.storage.MMKVManager
-import com.xboard.util.DomainFallbackManager
+import com.xboard.base.BaseComposeActivity
+import com.xboard.ui.compose.AgreementScreen
 
 /**
  * 协议展示页面（WebView）
+ * 已重构为 Compose 实现
  */
-class AgreementActivity : BaseActivity<ActivityAgreementBinding>() {
-
+class AgreementActivity : BaseComposeActivity() {
 
     companion object {
         const val EXTRA_TYPE = "agreement_type"
@@ -21,56 +16,16 @@ class AgreementActivity : BaseActivity<ActivityAgreementBinding>() {
         const val TYPE_PRIVACY_POLICY = "privacy_policy"
     }
 
-    override fun getViewBinding(): ActivityAgreementBinding {
-        return ActivityAgreementBinding.inflate(layoutInflater)
-
-    }
-
-    override fun initView() {
-        super.initView()
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        
         val type = intent.getStringExtra(EXTRA_TYPE) ?: TYPE_USER_AGREEMENT
-        setupWebView()
-        loadAgreement(type)
-        setupToolbar(type)
-    }
-
-    private fun setupWebView() {
-        binding.webView.apply {
-            webViewClient = WebViewClient()
-            settings.apply {
-                javaScriptEnabled = true
-                domStorageEnabled = true
-                databaseEnabled = true
-                useWideViewPort = true
-                loadWithOverviewMode = true
-                textZoom = 100
-            }
-        }
-    }
-
-    private fun loadAgreement(type: String) {
-        when (type) {
-            TYPE_PRIVACY_POLICY -> binding.webView.loadUrl(
-                "${DomainFallbackManager.getCachedMainDomain()}/user_privacy.html",
+        
+        setThemeContent {
+            AgreementScreen(
+                agreementType = type,
+                onNavigateBack = { finish() }
             )
-
-            else -> binding.webView.loadUrl(
-                "${DomainFallbackManager.getCachedMainDomain()}/user_agreement.html",
-            )
-        }
-
-
-    }
-
-    private fun setupToolbar(type: String) {
-        val title = when (type) {
-            TYPE_PRIVACY_POLICY -> "隐私政策"
-            else -> "用户协议"
-        }
-
-        binding.tvTitle.text = title
-        binding.vBack.setOnClickListener {
-            finish()
         }
     }
 }

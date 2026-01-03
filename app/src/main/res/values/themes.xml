@@ -1,14 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Simple theme definitions for build -->
-    <style name="AppThemeLight" parent="Theme.MaterialComponents.Light.NoActionBar">
+    <!-- XBoard App Theme - Light (Material 3 Expressive) -->
+    <style name="AppThemeLight" parent="Theme.Material3.Light.NoActionBar">
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
+        
+        <!-- Material 3 Color System -->
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSurface">@color/bg_primary</item>
+        <item name="colorOnSurface">@color/text_primary</item>
+        <item name="colorSurfaceVariant">@color/bg_secondary</item>
+        <item name="colorOnSurfaceVariant">@color/text_secondary</item>
+        <item name="colorOutline">@color/stroke</item>
+        <item name="colorError">@color/error</item>
+        <item name="colorOnError">@color/white</item>
     </style>
     
-    <style name="AppThemeDark" parent="Theme.MaterialComponents.NoActionBar">
+    <!-- XBoard App Theme - Dark (Material 3 Expressive) -->
+    <style name="AppThemeDark" parent="Theme.Material3.Dark.NoActionBar">
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
+        
+        <!-- Material 3 Color System -->
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSurface">@color/bg_secondary</item>
+        <item name="colorOnSurface">@color/text_primary</item>
+        <item name="colorSurfaceVariant">@color/bg_tertiary</item>
+        <item name="colorOnSurfaceVariant">@color/text_secondary</item>
+        <item name="colorOutline">@color/stroke</item>
+        <item name="colorError">@color/error</item>
+        <item name="colorOnError">@color/white</item>
     </style>
     
     <style name="BootstrapTheme" parent="AppThemeLight" />

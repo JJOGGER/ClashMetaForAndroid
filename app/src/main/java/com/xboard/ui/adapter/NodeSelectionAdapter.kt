@@ -5,9 +5,9 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
-import com.github.kr328.clash.R
+import com.xboard.R
 import com.github.kr328.clash.core.model.Proxy
-import com.github.kr328.clash.databinding.ItemNodeSelectionBinding
+import com.xboard.databinding.ItemNodeSelectionBinding
 import com.xboard.util.CountryIconMapper
 
 class NodeSelectionAdapter(

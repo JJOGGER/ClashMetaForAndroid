@@ -1,150 +1,274 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/bg_primary"
-    android:orientation="vertical"
-    android:paddingHorizontal="20dp"
-    android:paddingBottom="24dp">
+    android:fillViewport="true"
+    android:background="@color/bg_primary">
 
-    <FrameLayout
-        android:id="@+id/v_website"
-        android:layout_width="wrap_content"
-        android:layout_height="@dimen/toolbar_height"
-        android:paddingStart="10dp"
-        android:paddingEnd="10dp">
-        <ImageView
-            android:layout_width="30dp"
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingHorizontal="20dp"
+        android:paddingBottom="24dp">
+
+        <!-- 顶部 AppBar：标题 + 网站入口 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/toolbar_height"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="加速"
+                android:textColor="@color/text_primary"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+
+            <FrameLayout
+                android:id="@+id/v_website"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp">
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center_vertical"
+                    android:adjustViewBounds="true"
+                    android:src="@drawable/ic_website" />
+            </FrameLayout>
+        </LinearLayout>
+
+        <!-- 公告轮播 Banner（M3 卡片包裹，减小干扰） -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            android:adjustViewBounds="true"
-            android:src="@drawable/ic_website" />
-    </FrameLayout>
+            android:layout_marginTop="12dp"
+            android:visibility="visible"
+            app:cardElevation="1dp"
+            app:cardCornerRadius="16dp"
+            app:cardUseCompatPadding="false"
+            app:cardBackgroundColor="?attr/colorSurface"
+            app:strokeColor="@color/stroke"
+            app:strokeWidth="1dp"
+            tools:visibility="visible">
 
-    <!-- 公告轮播 Banner -->
-    <androidx.viewpager2.widget.ViewPager2
-        android:id="@+id/vp_notice_banner"
-        android:layout_width="match_parent"
-        android:layout_height="120dp"
-        android:layout_marginStart="-20dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="-20dp"
-        android:paddingStart="20dp"
-        android:paddingEnd="20dp"
-        android:visibility="invisible" />
+            <androidx.viewpager2.widget.ViewPager2
+                android:id="@+id/vp_notice_banner"
+                android:layout_width="match_parent"
+                android:layout_height="140dp"
+                android:paddingHorizontal="12dp"
+                android:visibility="invisible" />
+        </com.google.android.material.card.MaterialCardView>
 
-    <com.xboard.ui.round.SlidingTabLayout
-        android:id="@+id/mode_toggle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginTop="20dp" />
-    <ImageView
-        android:id="@+id/img_hero"
-        android:layout_width="160dp"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginTop="30dp"
-        android:adjustViewBounds="true"
-        android:src="@drawable/home_icon" />
+        <!-- 订阅状态横幅 -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_subscription_status"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:visibility="gone"
+            app:cardElevation="1dp"
+            app:cardCornerRadius="16dp"
+            app:cardUseCompatPadding="false"
+            app:cardBackgroundColor="?attr/colorSurface"
+            app:strokeColor="@color/stroke"
+            app:strokeWidth="1dp"
+            tools:visibility="gone">
 
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="16dp"
+                android:gravity="center_vertical">
 
-    <com.xboard.ui.round.RoundTextView
-        android:id="@+id/btn_connect"
-        style="@style/CommonButton"
-        android:layout_marginStart="80dp"
-        android:layout_marginTop="40dp"
-        android:layout_marginEnd="80dp"
-        android:text="开启连接"
-        android:textAllCaps="false"
-        android:textSize="16sp" />
+                <ProgressBar
+                    android:id="@+id/pb_subscription_status"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_marginEnd="12dp"
+                    android:visibility="gone"
+                    android:indeterminateTint="?attr/colorPrimary" />
 
-    <TextView
-        android:id="@+id/tv_connection_time"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginTop="12dp"
-        android:text="00:00:00"
-        android:textColor="@color/primary"
-        android:textSize="14sp"
-        android:textStyle="bold"
-        android:visibility="gone" />
+                <ImageView
+                    android:id="@+id/iv_subscription_status_icon"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_marginEnd="12dp"
+                    android:visibility="gone"
+                    android:src="@android:drawable/ic_menu_info_details"
+                    android:tint="?attr/colorPrimary" />
 
-    <com.xboard.ui.round.RoundConstraintLayout
-        android:id="@+id/card_selected_node"
-        android:layout_width="match_parent"
-        android:layout_height="70dp"
-        android:layout_marginStart="10dp"
-        android:layout_marginEnd="10dp"
-        android:layout_marginTop="50dp"
-        android:visibility="gone"
-        app:roundCornerRadius="30dp"
-        app:roundStrokeColor="@color/text_tertiary"
-        app:roundStrokeWidth="1dp"
+                <TextView
+                    android:id="@+id/tv_subscription_status_message"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="订阅更新中..."
+                    android:textColor="@color/text_primary"
+                    android:textSize="14sp"
+                    android:maxLines="2"
+                    android:ellipsize="end" />
 
-        tools:visibility="visible">
+                <TextView
+                    android:id="@+id/tv_subscription_refresh"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:text="刷新"
+                    android:textColor="?attr/colorPrimary"
+                    android:textSize="14sp"
+                    android:visibility="gone"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:padding="8dp" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
-        <com.github.kr328.clash.design.view.RoundedImageView
-            android:id="@+id/iv_node_icon"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:layout_marginStart="12dp"
-            android:scaleType="centerCrop"
-            app:cornerRadius="50dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"/>
-
-        <TextView
-            android:id="@+id/tv_selected_node_name"
+        <!-- 模式切换（智能 / 全局） -->
+        <com.xboard.ui.round.SlidingTabLayout
+            android:id="@+id/mode_toggle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="10dp"
-            android:text=""
-            android:textColor="@color/text_primary"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            app:layout_constraintBottom_toBottomOf="@id/iv_node_icon"
-            app:layout_constraintStart_toEndOf="@id/iv_node_icon"
-            app:layout_constraintTop_toTopOf="@id/iv_node_icon" />
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="20dp" />
 
-
-        <ImageView
-            android:id="@+id/node_status_dot"
-            android:layout_width="20dp"
+        <!-- 加速主视觉卡片：图标 + 按钮 + 时长 -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="12dp"
-            android:adjustViewBounds="true"
-            android:src="@drawable/arrow_right"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-        <com.xboard.ui.round.RoundView
-            android:id="@+id/v_dot"
-            android:layout_width="5dp"
-            android:layout_height="5dp"
-            android:layout_marginStart="6dp"
-            android:layout_marginEnd="6dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/node_status_dot"
-            app:layout_constraintTop_toTopOf="parent"
-            app:roundBackgroundColor="@color/primary_light"
-            app:roundCornerRadius="10dp" />
-<!--        <TextView-->
-<!--            android:id="@+id/tv_selected_node_latency"-->
-<!--            android:layout_width="wrap_content"-->
-<!--            android:layout_height="wrap_content"-->
-<!--            android:layout_marginEnd="8dp"-->
-<!--            android:text="&#45;&#45;"-->
-<!--            android:textColor="@color/primary_light"-->
-<!--            android:textSize="14sp"-->
-<!--            app:layout_constraintBottom_toBottomOf="parent"-->
-<!--            app:layout_constraintEnd_toStartOf="@id/v_dot"-->
-<!--            app:layout_constraintTop_toTopOf="parent" />-->
+            android:layout_marginTop="24dp"
+            app:cardCornerRadius="24dp"
+            app:cardUseCompatPadding="false"
+            app:cardElevation="3dp"
+            app:cardBackgroundColor="?attr/colorSurface">
 
-    </com.xboard.ui.round.RoundConstraintLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center_horizontal"
+                android:paddingStart="24dp"
+                android:paddingTop="24dp"
+                android:paddingEnd="24dp"
+                android:paddingBottom="24dp">
 
-</LinearLayout>
+                <ImageView
+                    android:id="@+id/img_hero"
+                    android:layout_width="160dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:adjustViewBounds="true"
+                    android:src="@drawable/home_icon" />
+
+                <com.xboard.ui.round.RoundTextView
+                    android:id="@+id/btn_connect"
+                    style="@style/CommonButton"
+                    android:layout_marginTop="24dp"
+                    android:text="开启连接"
+                    android:textAllCaps="false"
+                    android:textSize="16sp" />
+
+                <TextView
+                    android:id="@+id/tv_connection_time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="00:00:00"
+                    android:textColor="@color/primary"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- 当前节点信息卡片 -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            app:cardCornerRadius="20dp"
+            app:cardUseCompatPadding="false"
+            app:cardElevation="2dp"
+            app:cardBackgroundColor="?attr/colorSurface"
+            tools:visibility="visible">
+
+            <com.xboard.ui.round.RoundConstraintLayout
+                android:id="@+id/card_selected_node"
+                android:layout_width="match_parent"
+                android:layout_height="72dp"
+                android:layout_marginStart="4dp"
+                android:layout_marginEnd="4dp"
+                android:visibility="gone"
+                app:roundCornerRadius="24dp"
+                app:roundStrokeColor="@color/text_tertiary"
+                app:roundStrokeWidth="1dp"
+                tools:visibility="visible">
+
+                <com.github.kr328.clash.design.view.RoundedImageView
+                    android:id="@+id/iv_node_icon"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:layout_marginStart="16dp"
+                    android:scaleType="centerCrop"
+                    app:cornerRadius="50dp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <TextView
+                    android:id="@+id/tv_selected_node_name"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:layout_marginEnd="12dp"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:text=""
+                    android:textColor="@color/text_primary"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    app:layout_constraintBottom_toBottomOf="@id/iv_node_icon"
+                    app:layout_constraintEnd_toStartOf="@id/node_status_dot"
+                    app:layout_constraintStart_toEndOf="@id/iv_node_icon"
+                    app:layout_constraintTop_toTopOf="@id/iv_node_icon" />
+
+                <ImageView
+                    android:id="@+id/node_status_dot"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_marginEnd="16dp"
+                    android:adjustViewBounds="true"
+                    android:src="@drawable/arrow_right"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <com.xboard.ui.round.RoundView
+                    android:id="@+id/v_dot"
+                    android:layout_width="6dp"
+                    android:layout_height="6dp"
+                    android:layout_marginEnd="6dp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toStartOf="@id/node_status_dot"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:roundBackgroundColor="@color/primary_light"
+                    app:roundCornerRadius="10dp" />
+            </com.xboard.ui.round.RoundConstraintLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+    </LinearLayout>
+
+</androidx.core.widget.NestedScrollView>

@@ -161,7 +161,7 @@ subprojects {
                         }
                     } else {
                         // 如果没有配置路径，使用默认路径
-                        storeFile = rootProject.file("doc/clashkey.jks")
+                        storeFile = rootProject.file("doc/maclash.jks")
                     }
                     storePassword = prop.getProperty("keystore.password")!!
                     keyAlias = prop.getProperty("key.alias")!!
@@ -200,7 +200,7 @@ subprojects {
             splits {
                 abi {
                     isEnable = true
-                    isUniversalApk = false
+                    isUniversalApk = true
                     reset()
                     include("arm64-v8a", "armeabi-v7a")
                 }

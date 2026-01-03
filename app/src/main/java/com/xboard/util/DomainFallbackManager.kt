@@ -2,17 +2,29 @@ package com.xboard.util
 
 import android.util.Log
 import com.google.gson.Gson
+import com.google.gson.GsonBuilder
 import com.google.gson.annotations.SerializedName
 import com.xboard.api.RetrofitClient
+import com.xboard.api.ApiService
+import com.xboard.api.createTrustAllManager
+import com.xboard.api.createTrustAllHostnameVerifier
 import com.xboard.network.ApiResult
 import com.xboard.network.UserRepository
 import com.xboard.storage.MMKVManager
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 import java.io.IOException
+import java.net.SocketTimeoutException
+import java.security.cert.X509Certificate
 import java.util.concurrent.TimeUnit
+import javax.net.ssl.SSLContext
+import javax.net.ssl.TrustManager
 
 /**
  * 备用域名管理器
@@ -20,12 +32,12 @@ import java.util.concurrent.TimeUnit
  */
 object DomainFallbackManager {
     private const val TAG = "DomainFallbackManager"
-    private const val FALLBACK_API_URL = "https://xiuxiuyunapp.cc/api/api.json"
+    private const val FALLBACK_API_URL = "https://mazuvpn.icu/api/api.json"
     private const val KEY_MAIN_DOMAIN = "cached_main_domain"
     private const val KEY_API_DOMAIN = "cached_api_domain"
     private const val KEY_DOMAIN_RESPONSE = "cached_domain_response"
     private const val KEY_LAST_UPDATE_TIME = "last_domain_update_time"
-    private const val TEST_TIMEOUT_SECONDS = 5L
+    private const val TEST_TIMEOUT_SECONDS = 3L // 缩短超时时间到3秒，加快启动页响应
 
     /**
      * 备用域名响应模型
@@ -117,34 +129,76 @@ object DomainFallbackManager {
     /**
      * 测试域名是否可用
      * 通过调用 guest/comm/config 接口来测试
+     * 使用短超时时间（3秒）加快测试速度
      * @param domain 要测试的域名
-     * @param skipRestore 是否跳过恢复 baseUrl（用于连续测试多个域名时优化性能）
      */
     suspend fun testDomain(domain: String): Boolean =
         withContext(Dispatchers.IO) {
             try {
                 val baseUrl = "$domain/api/v1/"
-                // 创建临时 Retrofit 客户端用于测试
-                RetrofitClient.initialize(baseUrl)
-
-                val testApiService = RetrofitClient.getApiService()
+                
+                // 创建临时的 Retrofit 客户端，使用短超时时间（3秒）
+                val gson = GsonBuilder()
+                    .setDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+                    .disableHtmlEscaping()
+                    .create()
+                
+                // 配置SSL信任管理器
+                val trustManager = createTrustAllManager()
+                val sslContext = SSLContext.getInstance("TLS")
+                sslContext.init(null, arrayOf<TrustManager>(trustManager), java.security.SecureRandom())
+                
+                // 创建带短超时的 OkHttpClient
+                val testHttpClient = OkHttpClient.Builder()
+                    .connectTimeout(TEST_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                    .readTimeout(TEST_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                    .writeTimeout(TEST_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                    .sslSocketFactory(sslContext.socketFactory, trustManager)
+                    .hostnameVerifier(createTrustAllHostnameVerifier())
+                    // 测试时不需要重试拦截器，避免延长测试时间
+                    .build()
+                
+                // 创建临时的 Retrofit 实例
+                val testRetrofit = Retrofit.Builder()
+                    .baseUrl(baseUrl)
+                    .client(testHttpClient)
+                    .addConverterFactory(GsonConverterFactory.create(gson))
+                    .build()
+                
+                val testApiService = testRetrofit.create(ApiService::class.java)
                 val testRepository = UserRepository(testApiService)
 
-                // 尝试调用一个简单的接口
-                val result = testRepository.getCommonConfig()
+                // 尝试调用一个简单的接口，使用协程级别的超时保护
+                val result = withTimeout((TEST_TIMEOUT_SECONDS * 1000).toLong()) {
+                    testRepository.getCommonConfig()
+                }
 
                 val isAvailable = result.isSuccess()
 
                 if (isAvailable) {
                     Log.d(TAG, "域名可用: $domain")
                 } else {
-                    Log.w(
-                        TAG,
-                        "域名不可用: $domain, 错误: ${(result as? ApiResult.Error)?.message}"
-                    )
+                    // 检查是否是超时异常
+                    val error = result as? ApiResult.Error
+                    val isTimeout = error?.exception is SocketTimeoutException || 
+                                  error?.message?.contains("timeout", ignoreCase = true) == true
+                    if (isTimeout) {
+                        Log.w(TAG, "域名测试超时: $domain")
+                    } else {
+                        Log.w(
+                            TAG,
+                            "域名不可用: $domain, 错误: ${error?.message}"
+                        )
+                    }
                 }
 
                 isAvailable
+            } catch (e: TimeoutCancellationException) {
+                Log.w(TAG, "域名测试超时（协程级别）: $domain")
+                false
+            } catch (e: SocketTimeoutException) {
+                Log.w(TAG, "域名测试超时（网络级别）: $domain")
+                false
             } catch (e: Exception) {
                 Log.e(TAG, "测试域名异常: $domain", e)
                 false
